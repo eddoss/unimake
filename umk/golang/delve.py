@@ -9,7 +9,7 @@ from pathlib import Path
 from umk.golang.build import BuildArgs as GoBuildArgs
 from umk.system.shell import Shell
 from umk.application.config import Global
-from umk.system.env import Environs
+from umk.system.environs import Environs
 
 
 class GlobalFlags:

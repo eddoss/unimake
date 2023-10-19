@@ -5,7 +5,7 @@ from beartype import beartype
 from beartype.typing import Optional
 
 from umk import exceptions
-from umk.system.env import Environs
+from umk.system.environs import Environs
 from umk.system.shell import Shell
 from umk.golang.build import BuildArgs
 from umk.golang.mod import Mod

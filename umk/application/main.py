@@ -7,7 +7,7 @@ import sys
 import dotenv
 import asyncclick as click
 
-from beartype.typing import List, Any, Optional
+from beartype.typing import Any, Optional
 from rich.console import Console
 from rich.table import Table
 from rich.syntax import Syntax
@@ -17,8 +17,8 @@ from umk.application.modules import ExternalModules
 
 
 console = Console()
-need_print_help = ''
 external: Optional[ExternalModules] = None
+
 
 def show_native_help():
     console = Console()
@@ -104,12 +104,17 @@ project = Project()
 @click.option('--remote', '-r', default='', help="Execute command in remote environment (ignored in native)")
 @click.pass_context
 def application(ctx: click.Context, remote: str):
-    if ctx.invoked_subcommand in ('', None):
-        if need_print_help == 'native':
+    if not Global.paths.work.exists():
+        if ctx.invoked_subcommand in ('', None):
             show_native_help()
-        elif need_print_help == 'external':
-            show_external_help()
-        click.Abort()
+            click.Abort()
+        elif not ctx.invoked_subcommand.startswith('/'):
+            console.print("[bold]Current directory is not a Unimake project")
+            console.print("[bold]To create a project run:")
+            console.print("[bold cyan]    umk /init ...")
+            console.print("[bold]To get init details run:")
+            console.print("[bold cyan]    umk /init --help")
+            click.Abort()
     Global.remote = remote
 
 
@@ -127,28 +132,11 @@ def cmd(*args: Any, **kwargs):
     return application.command(*args, **kwargs)
 
 
-def validate_paths():
-    global need_print_help
-    need_print_help = 'native'
-    if not Global.paths.work.exists():
-        console.print("[bold]Current directory is not a Unimake project")
-        console.print("[bold]To create a project run:")
-        console.print("[bold cyan]    umk /init ...")
-        console.print("[bold]To get init details run:")
-        console.print("[bold cyan]    umk /init --help")
-        sys.exit()
-    if not Global.paths.work.is_dir():
-        console.print(f"[bold]Found '.unimake' but it's not a folder")
-        console.print(f"[bold]Try to remove '.unimake' at first and after init a project:")
-        console.print(f"[bold cyan]    umk /init ...")
-        console.print(f"[bold]To get init details run:")
-        console.print(f"[bold cyan]    umk /init --help")
-        sys.exit()
-    if not Global.paths.cli.is_file():
-        console.print(f"[bold red]Failed to find '.unimake/cli.py'")
-        console.print(f"[bold red]This file should contains project CLI codebase")
-        sys.exit()
-    need_print_help = 'external'
+def run():
+    try:
+        asyncio.run(application())
+    except Exception:
+        console.print_exception(show_locals=False, max_frames=1)
 
 
 def main():
@@ -156,7 +144,28 @@ def main():
     global need_print_help
 
     Global.paths = Config.Paths(Path.cwd().expanduser().resolve().absolute())
-    validate_paths()
+    # validate_paths()
+
+    if not Global.paths.work.exists():
+        run()
+        return
+
+    if not Global.paths.work.is_dir():
+        console.print(f"[bold red]Unimake error !")
+        console.print(f"[bold red]Found '.unimake' but it's not a folder")
+        console.print(f"[bold red]Try to remove '.unimake' at first and init a project:")
+        console.print(f"[bold red]    umk /init ...")
+        console.print(f"[bold red]To get init details run:")
+        console.print(f"[bold red]    umk /init --help")
+        sys.exit()
+
+    if not Global.paths.cli.is_file() or not Global.paths.project.is_file():
+        console.print(f"[bold bold red]Unimake error")
+        console.print(f"[bold bold red]Found '.unimake', but it's broken !")
+        console.print(f"[bold bold red]This folder must contains files:")
+        console.print(f"[bold bold red]  - project.py")
+        console.print(f"[bold bold red]  - cli.py")
+        sys.exit()
 
     if Global.paths.dotenv:
         try:
@@ -178,14 +187,11 @@ def main():
         if isinstance(o, click.Command):
             application.add_command(o)
 
-    try:
-        if not (hasattr(external.cli.module, 'show_help') and inspect.isfunction(external.cli.show_help)):
-            @application.command(name='help', help="Display help message")
-            def display_external_help():
-                show_external_help()
-        asyncio.run(application())
-    except Exception:
-        console.print_exception(show_locals=False, max_frames=1)
+    if not (hasattr(external.cli.module, 'show_help') and inspect.isfunction(external.cli.show_help)):
+        @application.command(name='help', help="Display help message")
+        def display_external_help():
+            show_external_help()
+    run()
 
 
 if __name__ == '__main__':

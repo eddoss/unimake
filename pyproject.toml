@@ -1,9 +1,19 @@
 [tool.poetry]
 name = "umk"
 version = "0.0.1"
-description = "UMK (Uniti Make) is a new era of the 'make' utility."
+description = "Unimake is a set of development tools and frameworks for project maintaining. This tools makes it easy to organize development routines (such as building, testing, linting, running, etc)"
 authors = ["Edward Sarkisyan <edw.sarkisyan@gmail.com>"]
 readme = "README.md"
+license = "GPL-3.0-only"
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: MacOS",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.12"

@@ -17,9 +17,9 @@ from .golang.delve import GlobalFlags as DelveGlobalFlags
 from asyncio import gather as parallel
 from pathlib import Path
 from .system.shell import Shell as shell
-from .system.fs import Filesystem as fs
-from .system import env
-from .system.env import Environs
+from .system.filesystem import Filesystem as fs
+from .system.environs import Environs
+from .system import environs as env
 
 # vcs
 from .vcs import Git, git, tag
