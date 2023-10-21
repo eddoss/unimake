@@ -60,6 +60,10 @@ publish:
 	@poetry build
 	@poetry publish --repository internal
 
+.PHONY: install
+install:
+	@cp ./dist/umk ~/.local/bin/$(PROJECT_NAME_SHORT)
+
 # ################################################################################################ #
 # Maintenance
 # ################################################################################################ #

@@ -15,8 +15,9 @@ A specific project must contain at least 2 scripts:
 - `.unimake/cli.py` - command line interface to interact with project
 
 `umk` tool allows you to execute a command from `.unimake/cli.py`
-### Script project.py
 
+![how-unimake-works](docs/diagrams/how-unimake-works.svg)
+### Script project.py
 ```py
 import umk 
 
@@ -80,13 +81,19 @@ umk vendor
 umk build
 umk debug --port 3000
 ``` 
-# Build requirements
+# Installation
+### Requirements
 - [Python](https://www.python.org/)
 - [Poetry](https://python-poetry.org/docs/#installation)
 - [Make](https://www.gnu.org/software/make/manual/make.html)
-# Build and install
+### Build
 ```sh
+make setver
 make dependencies
 make build
-sudo cp ./dist/umk /usr/bin/umk
+```
+### Install
+This receipt installs `./dist/umk` to `~/.local/bin/umk` 
+```sh
+make install
 ```
