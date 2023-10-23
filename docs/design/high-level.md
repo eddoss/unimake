@@ -68,7 +68,12 @@ umk /init
 
 #### External commands layer
 These commands relate to the `.unimake` project, such commands should not start with `/` !
-The list of external commands consists of what is described in the `.unimake/cli.py` script.
+The list of external commands consists of what is described in the `.unimake/cli.py` script. Inorder to list external
+commands go to project root and run:
+```
+umk help
+```
+The `umk help` is an auto-generated command. 
 
 ## Unimake framework
 Unimake framework is a python package named `umk`. You must use it when implements:

@@ -1,5 +1,12 @@
 # Unimake
-`unimake` is a set of development tools and frameworks for project maintaining. This tools makes it easy to organize development routines (such as building, testing, linting, running, etc) for a specific code base. 
+`unimake` is a set of development tools and frameworks for project maintaining. This tools makes it easy to organize development routines (such as building, testing, linting, running, etc) for a specific code base.
+
+## Goals
+- Allow gophers to use the full power of Python instead of makefiles and shell scripts.
+- Facilitate the task of product building consisting of several projects in different languages.
+- Provide the opportunity to develop debuggable project maintenance scripts.
+- Automate project maintenance routines.
+
 ## Features
 - Convenient framework for a project description
 - Python is the only language for everything
@@ -7,8 +14,9 @@
 - Easiest way to create a powerful CLI (like `make` but more flexible)
 - Adapters for a commonly used build systems (`go`, `cmake`, ...)
 - Run project targets in remote environment (dev-container, remote server, etc)
+
 # How it works ?
-Unimake provides the command line utility `umk` and the framework `umk` in Python.
+Unimake provides the command line utility `umk` and Python framework `umk`.
 
 A specific project must contain at least 2 scripts:
 - `.unimake/project.py` - project info, build steps, etc.
@@ -17,6 +25,7 @@ A specific project must contain at least 2 scripts:
 `umk` tool allows you to execute a command from `.unimake/cli.py`
 
 ![how-unimake-works](docs/diagrams/how-unimake-works.svg)
+
 ### Script project.py
 ```py
 import umk 
@@ -55,7 +64,6 @@ class Project(umk.GoProject):
 project = Project()
 ```
 ### Script cli.py
-
 ```py
 from umk import cli  
 from project import project  
@@ -82,34 +90,7 @@ umk build
 umk debug --port 3000
 ``` 
 # Installation
-### Requirements
-- [Python](https://www.python.org/)
-- [Poetry](https://python-poetry.org/docs/#installation)
-- [Make](https://www.gnu.org/software/make/manual/make.html)
-### Build
-```sh
-make setver
-make dependencies
-make build
-```
-### Install
-This receipt installs `./dist/umk` to `~/.local/bin/umk` 
-```sh
-make install
-``` 
-### Completions
-#### Bash
-```
-# Add this to ~/.bashrc:
-eval "$(_UMK_COMPLETE=bash_source umk)"
-```
-#### Zsh
-```
-# Add this to ~/.zshrc:
-eval "$(_UMK_COMPLETE=zsh_source umk)"
-```
-#### Fish
-```
-# Add this to ~/.config/fish/completions/umk.fish:
-_UMK_COMPLETE=fish_source umk | source
-```
+See [installation instructions](docs/installation.md) for more details.
+
+# Design
+- [High level concepts](docs/design/high-level.md)
