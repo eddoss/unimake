@@ -64,6 +64,10 @@ publish:
 install:
 	@cp ./dist/umk ~/.local/bin/$(PROJECT_NAME_SHORT)
 
+.PHONY: remove
+remove:
+	@rm -f ./dist/umk ~/.local/bin/$(PROJECT_NAME_SHORT)
+
 # ################################################################################################ #
 # Maintenance
 # ################################################################################################ #
