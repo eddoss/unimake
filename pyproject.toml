@@ -25,6 +25,9 @@ python-dotenv = "^1.0.0"
 beartype = "^0.16.3"
 
 
+[tool.poetry.scripts]
+umk = 'umk.application.main:main'
+
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.1.0"
 
