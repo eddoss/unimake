@@ -139,7 +139,7 @@ def run():
         console.print_exception(show_locals=False, max_frames=1)
 
 
-def main():
+def entrypoint():
     global external
     global need_print_help
 
@@ -195,4 +195,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    entrypoint()
