@@ -11,13 +11,13 @@ from .golang.build import BuildArgs as GoBuildArgs
 from .golang.build import BuildFlags as GoBuildFlags
 from .golang.go import Go
 from .golang.delve import Delve
-from .golang.delve import GlobalFlags as DelveGlobalFlags
+from .golang.delve import Flags as DelveFlags
 
 # system
 from asyncio import gather as parallel
 from pathlib import Path
 from .system.shell import Shell as shell
-from .system.filesystem import Filesystem as fs
+from .system import filesystem as fs
 from .system.environs import Environs
 from .system import environs as env
 

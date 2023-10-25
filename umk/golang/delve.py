@@ -12,7 +12,7 @@ from umk.application.config import Global
 from umk.system.environs import Environs
 
 
-class GlobalFlags:
+class Flags:
     class Log:
         @property
         def enabled(self) -> bool:
@@ -165,7 +165,7 @@ class GlobalFlags:
 
     def __init__(self, port: 2345):
         self._port = port
-        self._log = GlobalFlags.Log()
+        self._log = Flags.Log()
         self._multiclient: bool = False
         self._allow_non_terminal_interactive: bool = False
         self._api: int = 2
@@ -228,7 +228,7 @@ class Delve:
         bin_args: List[str] = None,
         contin=False,
         tty="",
-        flags=GlobalFlags(2345),
+        flags=Flags(2345),
         pwd=Global.paths.root,
         env: Environs = None
     ) -> Shell:
