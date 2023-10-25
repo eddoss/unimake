@@ -31,8 +31,8 @@ jobs:
         curl -sSL https://install.python-poetry.org | python3 -
     - name: Install dependencies
       run: |
-        make setver
-        make dependencies
+        make project/version
+        make project/dependencies/dev
       # - name: Lint with flake8
       #   run: |
       #     # stop the build if there are Python syntax errors or undefined names
@@ -44,6 +44,6 @@ jobs:
 #        pytest
     - name: Build package
       run: |
-        make package
+        make package/build
     - name: Pyblish to PyPi
       uses: pypa/gh-action-pypi-publish@release/v1

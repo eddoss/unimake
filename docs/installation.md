@@ -5,14 +5,15 @@
 - [Make](https://www.gnu.org/software/make/manual/make.html)
 ## Build
 ```sh
-make setver
-make dependencies
-make build
+make project/env/up
+make project/env/dependencies
+make package/build
+make cli/build
 ```
 ## Install
 This receipt installs `./dist/umk` to `~/.local/bin/umk` 
 ```sh
-make install
+make cli/install
 ``` 
 ## Completions
 ### Bash
