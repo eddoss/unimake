@@ -7,10 +7,15 @@ help:
 	@echo "Default"
 	@echo " - clean                  remove project cache"
 	@echo ""
-	@echo "CLI"
-	@echo " - cli/build              build Unimake cli tool"
-	@echo " - cli/install            install Unimake cli tool to user space"
-	@echo " - cli/remove             remove Unimake cli tool from user space"
+	@echo "CLI: umk"
+	@echo " - umk/build              build 'umk' cli tool"
+	@echo " - umk/install            install 'umk' cli tool to user space"
+	@echo " - umk/remove             remove 'umk' cli tool from user space"
+	@echo ""
+	@echo "CLI: unimake"
+	@echo " - unimake/build          build 'unimake' cli tool"
+	@echo " - unimake/install        install 'unimake' cli tool to user space"
+	@echo " - unimake/remove         remove 'unimake' cli tool from user space"
 	@echo ""
 	@echo "Python package"
 	@echo " - package/build          build Python package"
@@ -33,7 +38,8 @@ help:
 	@echo " 3) Run 'make env/up'"
 	@echo " 4) Run 'make dependencies/dev'"
 	@echo " 5) Run 'make package/build'"
-	@echo " 5) Run 'make cli/build'"
+	@echo " 5) Run 'make umk/build'"
+	@echo " 6) Run 'make unimake/build'"
 	@echo ""
 	@echo "Check the Makefile to know exactly what each target is doing."
 
@@ -68,11 +74,11 @@ clean:
 	@rm -rf build $(PROJECT_NAME).spec
 
 # ################################################################################################ #
-# CLI
+# CLI: umk
 # ################################################################################################ #
 
-.PHONY: cli/build
-cli/build: versionize
+.PHONY: umk/build
+umk/build: project/version
 	@rm -rf dist/$(PROJECT_NAME_SHORT)
 	@poetry run pyinstaller \
 	--noconfirm \
@@ -83,13 +89,37 @@ cli/build: versionize
 	--name $(PROJECT_NAME_SHORT) \
 	./umk/application/main.py
 
-.PHONY: cli/install
-cli/install:
-	@cp ./dist/umk ~/.local/bin/$(PROJECT_NAME_SHORT)
+.PHONY: umk/install
+umk/install:
+	@cp ./dist/$(PROJECT_NAME_SHORT) ~/.local/bin/$(PROJECT_NAME_SHORT)
 
-.PHONY: cli/remove
-cli/remove:
-	@rm -f ./dist/umk ~/.local/bin/$(PROJECT_NAME_SHORT)
+.PHONY: umk/remove
+umk/remove:
+	@rm -f ~/.local/bin/$(PROJECT_NAME_SHORT)
+
+# ################################################################################################ #
+# CLI: unimake
+# ################################################################################################ #
+
+.PHONY: unimake/build
+unimake/build: project/version
+	@rm -rf dist/$(PROJECT_NAME)
+	@poetry run pyinstaller \
+	--noconfirm \
+	--log-level=WARN \
+	--onefile \
+	--nowindow \
+	--hidden-import ctypes \
+	--name $(PROJECT_NAME) \
+	./unimake/main.py
+
+.PHONY: unimake/install
+unimake/install:
+	@cp ./dist/$(PROJECT_NAME) ~/.local/bin/$(PROJECT_NAME)
+
+.PHONY: unimake/remove
+unimake/remove:
+	@rm -f ~/.local/bin/$(PROJECT_NAME)
 
 # ################################################################################################ #
 # Python package
