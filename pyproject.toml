@@ -28,7 +28,7 @@ multimethod = "^1.10"
 
 
 [tool.poetry.scripts]
-umk = 'umk.application:entrypoint'
+umk = 'umk.entrypoint'
 
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.1.0"

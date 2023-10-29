@@ -87,7 +87,7 @@ umk/build: project/version
 	--nowindow \
 	--hidden-import ctypes \
 	--name $(PROJECT_NAME_SHORT) \
-	./umk/application/main.py
+	./umk/entrypoint.py
 
 .PHONY: umk/install
 umk/install:
@@ -111,7 +111,7 @@ unimake/build: project/version
 	--nowindow \
 	--hidden-import ctypes \
 	--name $(PROJECT_NAME) \
-	./unimake/main.py
+	./unimake/entrypoint.py
 
 .PHONY: unimake/install
 unimake/install:

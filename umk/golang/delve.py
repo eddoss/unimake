@@ -8,7 +8,7 @@ from umk import exceptions
 from pathlib import Path
 from umk.golang.build import BuildArgs as GoBuildArgs
 from umk.system.shell import Shell
-from umk.application.config import Global
+from umk.globals import Global
 from umk.system.environs import Environs
 
 
@@ -229,7 +229,7 @@ class Delve:
         contin=False,
         tty="",
         flags=Flags(2345),
-        pwd=Global.paths.root,
+        pwd=Global.paths.work,
         env: Environs = None
     ) -> Shell:
         res = Shell(f'{self.binary} {flags} exec', pwd=pwd, env=env)

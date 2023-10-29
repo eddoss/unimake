@@ -60,12 +60,8 @@ def init():
     print(f"Call global: init")
 
 
-def entrypoint():
+if __name__ == '__main__':
     try:
         asyncio.run(application())
     except Exception:
         console.print_exception(show_locals=False, max_frames=1)
-
-
-if __name__ == '__main__':
-    entrypoint()

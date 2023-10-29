@@ -1,22 +1,8 @@
 import string
-
 from beartype import beartype
 
 
-class Name:
-    @property
-    def ok(self) -> bool:
-        signs = set('.-+_')
-        digits = set(string.digits)
-        alphabet = set(string.ascii_lowercase)
-        allowed = set()
-        allowed.update(digits, signs, alphabet)
-
-        return self.short != "" \
-            and self.short[0] not in digits \
-            and self.short[0] not in signs \
-            and set(self.short) <= allowed
-
+class Description:
     @property
     def short(self) -> str:
         return self._short
@@ -35,9 +21,29 @@ class Name:
     def full(self, value: str):
         self._full = value
 
-    def __init__(self):
-        self._short = ""
-        self._full = ""
+    @beartype
+    def __init__(self, short: str = "", full: str = ""):
+        self._short = short
+        self._full = full
+
+
+class Name(Description):
+    @property
+    def ok(self) -> bool:
+        signs = set('.-+_')
+        digits = set(string.digits)
+        alphabet = set(string.ascii_lowercase)
+        allowed = set()
+        allowed.update(digits, signs, alphabet)
+
+        return self.short != "" \
+            and self.short[0] not in digits \
+            and self.short[0] not in signs \
+            and set(self.short) <= allowed
+
+    @beartype
+    def __init__(self, short: str = '', full: str = ''):
+        super().__init__(short, full)
 
 
 class Author:
@@ -95,12 +101,12 @@ class Info:
         self._version = value
 
     @property
-    def description(self) -> str:
+    def description(self) -> Description:
         return self._description
 
     @description.setter
     @beartype
-    def description(self, value: str):
+    def description(self, value: Description):
         self._description = value
 
     @property
@@ -115,7 +121,7 @@ class Info:
     def __init__(self):
         self._name = Name()
         self._version = ""
-        self._description = ""
+        self._description = Description()
         self._authors = []
 
 

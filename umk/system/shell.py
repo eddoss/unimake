@@ -5,7 +5,7 @@ from beartype import beartype
 
 from pathlib import Path
 from umk.system.environs import Environs
-from umk.application.config import Global
+from umk.globals import Global
 
 Command = Union[str, List[str]]
 Printer = Callable[[str], Any]
@@ -16,7 +16,7 @@ class Shell:
     @beartype
     def wait(
         cmd: Command,
-        pwd: Path = Global.paths.root,
+        pwd: Path = Global.paths.work,
         env: Optional[Environs] = None,
         out: Printer = print,
         err: Printer = print
@@ -51,7 +51,7 @@ class Shell:
     @beartype
     async def run(
         cmd: Command,
-        pwd: Path = Global.paths.root,
+        pwd: Path = Global.paths.work,
         env: Optional[Environs] = None,
         out: Printer = print,
         err: Printer = print
@@ -88,7 +88,7 @@ class Shell:
     def __init__(
         self,
         cmd: Command,
-        pwd: Path = Global.paths.root,
+        pwd: Path = Global.paths.work,
         env: Optional[Environs] = None,
         out: Printer = print,
         err: Printer = print
