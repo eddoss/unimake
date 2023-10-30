@@ -66,12 +66,6 @@ class DotUnimake:
 
     def load_cli(self):
         self.script('cli')
-        # sections = unimake['cli'].umk.application.main.sections
-        # for o in unimake['cli'].__dict__.values():
-        #     if issubclass(type(o), asyncclick.Command):
-        #         if o.name == 'help':
-        #             continue
-        #         application.add_command(o, o.name)
 
     def load_project(self):
         self.script('project')
