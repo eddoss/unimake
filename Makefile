@@ -6,6 +6,8 @@
 help:
 	@echo "Default"
 	@echo " - clean                  remove project cache"
+	@echo " - build                  build Python package, umk and unimake"
+	@echo " - install                install Python package, umk and unimake"
 	@echo ""
 	@echo "CLI: umk"
 	@echo " - umk/build              build 'umk' cli tool"
@@ -20,6 +22,8 @@ help:
 	@echo "Python package"
 	@echo " - package/build          build Python package"
 	@echo " - package/publish        publish Python package to private PyPi"
+	@echo " - package/clean          remove Python package from ./dist"
+	@echo " - package/install        install Python package by current pip"
 	@echo ""
 	@echo "Maintenance"
 	@echo " - project/env/up         setup poetry environment"
@@ -69,9 +73,15 @@ export PROJECT_VERSION_RAW    := $(subst v,,$(PROJECT_VERSION))
 # ################################################################################################ #
 
 .PHONY: clean
-clean:
+clean: package/clean
 	@find . -type d -name "__pycache__" | xargs rm -rf {};
 	@rm -rf build $(PROJECT_NAME).spec
+
+.PHONY: build
+build: umk/build unimake/build package/build
+
+.PHONY: install
+install: umk/install unimake/install package/install
 
 # ################################################################################################ #
 # CLI: umk
@@ -125,8 +135,12 @@ unimake/remove:
 # Python package
 # ################################################################################################ #
 
+.PHONY: package/clean
+package/clean:
+	@rm -f ./dist/umk-*
+
 .PHONY: package/build
-package/build: project/version
+package/build: package/clean project/version
 	poetry build
 
 .PHONY: package/publish
@@ -134,6 +148,11 @@ package/publish: package/build
 	@poetry config repositories.$(PROJECT_NAME_SHORT)-internal $(PRIVATE_PYPI_URL)
 	@poetry config http-basic.$(PROJECT_NAME_SHORT)-internal $(PRIVATE_PYPI_USER) $(PRIVATE_PYPI_PASSWORD)
 	@poetry publish --repository $(PROJECT_NAME_SHORT)-internal
+
+.PHONY: package/install
+package/install: package/build
+	@pip uninstall umk
+	@pip install ./dist/$(PROJECT_NAME_SHORT)-*.whl
 
 # ################################################################################################ #
 # Maintenance
