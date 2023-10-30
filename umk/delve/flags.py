@@ -1,15 +1,8 @@
 import os
-import pathlib
-from beartype.typing import Optional, List
-
+from beartype.typing import Optional
 from beartype import beartype
-
-from umk import exceptions
 from pathlib import Path
 from umk.golang.build import BuildArgs as GoBuildArgs
-from umk.system.shell import Shell
-from umk.globals import Global
-from umk.system.environs import Environs
 
 
 class Flags:
@@ -146,12 +139,12 @@ class Flags:
         self._init = value
 
     @property
-    def redirect(self) -> List[str]:
+    def redirect(self) -> list[str]:
         return self._redirect
 
     @redirect.setter
     @beartype
-    def redirect(self, value: List[str]):
+    def redirect(self, value: list[str]):
         self._redirect = value
 
     @property
@@ -162,6 +155,15 @@ class Flags:
     @beartype
     def cwd(self, value: Optional[Path]):
         self._cwd = value
+
+    @property
+    def only_same_user(self) -> bool:
+        return self._only_same_user
+
+    @only_same_user.setter
+    @beartype
+    def only_same_user(self, value: bool):
+        self._only_same_user = value
 
     def __init__(self, port: 2345):
         self._port = port
@@ -175,8 +177,9 @@ class Flags:
         self._validate: bool = True
         self._aslr: bool = False
         self._init: Optional[os.PathLike] = None
-        self._redirect: List[str] = []
+        self._redirect: list[str] = []
         self._cwd: Optional[os.PathLike] = None
+        self._only_same_user: bool = False
 
     def __str__(self) -> str:
         result = f'--api-version={self.api} --listen=:{self.port}'
@@ -204,41 +207,7 @@ class Flags:
             result += f' --log-output={self.log.out}'
         if self.cwd:
             result += f' --wd={self.cwd}'
+        result += f' --only-same-user={"true" if self.only_same_user else "false"}'
         # if self.redirect:
         #     result += f' --redirect={" ".join(self.redirect)}'
         return result
-
-
-class Delve:
-    @staticmethod
-    @beartype
-    def find():
-        # TODO Implement search  algorithm
-        return Delve(Path('/usr/bin/dlv'))
-
-    def __init__(self, binary: Path):
-        self.binary = pathlib.Path(binary)
-        if not self.binary.exists():
-            raise exceptions.DelveBinaryExistsError(f"Invalid path to 'delve' binary: {self.binary}")
-
-    @beartype
-    def exec(
-        self,
-        binary: Path,
-        bin_args: List[str] = None,
-        contin=False,
-        tty="",
-        flags=Flags(2345),
-        pwd=Global.paths.work,
-        env: Environs = None
-    ) -> Shell:
-        res = Shell(f'{self.binary} {flags} exec', pwd=pwd, env=env)
-        if tty:
-            res.cmd += f' --tty={tty}'
-        if contin:
-            res.cmd += ' --continue'
-        res.cmd += f' {pathlib.Path(binary).expanduser().resolve().absolute().as_posix()}'
-        if bin_args:
-            res.cmd += ' -- '
-            res.cmd += ' '.join(bin_args)
-        return res

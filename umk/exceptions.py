@@ -16,7 +16,7 @@ class GoBinaryExistsError(Exception):
         super().__init__(message)
 
 
-class DelveBinaryExistsError(Exception):
+class DelveBinaryNotExistsError(Exception):
     """
     Delve binary ('dlv' tool) does not exist.
     """
