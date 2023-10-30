@@ -1,4 +1,6 @@
 import os
+from beartype.typing import Optional
+
 from beartype.typing import Dict
 from beartype import beartype
 
@@ -36,3 +38,6 @@ class Environs(dict):
     @beartype
     def append(self, name: str, *values: str) -> None:
         append(self, name, *values)
+
+
+OptEnv = Optional[Environs]
