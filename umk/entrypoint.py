@@ -12,6 +12,7 @@ umk.cli.main.Unimake = DotUnimake(Global.paths.unimake)
 umk.cli.main.Unimake.validate()
 umk.cli.main.Unimake.load_dotenv()
 umk.cli.main.Unimake.load_project()
+umk.cli.main.Unimake.load_remotes()
 umk.cli.main.Unimake.load_cli()
 
 try:

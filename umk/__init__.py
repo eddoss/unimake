@@ -21,6 +21,11 @@ from .system.shell import Shell as shell
 from .system import filesystem as fs
 from .system.environs import Environs
 from .system import environs as env
+from .system.user import User
+from .system.user import user
+
+# remotes
+from . import remote
 
 # vcs
 from .vcs import Git, git, tag
@@ -31,6 +36,6 @@ from . import cli
 # global and common
 from .globals import Globals
 
-
 # exceptions
 from .exceptions import *
+

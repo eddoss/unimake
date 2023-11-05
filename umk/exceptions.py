@@ -23,3 +23,21 @@ class DelveBinaryNotExistsError(Exception):
 
     def __init__(self, message: str):
         super().__init__(message)
+
+
+class RemoteExistsError(Exception):
+    """
+    Remote is already exists.
+    """
+
+    def __init__(self, message: str):
+        super().__init__(message)
+
+
+class DefaultRemoteExistsError(Exception):
+    """
+    Default remote is already exists.
+    """
+
+    def __init__(self, message: str):
+        super().__init__(message)

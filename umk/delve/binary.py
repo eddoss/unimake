@@ -57,7 +57,7 @@ class Delve:
             cmd += f' {exe.strip()}'
         if contin:
             cmd += ' --continue'
-        return Shell(cmd=cmd, pwd=self.pwd, env=env)
+        return Shell(cmd=cmd, cwd=self.pwd, env=env)
 
     @beartype
     def exec(self, bin: Path, args: list[str] = None, contin: bool = False, tty: str = "", env: OptEnv = None) -> Shell:
@@ -69,4 +69,4 @@ class Delve:
         cmd += f' {Path(bin).expanduser().resolve().absolute().as_posix()}'
         if args:
             cmd += ' -- ' + ' '.join(args)
-        return Shell(cmd=cmd, pwd=self.pwd, env=env)
+        return Shell(cmd=cmd, cwd=self.pwd, env=env)

@@ -18,7 +18,7 @@ class Mod:
         cpt = compat.strip()
         if cpt:
             cmd += f' -compat={cpt}'
-        return Shell(cmd=cmd, pwd=pwd)
+        return Shell(cmd=cmd, cwd=pwd)
 
     @beartype
     def vendor(self, outdir: os.PathLike = "", pwd=Global.paths.work):
@@ -26,4 +26,4 @@ class Mod:
         if outdir:
             out = pathlib.Path(outdir).expanduser().resolve().absolute()
             cmd += f' -o={out}'
-        return Shell(cmd=cmd, pwd=pwd)
+        return Shell(cmd=cmd, cwd=pwd)

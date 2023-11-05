@@ -84,6 +84,12 @@ class DotUnimake:
                 "[bold red]File [underline]'.unimake/project.py'[/underline] must contains instance of the Project")
             Global.console.print(Syntax(code, "python", theme='monokai', line_numbers=False))
 
+    def load_remotes(self):
+        file = self._root / 'remotes.py'
+        if not file.exists():
+            return
+        self.script('remotes')
+
     def script(self, name: str):
         if name in self._modules:
             print(f'ExternalModules.load: module "{name}" already exists', file=sys.stderr)

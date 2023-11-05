@@ -1,12 +1,13 @@
+import sys
+
 import asyncclick
-from beartype import beartype
 from beartype.typing import Optional
 from rich.table import Table
 from umk.globals import Global
 from umk.project import Project
 from umk.cli.sections import Section
 from umk.cli.dot_unimake import DotUnimake
-
+from umk.remote.register import find as find_remote
 
 Sections = dict[Section, list[asyncclick.Command]]
 DefaultSection = Section(name='Default', description='Default commands')
@@ -54,11 +55,59 @@ class HelpMessage:
 Helper = HelpMessage()
 
 
-@asyncclick.group(add_help_option=False, invoke_without_command=True, cls=Group)
-@asyncclick.option('--remote', '-r', default='', help="Execute command in remote environment (ignored in native)")
+@asyncclick.group(
+    cls=Group,
+    add_help_option=False,
+    invoke_without_command=False,
+)
+@asyncclick.option(
+    '--remote',
+    default='',
+    help="Execute command in specific remote environment"
+)
+@asyncclick.option(
+    "-r",
+    is_flag=True,
+    default=False,
+    help="Execute command in default remote environment."
+         "This flag has higher priority than --remote"
+)
 @asyncclick.pass_context
-def application(ctx: asyncclick.Context, remote: str):
-    pass
+def application(ctx: asyncclick.Context, remote: str, r: bool):
+    # Skip remote execution if did not specify one
+
+    default_remote = r
+    specific_remote = remote
+    if not default_remote and not specific_remote:
+        return
+
+    # Find remote environment if specified
+
+    rem = find_remote(name=specific_remote, default=default_remote)
+    if default_remote and not rem:
+        Global.console.print(
+            '[bold red] Failed to find default remote! '
+            'Please specify default remote in .unimake/remotes.py'
+        )
+        sys.exit()
+    elif not rem and specific_remote:
+        Global.console.print(
+            f'[bold red] Failed to find remote "{specific_remote}"! '
+            f'Please specify remotes in .unimake/remotes.py'
+        )
+        sys.exit()
+
+    # Parse subcommand and its arguments
+
+    subcmd = sys.argv[sys.argv.index(ctx.invoked_subcommand) + 1:]
+    subcmd.insert(0, ctx.invoked_subcommand)
+    subcmd.insert(0, 'umk')
+
+    # We skip rem.build() because remote environment must be built
+    # by unimake tool. We need start this environment and run command
+
+    rem.up()
+    rem.execute(cmd=subcmd)
 
 
 @application.command(name='help', help="Display help message", section=DefaultSection)

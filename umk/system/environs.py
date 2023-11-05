@@ -25,11 +25,13 @@ def append(envs: Dict[str, str], name: str, *values: str) -> None:
 
 class Environs(dict):
     @beartype
-    def __init__(self, inherit=True):
+    def __init__(self, inherit=True, **var):
         super().__init__()
         if inherit:
             for name, value in os.environ.items():
                 self[name] = value
+        for k, v in var.items():
+            self[k] = v
 
     @beartype
     def prepend(self, name: str, *values: str) -> None:

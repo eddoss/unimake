@@ -1,5 +1,6 @@
 import string
 from beartype import beartype
+from umk.globals import Global
 
 
 class Description:
@@ -123,6 +124,12 @@ class Info:
         self._version = ""
         self._description = Description()
         self._authors = []
+
+
+class Layout:
+    def __init__(self, root=Global.paths.work):
+        self.root = root
+        self.umk = self.root / ".unimake"
 
 
 class Project:

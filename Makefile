@@ -75,7 +75,9 @@ export PROJECT_VERSION_RAW    := $(subst v,,$(PROJECT_VERSION))
 .PHONY: clean
 clean: package/clean
 	@find . -type d -name "__pycache__" | xargs rm -rf {};
-	@rm -rf build $(PROJECT_NAME).spec
+	@rm -rf build
+	@rm -f ./$(PROJECT_NAME).spec
+	@rm -f ./$(PROJECT_NAME_SHORT).spec
 
 .PHONY: build
 build: umk/build unimake/build package/build
@@ -151,7 +153,7 @@ package/publish: package/build
 
 .PHONY: package/install
 package/install: package/build
-	@pip uninstall umk
+	@pip uninstall --yes umk
 	@pip install ./dist/$(PROJECT_NAME_SHORT)-*.whl
 
 # ################################################################################################ #

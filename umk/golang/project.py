@@ -1,10 +1,11 @@
 from umk.project import Project as BaseProject
+from umk.project import Layout as BaseLayout
 from umk.globals import Global
 
 
-class Layout:
+class Layout(BaseLayout):
     def __init__(self, root=Global.paths.work):
-        self.root = root
+        super().__init__(root)
         self.assets = self.root / "assets"
         self.build = self.root / "build"
         self.cmd = self.root / "cmd"
