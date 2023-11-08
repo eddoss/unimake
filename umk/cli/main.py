@@ -83,7 +83,7 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
 
     # Find remote environment if specified
 
-    rem = find_remote(name=specific_remote, default=default_remote)
+    rem = find_remote("" if default_remote else specific_remote)
     if default_remote and not rem:
         Global.console.print(
             '[bold red] Failed to find default remote! '
@@ -92,8 +92,8 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
         sys.exit()
     elif not rem and specific_remote:
         Global.console.print(
-            f'[bold red] Failed to find remote "{specific_remote}"! '
-            f'Please specify remotes in .unimake/remotes.py'
+            f"[bold red] Failed to find remote '{specific_remote}'! "
+            f"Please specify remotes in .unimake/remotes.py"
         )
         sys.exit()
 
@@ -103,10 +103,9 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
     subcmd.insert(0, ctx.invoked_subcommand)
     subcmd.insert(0, 'umk')
 
-    # We skip rem.build() because remote environment must be built
-    # by unimake tool. We need start this environment and run command
+    # We skip rem.build() and rem.up() because remote environment must be built
+    # and started by unimake tool. We need just run the command.
 
-    rem.up()
     rem.execute(cmd=subcmd)
 
 

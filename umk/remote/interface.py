@@ -4,6 +4,7 @@ from umk.system.environs import OptEnv
 
 
 class Interface:
+    forbidden_names = ("build", "destroy", "up", "down", "shell", "exec")
     @property
     def name(self) -> str:
         """
@@ -14,7 +15,21 @@ class Interface:
     @name.setter
     @beartype
     def name(self, value: str):
+        if value in Interface.forbidden_names:
+            raise ValueError(f"Given remote environment name is forbidden: '{value}'")
         self._name = value
+
+    @property
+    def description(self) -> str:
+        """
+        Remote environment description.
+        """
+        return self._description
+
+    @description.setter
+    @beartype
+    def description(self, value: str):
+        self._description = value
 
     @property
     def default(self) -> bool:
@@ -70,6 +85,8 @@ class Interface:
         """
         ...
 
-    def __init__(self, name: str = '', default: bool = False):
+    @beartype
+    def __init__(self, name: str = "", description: str = "", default: bool = False):
         self._name: str = name
         self._default: bool = default
+        self._description = description
