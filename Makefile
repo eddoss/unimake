@@ -179,3 +179,10 @@ project/dependencies/dev:
 .PHONY: project/version
 project/version:
 	@sed -i 's/version = ".*"/version = "$(PROJECT_VERSION_RAW)"/' $(PROJECT_ROOT)/pyproject.toml
+
+.PHONY: project/format
+project/format:
+	@echo "Format umk"
+	@poetry run black $(PROJECT_ROOT)/umk
+	@echo "Format unimake"
+	@poetry run black $(PROJECT_ROOT)/unimake

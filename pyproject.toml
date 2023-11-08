@@ -26,11 +26,18 @@ beartype = "^0.16.3"
 fs = "^2.4.16"
 multimethod = "^1.10"
 
+[tool.black]
+line-length = 100
+
+
 [tool.poetry.scripts]
 umk = 'umk:entrypoint'
+unimake = 'unimake:entrypoint'
 
 [tool.poetry.group.dev.dependencies]
 pyinstaller = "^6.1.0"
+black = "^23.10.1"
+pytest = "^7.4.3"
 
 [build-system]
 requires = ["poetry-core"]
