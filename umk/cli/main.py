@@ -1,18 +1,16 @@
+import os
 import sys
-
 import asyncclick
-from beartype.typing import Optional
 from rich.table import Table
 from umk.globals import Global
 from umk.project import Project
 from umk.cli.sections import Section
-from umk.cli.dot_unimake import DotUnimake
+from umk import dotunimake
 from umk.remote.register import find as find_remote
 
 Sections = dict[Section, list[asyncclick.Command]]
 DefaultSection = Section(name='Default', description='Default commands')
 RegisteredSections: Sections = {DefaultSection: []}
-Unimake: Optional[DotUnimake] = None
 
 
 class Command(asyncclick.Command):
@@ -111,8 +109,7 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
 
 @application.command(name='help', help="Display help message", section=DefaultSection)
 def display_help_message():
-    project = Unimake['project'].project
-    Helper.render(project, RegisteredSections)
+    Helper.render(dotunimake.Unimake.project, RegisteredSections)
 
 
 cmd = application.command

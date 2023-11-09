@@ -12,7 +12,7 @@ class Globals:
     def __init__(self):
         self.paths = Paths(Path.cwd())
         self.console = Console()
-        self.completion = False
+        self.completion = ''
 
 
 Global = Globals()
