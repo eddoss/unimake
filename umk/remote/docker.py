@@ -48,7 +48,7 @@ class Container(Interface):
     def shell(self, *args, **kwargs):
         command = self.cmd.copy()
         command.extend(["exec", "-i", "-t", self.container, self.sh])
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
     @beartype
     def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None):
@@ -61,7 +61,7 @@ class Container(Interface):
                 command.extend(["-e", f"{k}={v}"])
         command.append(self._container)
         command.extend(cmd)
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
 
 class Compose(Interface):
@@ -131,29 +131,29 @@ class Compose(Interface):
         command.extend(["build"])
         for k, v in self._args.items():
             command.extend(["--build-arg", f"{k}={v}"])
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
     def destroy(self, *args, **kwargs):
         command = self.cmd
         command.extend(["rm", "-f", "-s", "-v"])
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
     @beartype
     def up(self, *args, **kwargs):
         command = self.cmd
         command.extend(["up", "--detach", "--no-recreate"])
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
     def down(self, *args, **kwargs):
         command = self.cmd
         command.append("down")
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
     @beartype
     def shell(self, *args, **kwargs):
         command = self.cmd
         command.extend(["exec", "-i", "-t", self._service, self.sh])
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
     @beartype
     def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None):
@@ -166,7 +166,7 @@ class Compose(Interface):
                 command.extend(["-e", f"{k}={v}"])
         command.append(self._service)
         command.extend(cmd)
-        Shell(command).sync()
+        Shell(command, name=self.name).sync()
 
 
 class CustomCompose(Compose):
