@@ -1,6 +1,7 @@
-import abc
 from beartype import beartype
+from umk.globals import Global
 from umk.system.environs import OptEnv
+from umk.system import code
 
 
 class Interface:
@@ -43,47 +44,47 @@ class Interface:
     def default(self, value: bool):
         self._default = value
 
-    @abc.abstractmethod
     def build(self, *args, **kwargs):
         """
         Build remote environment.
         """
-        ...
+        self.__not_implemented()
 
-    @abc.abstractmethod
     def destroy(self, *args, **kwargs):
         """
         Destroy remote environment.
         """
-        ...
+        self.__not_implemented()
 
-    @abc.abstractmethod
     def up(self, *args, **kwargs):
         """
         Start remote environment.
         """
-        ...
+        self.__not_implemented()
 
-    @abc.abstractmethod
     def down(self, *args, **kwargs):
         """
         Stop remote environment.
         """
-        ...
+        self.__not_implemented()
 
-    @abc.abstractmethod
     def shell(self, *args, **kwargs):
         """
         Open remote environment shell.
         """
-        ...
+        self.__not_implemented()
 
-    @abc.abstractmethod
     def execute(self, cmd: list[str], cwd: str = '', env: OptEnv = None):
         """
         Execute command in remote environment.
         """
-        ...
+        self.__not_implemented()
+
+    def __not_implemented(self):
+        Global.console.print(
+            f"[bold]The '{self.name}' remote environment has no '{code.caller(2)}' function. "
+            f"It`s must be managed outside of this tool."
+        )
 
     @beartype
     def __init__(self, name: str = "", description: str = "", default: bool = False):

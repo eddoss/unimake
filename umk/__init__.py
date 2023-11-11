@@ -18,6 +18,7 @@ from .delve.flags import Flags as DelveFlags
 from asyncio import gather as parallel
 from pathlib import Path
 from .system.shell import Shell as shell
+from .system import shell as sh
 from .system import filesystem as fs
 from .system.environs import Environs
 from .system import environs as env

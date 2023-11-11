@@ -58,6 +58,8 @@ def init():
 @application.group(
     help="Remote environments management commands",
     invoke_without_command=True,
+    no_args_is_help=True,
+    add_help_option=True,
 )
 @click.option('--name', '-n', default="", help="Remote environment name")
 @click.pass_context
@@ -134,14 +136,17 @@ def remote_shell(ctx: click.Context):
 
 @remote.command(name='ls', help='List project remote environments')
 def remote_ls():
-    table = Table(show_header=False, show_edge=False, show_lines=False, box=None)
-    table.add_column("", justify="left", style="green bold", no_wrap=True)
-    table.add_column("", justify="left", no_wrap=False)
+    table = Table(show_header=True, show_edge=True, show_lines=False)
+    table.add_column("Name", justify="left", style="", no_wrap=True)
+    table.add_column("Default", justify="left", style="", no_wrap=True)
+    table.add_column("Description", justify="left", style="", no_wrap=True)
     for rem in iterate_remotes():
+        default = 'No'
         if rem.default:
-            table.add_row(f"*{rem.name}", rem.description, style="yellow bold")
+            default = 'Yes'
+            table.add_row(f"*{rem.name}", default, rem.description, style="yellow bold")
         else:
-            table.add_row(rem.name, rem.description)
+            table.add_row(rem.name, default, rem.description)
     Global.console.print(table)
     sys.exit()
 

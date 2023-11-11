@@ -2,7 +2,6 @@ import os
 import pathlib
 
 from beartype import beartype
-
 from umk.globals import Global
 from umk.system.shell import Shell
 
@@ -26,4 +25,7 @@ class Mod:
         if outdir:
             out = pathlib.Path(outdir).expanduser().resolve().absolute()
             cmd += f' -o={out}'
-        return Shell(cmd=cmd, cwd=pwd)
+        return Shell(
+            command=cmd,
+            workdir=pwd
+        )

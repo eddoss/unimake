@@ -1,8 +1,6 @@
-import os
 from beartype import beartype
 from beartype.typing import Iterable
 from pathlib import Path
-from umk.globals import Global
 from umk.remote.interface import Interface
 from umk.system.environs import OptEnv
 from umk.system.shell import Shell
@@ -46,33 +44,11 @@ class Container(Interface):
         self._sh = shell
         self._cmd = [cmd]
 
-    def build(self, *args, **kwargs):
-        Global.console.print(
-            f"[bold]The '{self.name}' remote environment has no 'build' function.\n"
-            f"[bold]It`s '{self.name}' remote environment has no 'build' function.\n"
-        )
-
-    def destroy(self, *args, **kwargs):
-        Global.console.print(
-            f"[bold]The '{self.name}' remote environment has no 'destroy' function"
-        )
-
-    def up(self, *args, **kwargs):
-        Global.console.print(
-            f"[bold]The '{self.name}' remote environment has no 'build' function"
-        )
-
-    def down(self, *args, **kwargs):
-        ...
-
     @beartype
     def shell(self, *args, **kwargs):
         command = self.cmd.copy()
         command.extend(["exec", "-i", "-t", self.container, self.sh])
-        # sh = Shell(command)
-        # sh.sync()
-        # TODO Fix shell routine and use sh.sync() instead of os.system()
-        os.system(Shell(command).cmd)
+        Shell(command).sync()
 
     @beartype
     def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None):
@@ -85,7 +61,7 @@ class Container(Interface):
                 command.extend(["-e", f"{k}={v}"])
         command.append(self._container)
         command.extend(cmd)
-        Shell.wait(command)
+        Shell(command).sync()
 
 
 class Compose(Interface):
@@ -155,32 +131,29 @@ class Compose(Interface):
         command.extend(["build"])
         for k, v in self._args.items():
             command.extend(["--build-arg", f"{k}={v}"])
-        Shell.wait(cmd=command)
+        Shell(command).sync()
 
     def destroy(self, *args, **kwargs):
         command = self.cmd
         command.extend(["rm", "-f", "-s", "-v"])
-        Shell.wait(command)
+        Shell(command).sync()
 
     @beartype
     def up(self, *args, **kwargs):
         command = self.cmd
         command.extend(["up", "--detach", "--no-recreate"])
-        Shell.wait(cmd=command)
+        Shell(command).sync()
 
     def down(self, *args, **kwargs):
         command = self.cmd
         command.append("down")
-        Shell.wait(command)
+        Shell(command).sync()
 
     @beartype
-    def shell(self, shell: str = "sh", *args, **kwargs):
+    def shell(self, *args, **kwargs):
         command = self.cmd
-        command.extend(["exec", "-i", "-t", self._service, shell])
-        # sh = Shell(command)
-        # sh.sync()
-        # TODO Fix shell routine and use sh.sync() instead of os.system()
-        os.system(Shell(command).cmd)
+        command.extend(["exec", "-i", "-t", self._service, self.sh])
+        Shell(command).sync()
 
     @beartype
     def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None):
@@ -193,7 +166,7 @@ class Compose(Interface):
                 command.extend(["-e", f"{k}={v}"])
         command.append(self._service)
         command.extend(cmd)
-        Shell.wait(command)
+        Shell(command).sync()
 
 
 class CustomCompose(Compose):

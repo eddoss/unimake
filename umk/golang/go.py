@@ -1,4 +1,3 @@
-
 from beartype import beartype
 from beartype.typing import Optional
 from pathlib import Path
@@ -40,4 +39,7 @@ class Go:
 
     @beartype
     def build(self, args: BuildArgs, env: Optional[Environs] = None) -> Shell:
-        return Shell(cmd=f'{self.binary} build {args}', env=env)
+        return Shell(
+            command=f'{self.binary} build {args}',
+            environs=env
+        )
