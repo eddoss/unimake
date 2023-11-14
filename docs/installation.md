@@ -1,32 +1,40 @@
 # Installation
-## Requirements
-- [Python](https://www.python.org/)
+The easiest way to install `unimake` is to use `pip`. It will download and install latest stable 
+release of the toolkit from official PyPi repositories. 
+But if you need latest commit from development branch you can install it manually.
+## From PyPi
+It will provide latest stable release of the toolkit
+```sh
+pip install umk
+```
+## From sources
+### Requirements
+- [Python 3.10 (or higher)](https://www.python.org/)
 - [Poetry](https://python-poetry.org/docs/#installation)
 - [Make](https://www.gnu.org/software/make/manual/make.html)
-## Build
+### Build
+To build a project you need install dependencies at first, and after you can run the build. 
 ```sh
-make project/env/up
-make project/env/dependencies
-make package/build
-make cli/build
+make dependencies
+make build
 ```
-## Install
-This receipt installs `./dist/umk` to `~/.local/bin/umk` 
+### Install
+This receipt will install framework, `umk` and `unimake` binaries 
 ```sh
-make cli/install
-``` 
-## Completions
+make install
+```
+### Completions
 ### Bash
 ```
 # Add this to ~/.bashrc:
 eval "$(_UMK_COMPLETE=bash_source umk)"
 ```
-### Zsh
+#### Zsh
 ```
 # Add this to ~/.zshrc:
 eval "$(_UMK_COMPLETE=zsh_source umk)"
 ```
-### Fish
+#### Fish
 ```
 # Add this to ~/.config/fish/completions/umk.fish:
 _UMK_COMPLETE=fish_source umk | source

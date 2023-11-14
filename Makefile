@@ -79,59 +79,14 @@ clean: package/clean
 	@rm -f ./$(PROJECT_NAME).spec
 	@rm -f ./$(PROJECT_NAME_SHORT).spec
 
+.PHONY: dependencies
+dependencies: project/dependencies
+
 .PHONY: build
-build: umk/build unimake/build package/build
+build: package/build
 
 .PHONY: install
-install: umk/install unimake/install package/install
-
-# ################################################################################################ #
-# CLI: umk
-# ################################################################################################ #
-
-.PHONY: umk/build
-umk/build: project/version
-	@rm -rf dist/$(PROJECT_NAME_SHORT)
-	@poetry run pyinstaller \
-	--noconfirm \
-	--log-level=WARN \
-	--onefile \
-	--nowindow \
-	--hidden-import ctypes \
-	--name $(PROJECT_NAME_SHORT) \
-	./umk/entrypoint.py
-
-.PHONY: umk/install
-umk/install:
-	@cp ./dist/$(PROJECT_NAME_SHORT) ~/.local/bin/$(PROJECT_NAME_SHORT)
-
-.PHONY: umk/remove
-umk/remove:
-	@rm -f ~/.local/bin/$(PROJECT_NAME_SHORT)
-
-# ################################################################################################ #
-# CLI: unimake
-# ################################################################################################ #
-
-.PHONY: unimake/build
-unimake/build: project/version
-	@rm -rf dist/$(PROJECT_NAME)
-	@poetry run pyinstaller \
-	--noconfirm \
-	--log-level=WARN \
-	--onefile \
-	--nowindow \
-	--hidden-import ctypes \
-	--name $(PROJECT_NAME) \
-	./unimake/entrypoint.py
-
-.PHONY: unimake/install
-unimake/install:
-	@cp ./dist/$(PROJECT_NAME) ~/.local/bin/$(PROJECT_NAME)
-
-.PHONY: unimake/remove
-unimake/remove:
-	@rm -f ~/.local/bin/$(PROJECT_NAME)
+install: package/build package/install
 
 # ################################################################################################ #
 # Python package
@@ -152,7 +107,7 @@ package/publish: package/build
 	@poetry publish --repository $(PROJECT_NAME_SHORT)-internal
 
 .PHONY: package/install
-package/install: package/build
+package/install:
 	@pip uninstall --yes umk
 	@pip install ./dist/$(PROJECT_NAME_SHORT)-*.whl
 
