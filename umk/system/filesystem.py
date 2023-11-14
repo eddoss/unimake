@@ -1,3 +1,5 @@
+import os.path
+import shutil
 import zipfile
 from pathlib import Path
 
@@ -16,6 +18,7 @@ from fs.tarfs import TarFS
 from fs.tempfs import TempFS
 from fs.memoryfs import MemoryFS
 from fs.subfs import SubFS
+from fs.permissions import Permissions
 
 from multimethod import overload
 
@@ -41,6 +44,7 @@ def ftp(host: str, user="anonymous", passwd="", acct="", timeout=10, port=21, pr
     """
     Open FTP filesystem
     """
+
     return FTPFS(host, user, passwd, acct, timeout, port, proxy, tls)
 
 
@@ -88,26 +92,30 @@ def copy(
     timestamp: bool = True,
     group: str = '',
     mode: str = '',
-    owner: str = ''
 ):
     """
     Copies file or directory to destination path (on local filesystem).
     It will create all destination sub-dirs if not exists.
-    If mode/group/owner is None, it will be skipped.
+    If mode/group is None, it will be skipped.
 
     :param src: Path to file or directory to move from.
     :param dst: Path to file or directory to move to.
     :param timestamp: Preserve timestamp or not
     :param group: Destination file mode.
     :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
     ::
      - copy(Path('./main.py'), Path('./hello.py'))
      - copy(Path('./hellp.py'), Path('./some/dir/hello.py'))
     """
-    pass
+    if not dst.exists():
+        os.mkdir(dst)
+    if os.access(dst, os.W_OK):
+        cp.copy_file(src, dst, preserve_time=timestamp)
+        Permissions(group=group, other=mode)
+    else:
+        pass
 
 
 @overload
@@ -117,7 +125,6 @@ def copy(
     timestamp: bool = True,
     group: str = '',
     mode: str = '',
-    owner: str = ''
 ):
     """
     Copies specific file or directory from source FS to destination FS.
@@ -129,12 +136,17 @@ def copy(
     :param timestamp: Preserve timestamp or not
     :param group: Destination file mode.
     :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
      - copy(local(..), 'some/file.txt', ftp(..), 'file.txt')
     """
-    pass
+#    if not dst.exists():
+#        os.mkdir(dst)
+    if dst.is_writable:
+        cp.copy_fs(src[0], dst[0], preserve_time=timestamp)
+        Permissions(group=group, other=mode)
+    else:
+        pass
 
 
 @overload
@@ -236,7 +248,12 @@ def move(
      - move(Path('./main.py'), Path('./hello.py'))
      - move(Path('./hellp.py'), Path('./some/dir/hello.py'))
     """
-    pass
+    if not dst.exists():
+        os.mkdir(dst)
+    if os.access(dst, os.W_OK):
+        mv.move_file(src[0], src[1], dst[0], dst[1])
+    else:
+        pass
 
 
 @overload
@@ -254,6 +271,11 @@ def move(
     Examples
      - move('./some/file.txt', (ftp(..), 'description.ini'))
     """
+ #   if not dst.exists():
+ #       os.mkdir(dst)
+ #   if os.access(dst, os.W_OK):
+    mv.move_fs(src, dst[0])
+#    else:
     pass
 
 
@@ -272,6 +294,7 @@ def move(
     Examples
      - move((ftp(..), 'description.ini'), './some/file.txt')
     """
+    mv.move_fs(src[0], dst)
     pass
 
 
@@ -290,6 +313,8 @@ def move(
     Examples
      - move(local(..), 'some/file.txt', ftp(..), 'file.txt')
     """
+    FS
+    mv.move_fs(src[0], dst[0])
     pass
 
 
@@ -310,6 +335,7 @@ def move(
     Examples:
      - move(local(..), ftp(..), walker(..))
     """
+    mv.move_fs(src, dst,)
     pass
 
 
