@@ -1,3 +1,5 @@
+![Deploy PyPi](https://github.com/eddoss/unimake/actions/workflows/publish.yml/badge.svg)
+
 # Unimake
 `unimake` is a set of development tools and frameworks for project maintaining. This tools makes it easy to organize development routines (such as building, testing, linting, running, etc) for a specific code base.
 
