@@ -5,31 +5,25 @@
 .PHONY: help
 help:
 	@echo "Default"
-	@echo " - clean                  remove project cache"
-	@echo " - build                  build Python package, umk and unimake"
-	@echo " - install                install Python package, umk and unimake"
-	@echo ""
-	@echo "CLI: umk"
-	@echo " - umk/build              build 'umk' cli tool"
-	@echo " - umk/install            install 'umk' cli tool to user space"
-	@echo " - umk/remove             remove 'umk' cli tool from user space"
-	@echo ""
-	@echo "CLI: unimake"
-	@echo " - unimake/build          build 'unimake' cli tool"
-	@echo " - unimake/install        install 'unimake' cli tool to user space"
-	@echo " - unimake/remove         remove 'unimake' cli tool from user space"
+	@echo " - clean                      remove project cache"
+	@echo " - dependencies               install project dependencies"
+	@echo " - build                      build Python package, umk and unimake"
+	@echo " - install                    install Python package, umk and unimake"
+	@echo " - uninstall                  uninstall Python package, umk and unimake"
 	@echo ""
 	@echo "Python package"
-	@echo " - package/build          build Python package"
-	@echo " - package/publish        publish Python package to private PyPi"
-	@echo " - package/clean          remove Python package from ./dist"
-	@echo " - package/install        install Python package by current pip"
+	@echo " - package/build              build Python package"
+	@echo " - package/publish            publish Python package to private PyPi"
+	@echo " - package/clean              remove Python package from ./dist"
+	@echo " - package/install            install Python package by current pip"
+	@echo " - package/uninstall          uninstall Python package by current pip"
 	@echo ""
 	@echo "Maintenance"
-	@echo " - project/env/up         setup poetry environment"
-	@echo " - project/env/down       destroy poetry environment"
-	@echo " - project/dependencies   install project dependencies"
-	@echo " - project/version        set project version from latest tag (do not call this manually)"
+	@echo " - project/env/up             setup poetry environment"
+	@echo " - project/env/down           destroy poetry environment"
+	@echo " - project/dependencies       install project dependencies"
+	@echo " - project/dependencies/dev   install project development dependencies"
+	@echo " - project/version            set project version from latest tag (do not call this manually)"
 	@echo ""
 	@echo "Development notes"
 	@echo " 1) Install 'poetry' to manage the project."
@@ -39,11 +33,11 @@ help:
 	@echo "        PRIVATE_PYPI_URL=<url-to-private-pypi>"
 	@echo "        PRIVATE_PYPI_USER=<user-name>"
 	@echo "        PRIVATE_PYPI_PASSWORD=<user-password-or-token>"
-	@echo " 3) Run 'make env/up'"
-	@echo " 4) Run 'make dependencies/dev'"
+	@echo " 3) Run 'make project/env/up'"
+	@echo " 4) Run 'make project/dependencies/dev'"
 	@echo " 5) Run 'make package/build'"
-	@echo " 5) Run 'make umk/build'"
-	@echo " 6) Run 'make unimake/build'"
+	@echo " 6) Run 'make package/install'"
+	@echo " 7) Call 'unimake help' or go to unimake project and call 'umk ...'"
 	@echo ""
 	@echo "Check the Makefile to know exactly what each target is doing."
 
@@ -88,6 +82,9 @@ build: package/build
 .PHONY: install
 install: package/build package/install
 
+.PHONY: uninstall
+uninstall: package/uninstall
+
 # ################################################################################################ #
 # Python package
 # ################################################################################################ #
@@ -107,9 +104,12 @@ package/publish: package/build
 	@poetry publish --repository $(PROJECT_NAME_SHORT)-internal
 
 .PHONY: package/install
-package/install:
-	@pip uninstall --yes umk
+package/install: package/uninstall
 	@pip install ./dist/$(PROJECT_NAME_SHORT)-*.whl
+
+.PHONY: package/uninstall
+package/uninstall:
+	@pip uninstall --yes umk
 
 # ################################################################################################ #
 # Maintenance
