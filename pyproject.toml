@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "umk"
-version = "0.0.2"
+version = "0.0.3"
 description = "Unimake is a set of development tools and frameworks for project maintaining. This tools makes it easy to organize development routines (such as building, testing, linting, running, etc)"
 authors = ["Edward Sarkisyan <edw.sarkisyan@gmail.com>"]
 readme = "README.md"
@@ -40,7 +40,6 @@ umk = 'umk:entrypoint'
 unimake = 'unimake:entrypoint'
 
 [tool.poetry.group.dev.dependencies]
-pyinstaller = "^6.1.0"
 black = "^23.10.1"
 pytest = "^7.4.3"
 
