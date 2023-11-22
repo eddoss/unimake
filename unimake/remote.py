@@ -94,13 +94,13 @@ def shell(ctx: click.Context):
 def ls():
     table = Table(show_header=True, show_edge=True, show_lines=False)
     table.add_column("Name", justify="left", style="", no_wrap=True)
-    table.add_column("Default", justify="left", style="", no_wrap=True)
+    table.add_column("Default", justify="center", style="", no_wrap=True)
     table.add_column("Description", justify="left", style="", no_wrap=True)
     for rem in iterate_remotes():
-        default = 'No'
+        default = ''
         if rem.default:
-            default = 'Yes'
-            table.add_row(f"*{rem.name}", default, rem.description, style="yellow bold")
+            default = 'x'
+            table.add_row(f"{rem.name}", default, rem.description, style="yellow bold")
         else:
             table.add_row(rem.name, default, rem.description)
     Global.console.print(table)
