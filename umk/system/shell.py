@@ -1,9 +1,10 @@
 import abc
 import asyncio
+import shlex
 import subprocess
 import sys
 from asyncio import subprocess as async_subprocess
-from beartype.typing import Union, Optional
+from beartype.typing import Union, Optional, Iterable
 from beartype import beartype
 from pathlib import Path
 from umk.system.environs import Environs, OptEnv
@@ -22,6 +23,10 @@ class Handler:
 
 
 class Shell:
+    @staticmethod
+    def stringify(command: Iterable[str]) -> str:
+        return shlex.join(command)
+
     @property
     def name(self) -> str:
         return self._name
@@ -83,6 +88,18 @@ class Shell:
     @beartype
     def handler(self, value: Optional[Handler]):
         self._handler = value
+
+    @property
+    def log(self) -> bool:
+        """
+        Print executable command or not
+        """
+        return self._log
+
+    @log.setter
+    @beartype
+    def log(self, value: bool):
+        self._log = value
 
     devnull = subprocess.DEVNULL
     pipe = subprocess.PIPE
