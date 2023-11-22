@@ -35,6 +35,7 @@ from .vcs import Git, git, tag
 from . import cli
 
 # global and common
+from .globals import Global
 from .globals import Globals
 
 # exceptions
