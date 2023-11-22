@@ -135,7 +135,7 @@ class Compose(Interface):
 
     def destroy(self, *args, **kwargs):
         command = self.cmd
-        command.extend(["rm", "-f", "-s", "-v"])
+        command.extend(["down", "--remove-orphans", "--rmi", "all"])
         Shell(command, name=self.name).sync()
 
     @beartype
