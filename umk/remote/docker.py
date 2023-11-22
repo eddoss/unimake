@@ -1,7 +1,10 @@
+import os
+from textwrap import dedent
 from beartype import beartype
 from beartype.typing import Iterable
 from pathlib import Path
-from umk.remote.interface import Interface
+from umk.globals import Global
+from umk.remote.interface import Interface, Property
 from umk.system.environs import OptEnv
 from umk.system.shell import Shell
 
@@ -19,6 +22,7 @@ class Container(Interface):
     @beartype
     def container(self, value: str):
         self._container = value
+        self._details['container'].value = self._container
 
     @property
     def sh(self) -> str:
@@ -28,6 +32,7 @@ class Container(Interface):
     @beartype
     def sh(self, value: str):
         self._sh = value
+        self._details['shell'].value = self._sh
 
     @beartype
     def __init__(
@@ -43,6 +48,9 @@ class Container(Interface):
         self._container = container
         self._sh = shell
         self._cmd = [cmd]
+        self._details['shell'] = Property('shell', 'Default shell name', self.sh)
+        self._details['command'] = Property('command', 'Docker command', self.cmd)
+        self._details['container'] = Property('container', 'Default container name', self.container)
 
     @beartype
     def shell(self, *args, **kwargs):
@@ -79,6 +87,7 @@ class Compose(Interface):
     @beartype
     def service(self, value: str):
         self._service = value
+        self._details['service'].value = self._service
 
     @property
     def file(self) -> Path:
@@ -88,6 +97,7 @@ class Compose(Interface):
     @beartype
     def file(self, value: Path):
         self._file = value
+        self._details['file'].value = self._file
 
     @property
     def arguments(self) -> dict[str, str]:
@@ -97,6 +107,7 @@ class Compose(Interface):
     @beartype
     def arguments(self, value: dict[str, str]):
         self._args = value
+        self._details['arguments'].value = self._args
 
     @property
     def sh(self) -> str:
@@ -106,6 +117,7 @@ class Compose(Interface):
     @beartype
     def sh(self, value: str):
         self._sh = value
+        self._details['shell'].value = self._sh
 
     @beartype
     def __init__(
@@ -124,6 +136,11 @@ class Compose(Interface):
         self._cmd = list(cmd)
         self._args = {}
         self._sh = shell
+        self._details['shell'] = Property('shell', 'Default shell name', self.sh)
+        self._details['command'] = Property('command', 'Docker compose command', self._cmd)
+        self._details['service'] = Property('service', 'Default service name', self.service)
+        self._details['file'] = Property('file', 'Path to compose file', self.service)
+        self._details['arguments'] = Property('arguments', 'List of the build arguments', self.arguments)
 
     @beartype
     def build(self, *args, **kwargs):
@@ -177,7 +194,8 @@ class CustomCompose(Compose):
     @specification.setter
     @beartype
     def specification(self, value: str):
-        self._specification = value
+        self._specification = dedent(value).lstrip()
+        self._details['specification'].value = self.specification
 
     @beartype
     def __init__(
@@ -200,6 +218,11 @@ class CustomCompose(Compose):
             shell=shell
         )
         self._specification = ""
+        self._details['specification'] = Property(
+            'specification',
+            'Compose specification',
+            self.specification
+        )
 
     @beartype
     def build(self, *args, **kwargs):
