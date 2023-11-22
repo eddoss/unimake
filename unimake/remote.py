@@ -116,3 +116,21 @@ def execute(ctx: Context, program: str, arguments: tuple[str]):
     cmd.insert(0, program)
     rem: RemoteInterface = ctx.obj.get("instance")
     rem.execute(cmd=cmd)
+
+
+@remote.command(name='info', help='Show remote environment details')
+@click.pass_context
+def info(ctx: Context):
+    rem: RemoteInterface = ctx.obj.get("instance")
+    table = Table(show_header=True, show_edge=True, show_lines=True)
+    table.add_column("Name", justify="left", style="", no_wrap=True)
+    table.add_column("Description", justify="left", style="", no_wrap=True)
+    table.add_column("Value", justify="left", style="", no_wrap=True)
+    for _, prop in rem.details.items():
+        table.add_row(prop.name, prop.description, str(prop.value))
+    Global.console.print(f"[bold yellow]\[NAME]")
+    Global.console.print(f"[bold]    {rem.name}")
+    Global.console.print(f"[bold yellow]\[DESCRIPTION]")
+    Global.console.print(f"[bold]    {rem.description or 'No description'}")
+    Global.console.print(f"[bold yellow]\[PROPERTIES]")
+    Global.console.print(table)
