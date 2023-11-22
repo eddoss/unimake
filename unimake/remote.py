@@ -44,7 +44,7 @@ async def remote(ctx: click.Context, name: str):
     # We don't need to find remote environment if 'ls' is requested.
     # If no subcommand was passed we assume it is 'ls'
     if ctx.invoked_subcommand in ('ls', ''):
-        await ctx.invoke(remote_ls)
+        await ctx.invoke(ls)
 
     ctx.obj["instance"] = find_remote(name)
     if not ctx.obj["instance"]:
@@ -62,36 +62,36 @@ async def remote(ctx: click.Context, name: str):
 
 @remote.command(name='build', help=RemoteInterface.build.__doc__)
 @click.pass_context
-def remote_build(ctx: click.Context):
+def build(ctx: click.Context):
     ctx.obj.get("instance").build()
 
 
 @remote.command(name='destroy', help=RemoteInterface.destroy.__doc__)
 @click.pass_context
-def remote_destroy(ctx: click.Context):
+def destroy(ctx: click.Context):
     ctx.obj.get("instance").destroy()
 
 
 @remote.command(name='up', help=RemoteInterface.up.__doc__)
 @click.pass_context
-def remote_up(ctx: click.Context):
+def up(ctx: click.Context):
     ctx.obj.get("instance").up()
 
 
 @remote.command(name='down', help=RemoteInterface.down.__doc__)
 @click.pass_context
-def remote_down(ctx: click.Context):
+def down(ctx: click.Context):
     ctx.obj.get("instance").down()
 
 
 @remote.command(name='shell', help=RemoteInterface.shell.__doc__)
 @click.pass_context
-def remote_shell(ctx: click.Context):
+def shell(ctx: click.Context):
     ctx.obj.get("instance").shell()
 
 
 @remote.command(name='ls', help='List project remote environments')
-def remote_ls():
+def ls():
     table = Table(show_header=True, show_edge=True, show_lines=False)
     table.add_column("Name", justify="left", style="", no_wrap=True)
     table.add_column("Default", justify="left", style="", no_wrap=True)
@@ -111,7 +111,7 @@ def remote_ls():
 @click.argument('program', required=True, nargs=1)
 @click.argument('arguments', required=False, nargs=-1)
 @click.pass_context
-def remote_exec(ctx: Context, program: str, arguments: tuple[str]):
+def execute(ctx: Context, program: str, arguments: tuple[str]):
     cmd = list(arguments)
     cmd.insert(0, program)
     rem: RemoteInterface = ctx.obj["instance"]
