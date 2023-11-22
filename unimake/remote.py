@@ -1,7 +1,5 @@
 import sys
 import asyncclick as click
-import beartype
-beartype.BeartypeConf.is_color = False
 from asyncclick import Context
 from rich.table import Table
 from unimake import application
@@ -134,3 +132,41 @@ def info(ctx: Context):
     Global.console.print(f"[bold]    {rem.description or 'No description'}")
     Global.console.print(f"[bold yellow]\[PROPERTIES]")
     Global.console.print(table)
+
+
+@remote.command(name='upload', help=RemoteInterface.upload.__doc__)
+@click.argument('items', required=False, nargs=-1)
+@click.pass_context
+def upload(ctx: Context, items: tuple[str]):
+    rem: RemoteInterface = ctx.obj.get("instance")
+    paths = split(items)
+    if not paths:
+        return
+    rem.upload(paths)
+
+
+@remote.command(name='download', help=RemoteInterface.download.__doc__)
+@click.argument('items', required=False, nargs=-1)
+@click.pass_context
+def download(ctx: Context, items: tuple[str]):
+    rem: RemoteInterface = ctx.obj.get("instance")
+    paths = split(items)
+    if not paths:
+        return
+    rem.download(paths)
+
+
+def split(items: tuple[str]) -> dict[str, str]:
+    def error():
+        Global.console.print("[bold red]Invalid upload/download item!")
+        Global.console.print("[bold red]Pattern")
+        Global.console.print("[bold red]    upload:   <local/file>:<remote/file>")
+        Global.console.print("[bold red]    download: <remote/file>:<local/file>")
+    result = {}
+    for item in items:
+        if ':' not in item:
+            error()
+            return {}
+        s = item.split(':')
+        result[s[0]] = s[1]
+    return result
