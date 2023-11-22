@@ -5,7 +5,6 @@ from umk.system import code
 
 
 class Interface:
-    forbidden_names = ("build", "destroy", "up", "down", "shell", "exec")
     @property
     def name(self) -> str:
         """
@@ -16,9 +15,10 @@ class Interface:
     @name.setter
     @beartype
     def name(self, value: str):
-        if value in Interface.forbidden_names:
-            raise ValueError(f"Given remote environment name is forbidden: '{value}'")
-        self._name = value
+        name = value.strip()
+        if name == '':
+            raise ValueError(f"Given remote environment name is forbidden: '{name}'")
+        self._name = name
 
     @property
     def description(self) -> str:
