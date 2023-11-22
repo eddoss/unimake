@@ -71,6 +71,27 @@ class Container(Interface):
         command.extend(cmd)
         Shell(command, name=self.name).sync()
 
+    def upload(self, paths: dict[str, str], *args, **kwargs):
+        if not paths:
+            return
+        for src, dst in paths.items():
+            Global.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
+            cmd = self.cmd
+            cmd.extend(['container', 'cp', '-q', src, f"{self.container}:{dst}"])
+            Shell(command=cmd, name=self.name, log=False).sync()
+
+    def download(self, paths: dict[str, str], *args, **kwargs):
+        if not paths:
+            return
+        for src, dst in paths.items():
+            Global.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
+            dst = Path(dst).expanduser().resolve().absolute()
+            if not dst.parent.exists():
+                os.makedirs(dst.parent)
+            cmd = self.cmd
+            cmd.extend(['container', 'cp', '-q', f"{self.container}:{src}", dst.as_posix()])
+            Shell(command=cmd, name=self.name, log=False).sync()
+
 
 class Compose(Interface):
     @property
@@ -184,6 +205,27 @@ class Compose(Interface):
         command.append(self._service)
         command.extend(cmd)
         Shell(command, name=self.name).sync()
+
+    def upload(self, paths: dict[str, str], *args, **kwargs):
+        if not paths:
+            return
+        for src, dst in paths.items():
+            Global.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
+            cmd = self.cmd
+            cmd.extend(['cp', src, f"{self.service}:{dst}"])
+            Shell(command=cmd, name=self.name, log=False).sync()
+
+    def download(self, paths: dict[str, str], *args, **kwargs):
+        if not paths:
+            return
+        for src, dst in paths.items():
+            Global.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
+            dst = Path(dst).expanduser().resolve().absolute()
+            if not dst.parent.exists():
+                os.makedirs(dst.parent)
+            cmd = self.cmd
+            cmd.extend(['cp', f"{self.service}:{src}", dst.as_posix()])
+            Shell(command=cmd, name=self.name, log=False).sync()
 
 
 class CustomCompose(Compose):
