@@ -74,7 +74,7 @@ class Interface:
         """
         self.__not_implemented()
 
-    def execute(self, cmd: list[str], cwd: str = '', env: OptEnv = None):
+    def execute(self, cmd: list[str], cwd: str = '', env: OptEnv = None, *args, **kwargs):
         """
         Execute command in remote environment.
         """
