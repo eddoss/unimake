@@ -113,7 +113,8 @@ class Shell:
         workdir: Path = Global.paths.work,
         environs: OptEnv = None,
         handler: Optional[Handler] = None,
-        name: str = ""
+        name: str = "",
+        log: bool = True,
     ):
         """
         Initialize shell attributes.
@@ -122,6 +123,8 @@ class Shell:
         :param workdir: Path to working directory.
         :param environs: Additional process environs (it will merge and override current envs).
         :param handler: Callbacks to handle output when pipe is used.
+        :param name: Name of this shell instance.
+        :param log: Print executable command or not.
         """
         self._name = name
         self._command = command
@@ -129,11 +132,11 @@ class Shell:
         self._workdir = workdir
         self._environs = environs
         self._handler = handler
+        self._log = log
 
-    async def asyn(self) -> Optional[int]:
-        cmd = " ".join(self.command)
-        print(f'Shell({self.name}): {cmd}')
-
+    async def asyn(self, *, log: Optional[bool] = False) -> Optional[int]:
+        cmd = self.stringify(self.command)
+        self._log_cmd(log, cmd)
         inp, out, err = self._descriptors()
         prc: Optional[async_subprocess.Process] = None
         try:
@@ -167,10 +170,9 @@ class Shell:
 
         return await prc.wait()
 
-    def sync(self) -> Optional[int]:
-        cmd = " ".join(self.command)
-        print(f'Shell({self.name}): {cmd}')
-
+    def sync(self, *, log: Optional[bool] = False) -> Optional[int]:
+        cmd = self.stringify(self.command)
+        self._log_cmd(log, cmd)
         prc: Optional[subprocess.Popen] = None
         inp, out, err = self._descriptors()
 
@@ -232,6 +234,11 @@ class Shell:
             print(e)
         elif err == self.pipe:
             self.handler.on_error(str(e))
+
+    def _log_cmd(self, need: Optional[bool], cmd: str):
+        need_log = need if need is not None else self.log
+        if need_log:
+            Global.console.print(f'[bold] Shell({self.name}): {cmd}')
 
 
 class Devnull(Handler):
