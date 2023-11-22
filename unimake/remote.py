@@ -114,5 +114,5 @@ def ls():
 def execute(ctx: Context, program: str, arguments: tuple[str]):
     cmd = list(arguments)
     cmd.insert(0, program)
-    rem: RemoteInterface = ctx.obj["instance"]
+    rem: RemoteInterface = ctx.obj.get("instance")
     rem.execute(cmd=cmd)
