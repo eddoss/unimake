@@ -51,7 +51,7 @@ class Container(Interface):
         Shell(command, name=self.name).sync()
 
     @beartype
-    def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None):
+    def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None, *args, **kwargs):
         command = self._cmd.copy()
         command.extend(["exec", "-t"])
         if cwd:
@@ -156,7 +156,7 @@ class Compose(Interface):
         Shell(command, name=self.name).sync()
 
     @beartype
-    def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None):
+    def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None, *args, **kwargs):
         command = self.cmd
         command.extend(["exec", "-i", "-t"])
         if cwd:
