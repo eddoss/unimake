@@ -1,0 +1,20 @@
+services:
+  ssh:
+    image: unimake.ssh
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: unimake.ssh
+    networks:
+      unimake.ssh:
+        ipv4_address: 171.16.14.2
+    ports:
+      - 22:22
+
+networks:
+  unimake.ssh:
+    driver: bridge
+    ipam:
+     driver: default
+     config:
+       - subnet: 171.16.14.0/24

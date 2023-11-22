@@ -51,6 +51,7 @@ help:
 export PROJECT_NAME           := unimake
 export PROJECT_NAME_SHORT     := umk
 export PROJECT_ROOT           := $(CURDIR)
+export PROJECT_TESTS          := $(PROJECT_ROOT)/tests
 export PROJECT_VERSION        := $(shell git describe --abbrev=0 --tags)
 export PROJECT_VERSION_RAW    := $(subst v,,$(PROJECT_VERSION))
 
@@ -110,6 +111,19 @@ package/install: package/uninstall
 .PHONY: package/uninstall
 package/uninstall:
 	@pip uninstall --yes umk
+
+# ################################################################################################ #
+# Tests
+# ################################################################################################ #
+
+.PHONY: test/ssh-server
+test/ssh-server: test/ssh-server/stop
+	@docker compose -f $(PROJECT_TESTS)/ssh-server/docker-compose.yaml up -d --build
+	@echo 'SSH server run in container "unimake.ssh" with IP 171.16.14.2'
+
+.PHONY: test/ssh-server/stop
+test/ssh-server/stop:
+	@docker compose -f $(PROJECT_TESTS)/ssh-server/docker-compose.yaml down --remove-orphans --rmi all
 
 # ################################################################################################ #
 # Maintenance
