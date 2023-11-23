@@ -122,18 +122,21 @@ class Interface:
         """
         self.__not_implemented()
 
+    @beartype
     def execute(self, cmd: list[str], cwd: str = '', env: OptEnv = None, *args, **kwargs):
         """
         Execute command in remote environment.
         """
         self.__not_implemented()
 
+    @beartype
     def upload(self, paths: dict[str, str], *args, **kwargs):
         """
         Upload given paths to remote environment.
         """
         self.__not_implemented()
 
+    @beartype
     def download(self, paths: dict[str, str], *args, **kwargs):
         """
         Download given paths from remote environment.

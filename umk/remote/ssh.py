@@ -108,6 +108,7 @@ class Ssh(Interface):
         for line in err:
             print(line.rstrip())
 
+    @beartype
     def upload(self, paths: dict[str, str], *args, **kwargs):
         if not paths:
             return
@@ -121,6 +122,7 @@ class Ssh(Interface):
                 )
         client.close()
 
+    @beartype
     def download(self, paths: dict[str, str], *args, **kwargs):
         if not paths:
             return

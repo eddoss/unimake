@@ -71,6 +71,7 @@ class Container(Interface):
         command.extend(cmd)
         Shell(command, name=self.name).sync()
 
+    @beartype
     def upload(self, paths: dict[str, str], *args, **kwargs):
         if not paths:
             return
@@ -80,6 +81,7 @@ class Container(Interface):
             cmd.extend(['container', 'cp', '-q', src, f"{self.container}:{dst}"])
             Shell(command=cmd, name=self.name, log=False).sync()
 
+    @beartype
     def download(self, paths: dict[str, str], *args, **kwargs):
         if not paths:
             return
@@ -206,6 +208,7 @@ class Compose(Interface):
         command.extend(cmd)
         Shell(command, name=self.name).sync()
 
+    @beartype
     def upload(self, paths: dict[str, str], *args, **kwargs):
         if not paths:
             return
@@ -215,6 +218,7 @@ class Compose(Interface):
             cmd.extend(['cp', src, f"{self.service}:{dst}"])
             Shell(command=cmd, name=self.name, log=False).sync()
 
+    @beartype
     def download(self, paths: dict[str, str], *args, **kwargs):
         if not paths:
             return
