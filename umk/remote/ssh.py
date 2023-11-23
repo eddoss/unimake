@@ -144,32 +144,3 @@ class Ssh(Interface):
         result.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         result.connect(self.host, self.port, self.username, self.password)
         return result
-
-# class Sftp(Transport):
-#     @property
-#     def client(self) -> paramiko.SSHClient:
-#         return self._client
-#
-#     @beartype
-#     def __init__(self, host: str, username: str, password: str, port: int = 22):
-#         self._host = host
-#         self._port = port
-#         self._password = password
-#         self._username = username
-#         self._client = paramiko.SSHClient()
-#
-#     def open(self, *args, **kwargs):
-#         self._client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-#         self._client.connect(self.host, self.port, self.username, self.password)
-#
-#     def close(self, *args, **kwargs):
-#         self._client.close()
-#
-#     def bytes(self, src: bytes, dst: Path):
-#         pass
-#
-#     def text(self, src: str, dst: Path):
-#         pass
-#
-#     def file(self, src: str, dst: Path):
-#         pass
