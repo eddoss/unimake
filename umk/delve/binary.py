@@ -1,5 +1,4 @@
 from beartype import beartype
-from umk import exceptions
 from pathlib import Path
 from umk.delve.flags import Flags
 from umk.system.shell import Shell
@@ -22,7 +21,7 @@ class Delve:
     @beartype
     def binary(self, value: Path):
         if not value.exists():
-            raise exceptions.DelveBinaryNotExistsError(f"Invalid path to 'delve' binary: {value}")
+            raise FileNotFoundError(f"Invalid path to 'delve' binary: {value}")
         self._binary = value
 
     @property

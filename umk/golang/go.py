@@ -1,7 +1,6 @@
 from beartype import beartype
 from beartype.typing import Optional
 from pathlib import Path
-from umk import exceptions
 from umk.system.environs import Environs
 from umk.system.shell import Shell
 from umk.golang.build import BuildArgs
@@ -23,7 +22,7 @@ class Go:
     @beartype
     def binary(self, value: Path):
         if not value.exists():
-            raise exceptions.GoBinaryExistsError(f"Invalid path to 'go' binary: {value}")
+            raise FileNotFoundError(f"Invalid path to 'go' binary: {value}")
         self._binary = value
         self._mod = Mod(self._binary)
 

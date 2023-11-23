@@ -5,16 +5,16 @@ from .project import Name as ProjectName
 from .project import Info as ProjectInfo
 from .project import Description as ProjectDescription
 
-# golang
-from .golang.project import Project as GoProject
-from .golang.project import Layout as GoLayout
-from .golang.build import BuildArgs as GoBuildArgs
-from .golang.build import BuildFlags as GoBuildFlags
-from .golang.go import Go
-from .delve.binary import Delve
-from .delve.flags import Flags as DelveFlags
+# core: remotes, cli, vcs
+from . import remote
+from . import cli
+from .vcs import Git, git, tag
 
-# system
+# core: global and common
+from .globals import Global
+from .globals import Globals
+
+# core: system
 from asyncio import gather as parallel
 from pathlib import Path
 from .system.shell import Shell as shell
@@ -25,19 +25,13 @@ from .system import environs as env
 from .system.user import User
 from .system.user import user
 
-# remotes
-from . import remote
+# golang
+from .golang.project import Project as GoProject
+from .golang.project import Layout as GoLayout
+from .golang.build import BuildArgs as GoBuildArgs
+from .golang.build import BuildFlags as GoBuildFlags
+from .golang.go import Go
 
-# vcs
-from .vcs import Git, git, tag
-
-# cli
-from . import cli
-
-# global and common
-from .globals import Global
-from .globals import Globals
-
-# exceptions
-from .exceptions import *
-
+# delve
+from .delve.binary import Delve
+from .delve.flags import Flags as DelveFlags
