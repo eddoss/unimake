@@ -149,6 +149,9 @@ class Interface:
             f"It`s must be managed outside of this tool."
         )
 
+    def __hash__(self) -> int:
+        return hash(self.name)
+
     @beartype
     def __init__(self, name: str = "", description: str = "", default: bool = False):
         self._name: str = name
