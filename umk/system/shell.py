@@ -1,6 +1,5 @@
 import abc
 import asyncio
-import shlex
 import subprocess
 import sys
 from asyncio import subprocess as async_subprocess
@@ -25,7 +24,7 @@ class Handler:
 class Shell:
     @staticmethod
     def stringify(command: Iterable[str]) -> str:
-        return shlex.join(command)
+        return " ".join(command)
 
     @property
     def name(self) -> str:
