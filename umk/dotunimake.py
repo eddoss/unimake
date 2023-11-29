@@ -1,17 +1,22 @@
+import copy
+
 import dotenv
 import sys
+import umk.remote
 from enum import Enum
 from pathlib import Path
 from importlib import util as importer
 from rich.syntax import Syntax
 from rich.table import Table
-
 from umk.globals import Global
 from umk.project import Project
+import umk.remote
+from umk.remote.registerer import Registerer as RemoteInterfaceRegisterer
 from beartype.typing import Optional
 
 
 class LoadingState(Enum):
+    INTERNAL_ERROR = -1
     OK = 0
     ROOT_NOT_EXISTS = 1
     ROOT_IS_NOT_DIR = 2
@@ -28,15 +33,25 @@ class Require(Enum):
     OPT = 2     # required if exists
 
 
+class Instances:
+    def __init__(self):
+        self.project: Optional[Project] = None
+        self.remotes: dict[str, umk.remote.Interface] = {}
+
+
 class DotUnimake:
     @property
     def project(self) -> Optional[Project]:
-        return self._project_instance
+        return self._instances.project
+
+    @property
+    def remotes(self) -> dict[str, umk.remote.Interface]:
+        return self._instances.remotes
 
     def __init__(self):
         self._root = Path()
         self._modules = {}
-        self._project_instance: Optional[Project] = None
+        self._instances = Instances()
 
     def __getitem__(self, module_name: str):
         return self._modules[module_name]
@@ -114,13 +129,55 @@ class DotUnimake:
     def _load_remotes(self, require: Require):
         if require == Require.NO:
             return LoadingState.OK
-        if require == Require.YES:
-            self._script('remotes')
-            return LoadingState.OK
+
         try:
             self._script('remotes')
-        finally:
-            return LoadingState.OK
+        except FileNotFoundError:
+            return LoadingState.REMOTE_PY_NOT_EXISTS
+        except Exception:
+            return LoadingState.INTERNAL_ERROR
+
+        module = self._modules.get('remotes')
+
+        # Find all and collect all remote interface registerer
+        default: Optional[umk.remote.Interface] = None
+        for _, value in module.__dict__.items():
+            if issubclass(type(value), RemoteInterfaceRegisterer):
+                impl: umk.remote.Interface = copy.deepcopy(value.instance)
+                if impl.name not in self._instances.remotes:
+                    if not default and impl.default:
+                        default = impl
+                    elif default and impl.default:
+                        Global.console.print(
+                            f"[bold yellow]WARNING! Default remote environment is already "
+                            f"exists! Force '{impl.name}.default=False'[/]\n"
+                            f"[bold underline]Given[/] \n"
+                            f" - name '{impl.name}'\n"
+                            f" - type '{impl.__class__.__module__}.{impl.__class__.__qualname__}'\n"
+                            f" - desc '{impl.description}'\n"
+                            f"[bold underline]Exist[/] \n"
+                            f" - name '{default.name}'\n"
+                            f" - type '{default.__class__.__module__}.{default.__class__.__qualname__}'\n"
+                            f" - desc '{default.description}'\n"
+                        )
+                        impl.default = False
+                    self._instances.remotes[impl.name] = impl
+                else:
+                    exist = self._instances.remotes.get(impl.name)
+                    Global.console.print(
+                        f"[bold yellow]WARNING! Skip '{impl.name}' remote environment, it is "
+                        f"already exists![/]\n"
+                        f"[bold underline]Given[/] \n"
+                        f" - name '{impl.name}'\n"
+                        f" - type '{impl.__class__.__module__}.{impl.__class__.__qualname__}'\n"
+                        f" - desc '{impl.description}'\n"
+                        f"[bold underline]Exist[/] \n"
+                        f" - name '{exist.name}'\n"
+                        f" - type '{exist.__class__.__module__}.{exist.__class__.__qualname__}'\n"
+                        f" - desc '{exist.description}'\n"
+                    )
+
+        return LoadingState.OK
 
     def _script(self, name: str):
         if name in self._modules:
@@ -196,3 +253,30 @@ class LoadingStateMessages:
 
 
 Unimake: Optional[DotUnimake] = DotUnimake()
+
+
+# ####################################################################################
+# Remote environment utils implementation
+# ####################################################################################
+
+
+def find_remote(name: str = "") -> Optional[umk.remote.Interface]:
+    global Unimake
+    if not Unimake:
+        return
+    if not name:
+        for remote in Unimake.remotes.values():
+            if remote.default:
+                return remote
+    else:
+        return Unimake.remotes.get(name)
+
+
+def iterate_remotes():
+    global Unimake
+    for rem in Unimake.remotes.values():
+        yield rem
+
+
+umk.remote.find = find_remote
+umk.remote.iterate = iterate_remotes

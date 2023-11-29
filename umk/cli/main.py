@@ -6,7 +6,7 @@ from umk.globals import Global
 from umk.project import Project
 from umk.cli.sections import Section
 from umk import dotunimake
-from umk.remote.register import find as find_remote
+import umk.remote
 
 Sections = dict[Section, list[asyncclick.Command]]
 DefaultSection = Section(name='Default', description='Default commands')
@@ -81,17 +81,17 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
 
     # Find remote environment if specified
 
-    rem = find_remote("" if default_remote else specific_remote)
+    rem = umk.remote.find("" if default_remote else specific_remote)
     if default_remote and not rem:
         Global.console.print(
-            '[bold red] Failed to find default remote! '
-            'Please specify default remote in .unimake/remotes.py'
+            '[bold red]Failed to find default remote environment! '
+            'Please specify it in the .unimake/remotes.py'
         )
         sys.exit()
     elif not rem and specific_remote:
         Global.console.print(
-            f"[bold red] Failed to find remote '{specific_remote}'! "
-            f"Please specify remotes in .unimake/remotes.py"
+            f"[bold red]Failed to find remote environment '{specific_remote}'! "
+            f"Please create it in the .unimake/remotes.py"
         )
         sys.exit()
 
