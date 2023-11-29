@@ -133,7 +133,7 @@ class Shell:
         self._handler = handler
         self._log = log
 
-    async def asyn(self, *, log: Optional[bool] = False) -> Optional[int]:
+    async def asyn(self, *, log: Optional[bool] = None) -> Optional[int]:
         cmd = self.stringify(self.command)
         self._log_cmd(log, cmd)
         inp, out, err = self._descriptors()
@@ -169,7 +169,7 @@ class Shell:
 
         return await prc.wait()
 
-    def sync(self, *, log: Optional[bool] = False) -> Optional[int]:
+    def sync(self, *, log: Optional[bool] = None) -> Optional[int]:
         cmd = self.stringify(self.command)
         self._log_cmd(log, cmd)
         prc: Optional[subprocess.Popen] = None
