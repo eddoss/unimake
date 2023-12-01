@@ -1,5 +1,6 @@
 import string
 from beartype import beartype
+from beartype.typing import Optional, Callable, Union, Type
 from umk.globals import Global
 
 
@@ -144,3 +145,21 @@ class Project:
 
     def __init__(self):
         self._info = Info()
+
+
+class Registerer:
+    @property
+    def instance(self) -> Project:
+        return self._creator()
+
+    def __init__(self, value: Optional[Union[Type, Callable[[], Project]]] = None):
+        self._creator = value
+
+
+def register(creator):
+    return Registerer(creator)
+
+
+def project() -> Optional[Project]:
+    # See implementation in umk/dotunimake.py
+    raise NotImplemented()

@@ -4,6 +4,8 @@ from .project import Author
 from .project import Name as ProjectName
 from .project import Info as ProjectInfo
 from .project import Description as ProjectDescription
+from .project import register
+from .project import project
 
 # core: remotes, cli, vcs
 from . import remote

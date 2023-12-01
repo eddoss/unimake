@@ -4,7 +4,8 @@ from asyncclick import Context
 from rich.table import Table
 from unimake import application
 from umk.globals import Global
-from umk import dotunimake as du
+from umk.dotunimake import dotunimake as du
+from umk.dotunimake.instance import Instance as UniInstance
 import umk.remote
 
 
@@ -22,19 +23,19 @@ async def remote(ctx: click.Context, name: str):
 
     # Load .unimake/remotes.py
     try:
-        state = du.Unimake.load(
+        state = UniInstance.load(
             root=Global.paths.unimake,
-            env=du.Require.OPT,
             remotes=du.Require.YES,
+            project=du.Require.OPT,
         )
     except Exception as e:
         Global.console.print(
             f"[bold red]Unimake error !\n"
-            f"Failed to load .unimake/remote.py: {e}"
+            f"Failed to load .unimake/remotes.py: {e}"
         )
         sys.exit()
-    if state != du.LoadingState.OK:
-        du.LoadingStateMessages().on(state)
+    if not state.ok:
+        state.print()
         sys.exit()
 
     # We don't need to find remote environment if 'ls' is requested.

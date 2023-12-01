@@ -237,7 +237,10 @@ class Shell:
     def _log_cmd(self, need: Optional[bool], cmd: str):
         need_log = need if need is not None else self.log
         if need_log:
-            Global.console.print(f'[bold] Shell({self.name}): {cmd}')
+            if self.name:
+                Global.console.print(f"[bold]shell\['{self.name}']: {cmd}")
+            else:
+                Global.console.print(f"[bold]shell: {cmd}")
 
 
 class Devnull(Handler):
