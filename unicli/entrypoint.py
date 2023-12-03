@@ -24,10 +24,11 @@ try:
     )
 except Exception:
     Global.console.print_exception(show_locals=False, max_frames=1)
+    sys.exit()
 
 if not Global.completion and not state.ok:
     state.print()
-    sys.exit()
+    sys.exit(-1)
 
 if Global.completion:
     os.environ['_UMK_COMPLETE'] = Global.completion

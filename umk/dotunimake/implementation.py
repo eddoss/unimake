@@ -1,6 +1,6 @@
 import umk
 from umk import framework
-from umk.project.base import Project
+from umk.framework.project.base import Project
 from umk.dotunimake.instance import DotInstance
 from beartype.typing import Optional
 
@@ -43,5 +43,4 @@ def get_project() -> Optional[Project]:
     return Instance.project
 
 
-umk.projects.base.get = get_project
-umk.project = get_project
+framework.project.get = get_project

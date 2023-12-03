@@ -1,5 +1,5 @@
-from umk.project.base import Project as BaseProject
-from umk.project.base import Layout as BaseLayout
+from umk.framework.project.base import Project as BaseProject
+from umk.framework.project.base import Layout as BaseLayout
 from umk.globals import Global
 
 

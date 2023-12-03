@@ -5,7 +5,7 @@ from .base import Name
 from .base import Description
 from .base import Layout as BaseLayout
 from .base import Project as BaseProject
-from .base import register
+from .base import register, get
 
 
 # golang

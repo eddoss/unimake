@@ -7,8 +7,8 @@ from enum import Enum
 from pathlib import Path
 from importlib import util as importer
 from umk.globals import Global
-from umk.project.base import Project
-from umk.project.base import Registerer as ProjectRegisterer
+from umk.framework.project.base import Project
+from umk.framework.project.base import Registerer as ProjectRegisterer
 from beartype.typing import Optional
 from umk.dotunimake import states
 

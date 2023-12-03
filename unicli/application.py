@@ -2,7 +2,7 @@ import sys
 import asyncclick
 from rich.table import Table
 from umk.globals import Global
-from umk.project.base import Project
+from umk.framework.project import BaseProject
 from umk import framework
 from umk.dotunimake.implementation import Instance
 
@@ -26,7 +26,7 @@ class Group(asyncclick.Group):
 
 
 class HelpMessage:
-    def render(self, project: Project, section: Sections):
+    def render(self, project: BaseProject, section: Sections):
         console = Global.console
         info = project.info
         console.print(f"[blue bold]Welcome to[/] [bold yellow]{info.name.full or info.name.short}\n")
