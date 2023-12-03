@@ -1,8 +1,8 @@
 from beartype import beartype
 from beartype.typing import Optional
 from pathlib import Path
-from umk.system.environs import Environs
-from umk.system.shell import Shell
+from umk.framework import Environs
+from umk.framework.system.shell import Shell
 from umk.adapters.golang.build import BuildArgs
 from umk.adapters.golang.mod import Mod
 

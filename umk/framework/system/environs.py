@@ -42,4 +42,4 @@ class Environs(dict):
         append(self, name, *values)
 
 
-OptEnv = Optional[Environs]
+Optional = Optional[Environs]

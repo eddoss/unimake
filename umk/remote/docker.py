@@ -5,8 +5,8 @@ from beartype.typing import Iterable
 from pathlib import Path
 from umk.globals import Global
 from umk.remote.interface import Interface, Property
-from umk.system.environs import OptEnv
-from umk.system.shell import Shell
+from umk.framework import env as envs
+from umk.framework.system.shell import Shell
 
 
 class Container(Interface):
@@ -59,7 +59,7 @@ class Container(Interface):
         Shell(command, name=self.name).sync()
 
     @beartype
-    def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None, *args, **kwargs):
+    def execute(self, cmd: list[str], cwd: str = "", env: envs.Optional = None, *args, **kwargs):
         command = self._cmd.copy()
         command.extend(["exec", "-t"])
         if cwd:
@@ -196,7 +196,7 @@ class Compose(Interface):
         Shell(command, name=self.name).sync()
 
     @beartype
-    def execute(self, cmd: list[str], cwd: str = "", env: OptEnv = None, *args, **kwargs):
+    def execute(self, cmd: list[str], cwd: str = "", env: envs.Optional = None, *args, **kwargs):
         command = self.cmd
         command.extend(["exec", "-i", "-t"])
         if cwd:

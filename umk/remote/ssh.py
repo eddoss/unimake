@@ -6,8 +6,8 @@ from beartype import beartype
 from beartype.typing import Optional
 from umk.globals import Global
 from umk.remote.interface import Interface, Property
-from umk.system.environs import OptEnv
-from umk.system.shell import Shell
+from umk.framework import env as envs
+from umk.framework.system.shell import Shell
 from paramiko import util as paramiko_util
 
 
@@ -96,7 +96,7 @@ class Ssh(Interface):
             cmd.extend(["-t", self.sh.strip()])
         Shell(name=self.name, command=cmd).sync()
 
-    def execute(self, cmd: list[str], cwd: str = '', env: OptEnv = None, *args, **kwargs):
+    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, *args, **kwargs):
         client = self._client()
         _, out, err = client.exec_command(
             command=Shell.stringify(cmd),

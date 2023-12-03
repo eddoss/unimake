@@ -2,8 +2,8 @@ from textwrap import dedent
 from beartype import beartype
 from beartype.typing import Any, Optional
 from umk.globals import Global
-from umk.system.environs import OptEnv
-from umk.system import code
+from umk.framework import env as envs
+from umk.framework import utils
 
 
 class Property:
@@ -123,7 +123,7 @@ class Interface:
         self.__not_implemented()
 
     @beartype
-    def execute(self, cmd: list[str], cwd: str = '', env: OptEnv = None, *args, **kwargs):
+    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, *args, **kwargs):
         """
         Execute command in remote environment.
         """
@@ -145,7 +145,7 @@ class Interface:
 
     def __not_implemented(self):
         Global.console.print(
-            f"[bold]The '{self.name}' remote environment has no '{code.caller(2)}' function. "
+            f"[bold]The '{self.name}' remote environment has no '{utils.caller(2)}' function. "
             f"It`s must be managed outside of this tool."
         )
 

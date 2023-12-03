@@ -1,9 +1,9 @@
 from beartype import beartype
 from pathlib import Path
 from umk.adapters.delve.flags import Flags
-from umk.system.shell import Shell
+from umk.framework.system.shell import Shell
 from umk.globals import Global
-from umk.system.environs import Environs, OptEnv
+from umk.framework import env as envs
 
 
 class Delve:
@@ -50,7 +50,7 @@ class Delve:
         self._pwd = pwd
 
     @beartype
-    def attach(self, pid: int, exe: str = '', contin: bool = False, env: Environs = None) -> Shell:
+    def attach(self, pid: int, exe: str = '', contin: bool = False, env: envs.Environs = None) -> Shell:
         cmd = f'{self.binary} {self.flags} attach {pid}'
         if exe.strip():
             cmd += f' {exe.strip()}'
@@ -63,7 +63,7 @@ class Delve:
         )
 
     @beartype
-    def exec(self, binary: Path, args: list[str] = None, contin: bool = False, tty: str = "", env: OptEnv = None) -> Shell:
+    def exec(self, binary: Path, args: list[str] = None, contin: bool = False, tty: str = "", env: envs.Optional = None) -> Shell:
         cmd = f'{self.binary} {self.flags} exec'
         if tty:
             cmd += f' --tty={tty}'

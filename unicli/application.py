@@ -3,7 +3,7 @@ import asyncclick
 from rich.table import Table
 from umk.globals import Global
 from umk.project.base import Project
-from umk.cli.sections import Section
+from umk.framework.cli import Section
 from umk.dotunimake.implementation import Instance
 import umk.remote
 

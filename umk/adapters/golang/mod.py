@@ -3,7 +3,7 @@ import pathlib
 
 from beartype import beartype
 from umk.globals import Global
-from umk.system.shell import Shell
+from umk.framework.system.shell import Shell
 
 
 class Mod:

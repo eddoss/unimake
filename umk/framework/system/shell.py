@@ -6,7 +6,7 @@ from asyncio import subprocess as async_subprocess
 from beartype.typing import Union, Optional, Iterable
 from beartype import beartype
 from pathlib import Path
-from umk.system.environs import Environs, OptEnv
+from umk.framework import env
 from umk.globals import Global
 
 
@@ -63,7 +63,7 @@ class Shell:
         self._workdir = value
 
     @property
-    def environs(self) -> Environs:
+    def environs(self) -> env.Environs:
         """
         Additional process environs (it will be merged to current envs and override).
         """
@@ -71,8 +71,8 @@ class Shell:
 
     @environs.setter
     @beartype
-    def environs(self, value: OptEnv):
-        self._environs = Environs(inherit=True)
+    def environs(self, value: env.Optional):
+        self._environs = env.Environs(inherit=True)
         if value:
             self._environs.update(value)
 
@@ -110,7 +110,7 @@ class Shell:
         self,
         command: Command,
         workdir: Path = Global.paths.work,
-        environs: OptEnv = None,
+        environs: env.Optional = None,
         handler: Optional[Handler] = None,
         name: str = "",
         log: bool = True,

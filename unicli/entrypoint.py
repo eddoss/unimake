@@ -1,14 +1,14 @@
 import asyncio
 import os
 import sys
-import umk.cli
+import umk.framework.cli
 from umk.dotunimake.instance import Require
 from umk.dotunimake.implementation import Instance
 from unicli.application import application
 from umk.globals import Global
 
 
-umk.cli.cmd = application.command
+umk.framework.cli.cmd = application.command
 
 Global.completion = os.environ.get('_UMK_COMPLETE')
 if Global.completion:
