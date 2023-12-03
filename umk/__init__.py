@@ -1,5 +1,4 @@
 # utils
-from asyncio import gather as parallel
 from pathlib import Path
 
 # project
@@ -10,7 +9,6 @@ from .project import Description as ProjectDescription
 from .project import register
 
 # framework
-from . import adapters
 from . import project as projects
 from .project.base import get as project
 from .globals import Global

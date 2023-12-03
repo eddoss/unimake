@@ -2,7 +2,7 @@ import os
 from beartype.typing import Optional
 from beartype import beartype
 from pathlib import Path
-from umk.adapters.go.build import BuildArgs as GoBuildArgs
+from umk.framework.adapters.go.build import BuildArgs as GoBuildArgs
 
 
 class Flags:

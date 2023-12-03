@@ -3,8 +3,8 @@ from beartype.typing import Optional
 from pathlib import Path
 from umk.framework.system import Environs
 from umk.framework.system.shell import Shell
-from umk.adapters.go.build import BuildArgs
-from umk.adapters.go.mod import Mod
+from umk.framework.adapters.go.build import BuildArgs
+from umk.framework.adapters.go.mod import Mod
 
 
 class Go:
