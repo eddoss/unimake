@@ -1,6 +1,6 @@
 from beartype import beartype
 from pathlib import Path
-from umk.delve.flags import Flags
+from umk.adapters.delve.flags import Flags
 from umk.system.shell import Shell
 from umk.globals import Global
 from umk.system.environs import Environs, OptEnv
