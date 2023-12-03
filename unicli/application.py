@@ -1,11 +1,10 @@
-import os
 import sys
 import asyncclick
 from rich.table import Table
 from umk.globals import Global
-from umk.project import Project
+from umk.project.base import Project
 from umk.cli.sections import Section
-from umk.dotunimake.instance import Instance as UniInstance
+from umk.dotunimake.implementation import Instance
 import umk.remote
 
 Sections = dict[Section, list[asyncclick.Command]]
@@ -109,4 +108,4 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
 
 @application.command(name='help', help="Display help message", section=DefaultSection)
 def display_help_message():
-    Helper.render(UniInstance.project, RegisteredSections)
+    Helper.render(Instance.project, RegisteredSections)

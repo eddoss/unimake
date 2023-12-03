@@ -1,45 +1,174 @@
-from beartype.typing import Optional
+import copy
+import dotenv
+import sys
 import umk.remote
-from umk.project import Project
-from umk.dotunimake.dotunimake import DotUnimake
+from enum import Enum
+from pathlib import Path
+from importlib import util as importer
+from umk.globals import Global
+from umk.project.base import Project
+from umk.project.base import Registerer as ProjectRegisterer
+from umk.remote.registerer import Registerer as RemoteInterfaceRegisterer
+from beartype.typing import Optional
+from umk.dotunimake import states
 
 
-Instance: Optional[DotUnimake] = DotUnimake()
+class Require(Enum):
+    YES = 0     # required
+    NO = 1      # not required
+    OPT = 2     # required if exists
 
 
-# ####################################################################################
-# Remote environment utils implementation
-# ####################################################################################
-
-def find_remote(name: str = "") -> Optional[umk.remote.Interface]:
-    global Instance
-    if not Instance:
-        return
-    if not name:
-        for remote in Instance.remotes.values():
-            if remote.default:
-                return remote
-    else:
-        return Instance.remotes.get(name)
+class Containers:
+    def __init__(self):
+        self.project: Optional[Project] = None
+        self.remotes: dict[str, umk.remote.Interface] = {}
 
 
-def iterate_remotes():
-    global Instance
-    for rem in Instance.remotes.values():
-        yield rem
+class ProjectInstance:
+    @property
+    def project(self) -> Optional[Project]:
+        return self._containers.project
 
+    @property
+    def remotes(self) -> dict[str, umk.remote.Interface]:
+        return self._containers.remotes
 
-umk.remote.find = find_remote
-umk.remote.iterate = iterate_remotes
+    def __init__(self):
+        self._root = Path()
+        self._modules = {}
+        self._containers = Containers()
 
+    def load(
+        self,
+        root: Path, *,
+        project: Require = Require.NO,
+        remotes: Require = Require.NO,
+        cli: Require = Require.NO
+    ) -> states.State:
+        self._root = root.expanduser().resolve().absolute()
+        if not self._root.exists():
+            return states.RootNotExists()
+        if not self._root.is_dir():
+            return states.RootNotDirectory()
 
-# ####################################################################################
-# Project stuff implementation
-# ####################################################################################
+        sys.path.insert(0, root.as_posix())
 
-def get_project() -> Optional[Project]:
-    global Instance
-    return Instance.project
+        try:
+            file = self._root / '.env'
+            dotenv.load_dotenv(file)
+        finally:
+            pass
 
+        state = self._load_project(project)
+        if not state.ok:
+            return state
+        state = self._load_remotes(remotes)
+        if not state.ok:
+            return state
+        state = self._load_cli(cli)
+        if not state.ok:
+            return state
 
-umk.project = get_project
+        return state
+
+    def _load_cli(self, require: Require) -> states.State:
+        if require == Require.NO:
+            return states.Ok()
+        if require == Require.YES:
+            self._script('cli')
+            return states.Ok()
+        try:
+            self._script('cli')
+        finally:
+            return states.Ok()
+
+    def _load_project(self, require: Require) -> states.State:
+        if require == Require.NO:
+            return states.Ok()
+        try:
+            self._script('project')
+        except FileNotFoundError:
+            return states.ProjectScriptNotExists()
+        except Exception as e:
+            return states.InternalError(script="project.py", description=str(e))
+
+        module = self._modules.get('project')
+
+        # Find project creator
+        for _, value in module.__dict__.items():
+            if issubclass(type(value), ProjectRegisterer):
+                self._containers.project = copy.deepcopy(value.instance)
+                break
+
+        if self._containers.project is None:
+            return states.ProjectCreatorNotExists()
+        elif not issubclass(type(self._containers.project), Project):
+            return states.ProjectCreatorBadType()
+
+        return states.Ok()
+
+    def _load_remotes(self, require: Require):
+        if require == Require.NO:
+            return states.Ok()
+        try:
+            self._script('remotes')
+        except FileNotFoundError:
+            return states.RemotesScriptNotExists()
+        except Exception as e:
+            return states.InternalError(script="remotes.py", description=str(e))
+
+        module = self._modules.get('remotes')
+
+        # Find all and collect all remote interface registerer
+        default: Optional[umk.remote.Interface] = None
+        for _, value in module.__dict__.items():
+            if issubclass(type(value), RemoteInterfaceRegisterer):
+                impl: umk.remote.Interface = copy.deepcopy(value.instance)
+                if impl.name not in self._containers.remotes:
+                    if not default and impl.default:
+                        default = impl
+                    elif default and impl.default:
+                        Global.console.print(
+                            f"[bold yellow]WARNING! Default remote environment is already "
+                            f"exists! Force '{impl.name}.default=False'[/]\n"
+                            f"[bold underline]Given[/] \n"
+                            f" - name '{impl.name}'\n"
+                            f" - type '{impl.__class__.__module__}.{impl.__class__.__qualname__}'\n"
+                            f" - desc '{impl.description}'\n"
+                            f"[bold underline]Exist[/] \n"
+                            f" - name '{default.name}'\n"
+                            f" - type '{default.__class__.__module__}.{default.__class__.__qualname__}'\n"
+                            f" - desc '{default.description}'\n"
+                        )
+                        impl.default = False
+                    self._containers.remotes[impl.name] = impl
+                else:
+                    exist = self._containers.remotes.get(impl.name)
+                    Global.console.print(
+                        f"[bold yellow]WARNING! Skip '{impl.name}' remote environment, it is "
+                        f"already exists![/]\n"
+                        f"[bold underline]Given[/] \n"
+                        f" - name '{impl.name}'\n"
+                        f" - type '{impl.__class__.__module__}.{impl.__class__.__qualname__}'\n"
+                        f" - desc '{impl.description}'\n"
+                        f"[bold underline]Exist[/] \n"
+                        f" - name '{exist.name}'\n"
+                        f" - type '{exist.__class__.__module__}.{exist.__class__.__qualname__}'\n"
+                        f" - desc '{exist.description}'\n"
+                    )
+
+        return states.Ok()
+
+    def _script(self, name: str):
+        if name in self._modules:
+            Global.console.log(f"DotUnimake.script(): module '{name}' already exists")
+            sys.exit(-1)
+        file = self._root / f'{name}.py'
+        if not file.exists():
+            raise FileNotFoundError(f"fDotUnimake.script(): script does not exists: {file}")
+        spec = importer.spec_from_file_location(name, file)
+        module = importer.module_from_spec(spec)
+        sys.modules[f'umk:{name}'] = module
+        spec.loader.exec_module(module)
+        self._modules[name] = module

@@ -2,11 +2,11 @@ import sys
 import asyncclick as click
 from asyncclick import Context
 from rich.table import Table
-from unimake import application
-from umk.globals import Global
-from umk.dotunimake import dotunimake as du
-from umk.dotunimake.instance import Instance as UniInstance
 import umk.remote
+from umk.globals import Global
+from umk.dotunimake.instance import Require
+from umk.dotunimake.implementation import Instance
+from unimake import application
 
 
 @application.group(
@@ -23,10 +23,10 @@ async def remote(ctx: click.Context, name: str):
 
     # Load .unimake/remotes.py
     try:
-        state = UniInstance.load(
+        state = Instance.load(
             root=Global.paths.unimake,
-            remotes=du.Require.YES,
-            project=du.Require.OPT,
+            remotes=Require.YES,
+            project=Require.OPT,
         )
     except Exception as e:
         Global.console.print(

@@ -160,6 +160,6 @@ def register(creator):
     return Registerer(creator)
 
 
-def project() -> Optional[Project]:
-    # See implementation in umk/dotunimake.py
+def get() -> Optional[Project]:
+    # See implementation in dotunimake/implementation.py
     raise NotImplemented()

@@ -2,9 +2,8 @@ import asyncio
 import os
 import sys
 import umk.cli
-from umk.dotunimake import dotunimake as du
-from umk.dotunimake import states as dus
-from umk.dotunimake.instance import Instance
+from umk.dotunimake.instance import Require
+from umk.dotunimake.implementation import Instance
 from unicli.application import application
 from umk.globals import Global
 
@@ -15,13 +14,13 @@ Global.completion = os.environ.get('_UMK_COMPLETE')
 if Global.completion:
     os.environ.pop('_UMK_COMPLETE')
 
-state = dus.Ok()
+state = None
 try:
     state = Instance.load(
         root=Global.paths.unimake,
-        project=du.Require.OPT if Global.completion else du.Require.YES,
-        cli=du.Require.OPT if Global.completion else du.Require.YES,
-        remotes=du.Require.OPT,
+        project=Require.OPT if Global.completion else Require.YES,
+        cli=Require.OPT if Global.completion else Require.YES,
+        remotes=Require.OPT,
     )
 except Exception:
     Global.console.print_exception(show_locals=False, max_frames=1)

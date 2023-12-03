@@ -16,10 +16,10 @@ def register(creator):
 
 
 def find(name: str = "") -> Optional[Interface]:
-    # See implementation in umk/dotunimake.py
+    # See implementation in dotunimake/implementation.py
     raise NotImplemented()
 
 
 def iterate():
-    # See implementation in umk/dotunimake.py
+    # See implementation in dotunimake/implementation.py
     raise NotImplemented()

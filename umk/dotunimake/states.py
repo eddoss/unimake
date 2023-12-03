@@ -33,14 +33,15 @@ class Ok(State):
 
 class InternalError(State):
     @beartype
-    def __init__(self, description: str):
+    def __init__(self, script: str, description: str):
         super().__init__(code=-1, name="Internal error")
         self._description = description
+        self._script = script
 
     def print(self):
         desc = self._description if self._description else "No error description"
         Global.console.print(
-            f"[red bold]Unimake internal error!\n"
+            f"[red bold]Unimake internal error occurred when loaded '{self._script}'!\n"
             f"{desc}"
         )
 
