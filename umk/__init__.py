@@ -7,11 +7,11 @@ from .project import register
 
 # framework
 from . import remote
-from . import cli
 from . import adapters
 from . import project as projects
 from .project.base import get as project
 from .globals import Global
+from . import framework
 
 # system
 from asyncio import gather as parallel
