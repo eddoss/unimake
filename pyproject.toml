@@ -18,6 +18,7 @@ classifiers = [
 packages = [
     { include = "umk" },
     { include = "unimake" },
+    { include = "unicli" },
 ]
 
 [tool.poetry.dependencies]
@@ -37,7 +38,7 @@ line-length = 100
 
 
 [tool.poetry.scripts]
-umk = 'umk:entrypoint'
+umk = 'unicli:entrypoint'
 unimake = 'unimake:entrypoint'
 
 [tool.poetry.group.dev.dependencies]

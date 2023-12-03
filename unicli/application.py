@@ -110,6 +110,3 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
 @application.command(name='help', help="Display help message", section=DefaultSection)
 def display_help_message():
     Helper.render(UniInstance.project, RegisteredSections)
-
-
-cmd = application.command

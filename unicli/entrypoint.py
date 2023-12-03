@@ -1,12 +1,15 @@
 import asyncio
 import os
 import sys
+import umk.cli
 from umk.dotunimake import dotunimake as du
 from umk.dotunimake import states as dus
-from umk.dotunimake.instance import Instance as UniInstance
-from umk.cli.main import application
+from umk.dotunimake.instance import Instance
+from unicli.application import application
 from umk.globals import Global
 
+
+umk.cli.cmd = application.command
 
 Global.completion = os.environ.get('_UMK_COMPLETE')
 if Global.completion:
@@ -14,7 +17,7 @@ if Global.completion:
 
 state = dus.Ok()
 try:
-    state = UniInstance.load(
+    state = Instance.load(
         root=Global.paths.unimake,
         project=du.Require.OPT if Global.completion else du.Require.YES,
         cli=du.Require.OPT if Global.completion else du.Require.YES,
