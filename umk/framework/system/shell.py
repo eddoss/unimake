@@ -6,7 +6,7 @@ from asyncio import subprocess as async_subprocess
 from beartype.typing import Union, Optional, Iterable
 from beartype import beartype
 from pathlib import Path
-from umk.framework import env
+from umk.framework.system import environs as env
 from umk.globals import Global
 
 

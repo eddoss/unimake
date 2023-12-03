@@ -5,8 +5,8 @@ from pathlib import Path
 from beartype import beartype
 from beartype.typing import Optional
 from umk.globals import Global
-from umk.remote.interface import Interface, Property
-from umk.framework import env as envs
+from umk.framework.remote.interface import Interface, Property
+from umk.framework.system import environs as envs
 from umk.framework.system.shell import Shell
 from paramiko import util as paramiko_util
 

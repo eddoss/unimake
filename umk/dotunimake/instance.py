@@ -1,14 +1,14 @@
 import copy
 import dotenv
 import sys
-import umk.remote
+from umk import framework
+from umk.framework.remote.registerer import Registerer as RemoteInterfaceRegisterer
 from enum import Enum
 from pathlib import Path
 from importlib import util as importer
 from umk.globals import Global
 from umk.project.base import Project
 from umk.project.base import Registerer as ProjectRegisterer
-from umk.remote.registerer import Registerer as RemoteInterfaceRegisterer
 from beartype.typing import Optional
 from umk.dotunimake import states
 
@@ -22,16 +22,16 @@ class Require(Enum):
 class Containers:
     def __init__(self):
         self.project: Optional[Project] = None
-        self.remotes: dict[str, umk.remote.Interface] = {}
+        self.remotes: dict[str, framework.remote.Interface] = {}
 
 
-class ProjectInstance:
+class DotInstance:
     @property
     def project(self) -> Optional[Project]:
         return self._containers.project
 
     @property
-    def remotes(self) -> dict[str, umk.remote.Interface]:
+    def remotes(self) -> dict[str, framework.remote.Interface]:
         return self._containers.remotes
 
     def __init__(self):
@@ -121,10 +121,10 @@ class ProjectInstance:
         module = self._modules.get('remotes')
 
         # Find all and collect all remote interface registerer
-        default: Optional[umk.remote.Interface] = None
+        default: Optional[framework.remote.Interface] = None
         for _, value in module.__dict__.items():
             if issubclass(type(value), RemoteInterfaceRegisterer):
-                impl: umk.remote.Interface = copy.deepcopy(value.instance)
+                impl: framework.remote.Interface = copy.deepcopy(value.instance)
                 if impl.name not in self._containers.remotes:
                     if not default and impl.default:
                         default = impl

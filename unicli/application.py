@@ -3,17 +3,16 @@ import asyncclick
 from rich.table import Table
 from umk.globals import Global
 from umk.project.base import Project
-from umk.framework.cli import Section
+from umk import framework
 from umk.dotunimake.implementation import Instance
-import umk.remote
 
-Sections = dict[Section, list[asyncclick.Command]]
-DefaultSection = Section(name='Default', description='Default commands')
+Sections = dict[framework.cli.Section, list[asyncclick.Command]]
+DefaultSection = framework.cli.Section(name='Default', description='Default commands')
 RegisteredSections: Sections = {DefaultSection: []}
 
 
 class Command(asyncclick.Command):
-    def __init__(self, section: Section = DefaultSection, *args, **kwargs) -> None:
+    def __init__(self, section: framework.cli.Section = DefaultSection, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         global RegisteredSections
         if section not in RegisteredSections:
@@ -80,7 +79,7 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
 
     # Find remote environment if specified
 
-    rem = umk.remote.find("" if default_remote else specific_remote)
+    rem = framework.remote.find("" if default_remote else specific_remote)
     if default_remote and not rem:
         Global.console.print(
             '[bold red]Failed to find default remote environment! '

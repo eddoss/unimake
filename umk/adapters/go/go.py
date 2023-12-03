@@ -1,10 +1,10 @@
 from beartype import beartype
 from beartype.typing import Optional
 from pathlib import Path
-from umk.framework import Environs
+from umk.framework.system import Environs
 from umk.framework.system.shell import Shell
-from umk.adapters.golang.build import BuildArgs
-from umk.adapters.golang.mod import Mod
+from umk.adapters.go.build import BuildArgs
+from umk.adapters.go.mod import Mod
 
 
 class Go:

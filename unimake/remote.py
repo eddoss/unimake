@@ -2,7 +2,7 @@ import sys
 import asyncclick as click
 from asyncclick import Context
 from rich.table import Table
-import umk.remote
+from umk import framework
 from umk.globals import Global
 from umk.dotunimake.instance import Require
 from umk.dotunimake.implementation import Instance
@@ -43,7 +43,7 @@ async def remote(ctx: click.Context, name: str):
     if ctx.invoked_subcommand in ('ls', ''):
         await ctx.invoke(ls)
 
-    ctx.obj["instance"] = umk.remote.find(name)
+    ctx.obj["instance"] = framework.remote.find(name)
     if not ctx.obj["instance"]:
         if not name:
             Global.console.print(
@@ -57,31 +57,31 @@ async def remote(ctx: click.Context, name: str):
             )
 
 
-@remote.command(name='build', help=umk.remote.Interface.build.__doc__)
+@remote.command(name='build', help=framework.remote.Interface.build.__doc__)
 @click.pass_context
 def build(ctx: click.Context):
     ctx.obj.get("instance").build()
 
 
-@remote.command(name='destroy', help=umk.remote.Interface.destroy.__doc__)
+@remote.command(name='destroy', help=framework.remote.Interface.destroy.__doc__)
 @click.pass_context
 def destroy(ctx: click.Context):
     ctx.obj.get("instance").destroy()
 
 
-@remote.command(name='up', help=umk.remote.Interface.up.__doc__)
+@remote.command(name='up', help=framework.remote.Interface.up.__doc__)
 @click.pass_context
 def up(ctx: click.Context):
     ctx.obj.get("instance").up()
 
 
-@remote.command(name='down', help=umk.remote.Interface.down.__doc__)
+@remote.command(name='down', help=framework.remote.Interface.down.__doc__)
 @click.pass_context
 def down(ctx: click.Context):
     ctx.obj.get("instance").down()
 
 
-@remote.command(name='shell', help=umk.remote.Interface.shell.__doc__)
+@remote.command(name='shell', help=framework.remote.Interface.shell.__doc__)
 @click.pass_context
 def shell(ctx: click.Context):
     ctx.obj.get("instance").shell()
@@ -93,7 +93,7 @@ def ls():
     table.add_column("Name", justify="left", style="", no_wrap=True)
     table.add_column("Default", justify="center", style="", no_wrap=True)
     table.add_column("Description", justify="left", style="", no_wrap=True)
-    for rem in umk.remote.iterate():
+    for rem in framework.remote.iterate():
         default = ''
         if rem.default:
             default = 'x'
@@ -104,21 +104,21 @@ def ls():
     sys.exit()
 
 
-@remote.command(name='exec', help=umk.remote.Interface.execute.__doc__)
+@remote.command(name='exec', help=framework.remote.Interface.execute.__doc__)
 @click.argument('program', required=True, nargs=1)
 @click.argument('arguments', required=False, nargs=-1)
 @click.pass_context
 def execute(ctx: Context, program: str, arguments: tuple[str]):
     cmd = list(arguments)
     cmd.insert(0, program)
-    rem: umk.remote.Interface = ctx.obj.get("instance")
+    rem: framework.remote.Interface = ctx.obj.get("instance")
     rem.execute(cmd=cmd)
 
 
 @remote.command(name='info', help='Show remote environment details')
 @click.pass_context
 def info(ctx: Context):
-    rem: umk.remote.Interface = ctx.obj.get("instance")
+    rem: framework.remote.Interface = ctx.obj.get("instance")
     table = Table(show_header=True, show_edge=True, show_lines=True)
     table.add_column("Name", justify="left", style="", no_wrap=True)
     table.add_column("Description", justify="left", style="", no_wrap=True)
@@ -133,22 +133,22 @@ def info(ctx: Context):
     Global.console.print(table)
 
 
-@remote.command(name='upload', help=umk.remote.Interface.upload.__doc__)
+@remote.command(name='upload', help=framework.remote.Interface.upload.__doc__)
 @click.argument('items', required=False, nargs=-1)
 @click.pass_context
 def upload(ctx: Context, items: tuple[str]):
-    rem: umk.remote.Interface = ctx.obj.get("instance")
+    rem: framework.remote.Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:
         return
     rem.upload(paths)
 
 
-@remote.command(name='download', help=umk.remote.Interface.download.__doc__)
+@remote.command(name='download', help=framework.remote.Interface.download.__doc__)
 @click.argument('items', required=False, nargs=-1)
 @click.pass_context
 def download(ctx: Context, items: tuple[str]):
-    rem: umk.remote.Interface = ctx.obj.get("instance")
+    rem: framework.remote.Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:
         return

@@ -30,15 +30,18 @@ def foo(): ...
 def bar(): ...
 ```
 The `cli.py` contains just two command `foo` and `bar`, this command has no descriptions, options, arguments or 
-something else. You can call this commands by `umk`. 
+something else. You can call this commands by `umk`.
+
 ```python
 # remotes.py 
 
-from umk import remote
+from umk.framework import remote
+
 
 @remote.register
 def development():
     return remote.DockerContainer(name="dev", container='app-dev', default=True)
+
 
 @remote.register
 def production():

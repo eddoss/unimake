@@ -1,6 +1,6 @@
+import asyncio
 import beartype
 beartype.BeartypeConf.is_color = False
-import asyncio
 from umk.globals import Global
 from unimake import application
 

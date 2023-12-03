@@ -1,5 +1,5 @@
 from beartype.typing import Optional, Type, Callable, Union
-from .interface import Interface
+from umk.framework.remote import Interface
 
 
 class Registerer:

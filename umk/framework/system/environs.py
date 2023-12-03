@@ -1,12 +1,10 @@
 import os
-from beartype.typing import Optional
-
-from beartype.typing import Dict
 from beartype import beartype
+from beartype.typing import Optional
 
 
 @beartype
-def prepend(envs: Dict[str, str], name: str, *values: str) -> None:
+def prepend(envs: dict[str, str], name: str, *values: str) -> None:
     nonempty = filter(None, values)
     value = os.pathsep.join(nonempty)
     if name in envs and envs[name]:
@@ -15,7 +13,7 @@ def prepend(envs: Dict[str, str], name: str, *values: str) -> None:
 
 
 @beartype
-def append(envs: Dict[str, str], name: str, *values: str) -> None:
+def append(envs: dict[str, str], name: str, *values: str) -> None:
     nonempty = filter(None, values)
     appended = os.pathsep.join(nonempty)
     if name in envs and envs[name]:
