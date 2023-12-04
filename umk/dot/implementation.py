@@ -1,11 +1,11 @@
 import umk
 from umk import framework
 from umk.framework.project.base import Project
-from umk.dotunimake.instance import DotInstance
+from umk.dot.instance import Dot
 from beartype.typing import Optional
 
 
-Instance: Optional[DotInstance] = DotInstance()
+Instance: Optional[Dot] = Dot()
 
 
 # ####################################################################################

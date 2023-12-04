@@ -4,5 +4,5 @@ from asyncclick import argument as arg
 
 
 def cmd(*args, **kwargs):
-    # See implementation in unicli/application.py
+    # See implementation in tools/umk/entrypoint.py
     raise NotImplemented()

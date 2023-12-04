@@ -161,5 +161,5 @@ def register(creator):
 
 
 def get() -> Optional[Project]:
-    # See implementation in dotunimake/implementation.py
+    # See implementation in dot/implementation.py
     raise NotImplemented()

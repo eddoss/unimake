@@ -4,7 +4,7 @@ import sys
 import beartype
 beartype.BeartypeConf.is_color = False
 from umk.globals import Global
-from unimake import application
+from umk.tools.unimake import application
 
 
 try:

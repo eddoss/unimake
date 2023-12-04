@@ -1,11 +1,8 @@
 import asyncio
 import os
 import sys
-from umk import framework
-from umk.dotunimake.instance import Require
-from umk.dotunimake.implementation import Instance
-from unicli.application import application
-from umk.globals import Global
+from umk import framework, dot, Global
+from umk.tools.umk.application import application
 
 
 framework.cli.cmd = application.command
@@ -16,11 +13,11 @@ if Global.completion:
 
 state = None
 try:
-    state = Instance.load(
+    state = dot.Instance.load(
         root=Global.paths.unimake,
-        project=Require.OPT if Global.completion else Require.YES,
-        cli=Require.OPT if Global.completion else Require.YES,
-        remotes=Require.OPT,
+        project=dot.OPT if Global.completion else dot.YES,
+        cli=dot.OPT if Global.completion else dot.YES,
+        remotes=dot.OPT,
     )
 except Exception:
     Global.console.print_exception(show_locals=False, max_frames=1)

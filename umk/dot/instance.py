@@ -10,7 +10,7 @@ from umk.globals import Global
 from umk.framework.project.base import Project
 from umk.framework.project.base import Registerer as ProjectRegisterer
 from beartype.typing import Optional
-from umk.dotunimake import states
+from umk.dot import states
 
 
 class Require(Enum):
@@ -19,13 +19,18 @@ class Require(Enum):
     OPT = 2     # required if exists
 
 
+OPT = Require.OPT
+YES = Require.YES
+NO = Require.NO
+
+
 class Containers:
     def __init__(self):
         self.project: Optional[Project] = None
         self.remotes: dict[str, framework.remote.Interface] = {}
 
 
-class DotInstance:
+class Dot:
     @property
     def project(self) -> Optional[Project]:
         return self._containers.project
