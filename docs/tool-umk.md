@@ -64,5 +64,5 @@ The `remotes.py` contains two remote environments where you can execute command:
 At first of all `umk` check whether `${PWD}/.unimake` exists and this structure is ok. It will show an error message,
 if something wrong. If you try to call in the remote environment, but it is not exists `umk` will error.
 
-![umk-exec-flow.svg](diagrams%2Fumk-exec-flow.svg)
+![umk-exec-flow.svg](diagrams/umk-exec-flow.svg)
 
