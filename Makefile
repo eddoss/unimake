@@ -52,6 +52,8 @@ export PROJECT_NAME           := unimake
 export PROJECT_NAME_SHORT     := umk
 export PROJECT_ROOT           := $(CURDIR)
 export PROJECT_TESTS          := $(PROJECT_ROOT)/tests
+export PROJECT_DEVELOPMENT    := $(PROJECT_ROOT)/development
+export PROJECT_EXAMPLES       := $(PROJECT_ROOT)/examples
 export PROJECT_VERSION        := $(shell git describe --abbrev=0 --tags)
 export PROJECT_VERSION_RAW    := $(subst v,,$(PROJECT_VERSION))
 
@@ -86,6 +88,12 @@ install: package/build package/install
 .PHONY: uninstall
 uninstall: package/uninstall
 
+.PHONY: dev/up
+dev/up: dev/remote/ssh
+
+.PHONY: dev/down
+dev/down: dev/remote/ssh/stop dev/base/destroy
+
 # ################################################################################################ #
 # Python package
 # ################################################################################################ #
@@ -111,19 +119,6 @@ package/install: package/uninstall
 .PHONY: package/uninstall
 package/uninstall:
 	@pip uninstall --yes umk
-
-# ################################################################################################ #
-# Tests
-# ################################################################################################ #
-
-.PHONY: test/ssh-server
-test/ssh-server: test/ssh-server/stop
-	@docker compose -f $(PROJECT_TESTS)/ssh-server/docker-compose.yaml up -d --build
-	@echo 'SSH server run in container "unimake.ssh" with IP 171.16.14.2'
-
-.PHONY: test/ssh-server/stop
-test/ssh-server/stop:
-	@docker compose -f $(PROJECT_TESTS)/ssh-server/docker-compose.yaml down --remove-orphans --rmi all
 
 # ################################################################################################ #
 # Maintenance
@@ -155,3 +150,44 @@ project/format:
 	@poetry run black $(PROJECT_ROOT)/umk
 	@echo "Format unimake"
 	@poetry run black $(PROJECT_ROOT)/unimake
+
+# ################################################################################################ #
+# Development
+# ################################################################################################ #
+
+export DEV_BASE_OS         ?= ubuntu
+export DEV_BASE_OS_VERSION ?= latest
+export DEV_BASE_IMAGE      := dev.$(PROJECT_NAME).base:$(PROJECT_VERSION)
+export DEV_BASE_IMAGE_DIR  := $(PROJECT_DEVELOPMENT)/linux/$(DEV_BASE_OS)
+
+.PHONY: dev/base
+dev/base: dev/base/destroy
+	@docker build \
+		--tag $(DEV_BASE_IMAGE) \
+		--build-arg OS_VERSION=$(DEV_BASE_OS_VERSION) \
+		--build-arg USER_ID=$(shell id -u) \
+		--build-arg USER_NAME=$(USER) \
+		--build-arg GROUP_ID=$(shell id -g) \
+		--build-arg GROUP_NAME=$(USER) \
+		--file $(DEV_BASE_IMAGE_DIR)/Dockerfile $(DEV_BASE_IMAGE_DIR)
+
+.PHONY: dev/base/destroy
+dev/base/destroy:
+	@docker image ls -q --filter "reference=$(DEV_BASE_IMAGE)" | grep -q . && docker image rm -f $(DEV_BASE_IMAGE) || true
+
+# ################################################################################################ #
+# Development remotes
+# ################################################################################################ #
+
+.PHONY: dev/remote/ssh
+dev/remote/ssh: dev/remote/ssh/stop
+	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml up -d --build
+	@echo 'Test SSH server run in container "dev.unimake.ssh"'
+	@echo " - ip:   171.16.14.2"
+	@echo " - port: 22"
+	@echo " - user: unimake"
+	@echo " - pass: unimake"
+
+.PHONY: dev/remote/ssh/stop
+dev/remote/ssh/stop:
+	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml down --remove-orphans --rmi all

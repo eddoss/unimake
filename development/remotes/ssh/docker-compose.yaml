@@ -1,10 +1,10 @@
 services:
   ssh:
-    image: unimake.ssh
+    image: dev.unimake.ssh
     build:
       context: .
       dockerfile: ./Dockerfile
-    container_name: unimake.ssh
+    container_name: dev.unimake.ssh
     networks:
       unimake.ssh:
         ipv4_address: 171.16.14.2
