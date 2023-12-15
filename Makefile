@@ -88,11 +88,11 @@ install: package/build package/install
 .PHONY: uninstall
 uninstall: package/uninstall
 
-.PHONY: dev/up
-dev/up: dev/remote/ssh
+.PHONY: dev
+dev: dev/destroy dev/remote/ssh
 
-.PHONY: dev/down
-dev/down: dev/remote/ssh/stop dev/base/destroy
+.PHONY: dev/destroy
+dev/destroy: dev/remote/ssh/stop dev/base/destroy
 
 # ################################################################################################ #
 # Python package
@@ -155,7 +155,7 @@ project/format:
 # Development
 # ################################################################################################ #
 
-export DEV_BASE_OS         ?= ubuntu
+export DEV_BASE_OS         ?= alpine
 export DEV_BASE_OS_VERSION ?= latest
 export DEV_BASE_IMAGE      := dev.$(PROJECT_NAME).base:$(PROJECT_VERSION)
 export DEV_BASE_IMAGE_DIR  := $(PROJECT_DEVELOPMENT)/linux/$(DEV_BASE_OS)
@@ -169,7 +169,7 @@ dev/base: dev/base/destroy
 		--build-arg USER_NAME=$(USER) \
 		--build-arg GROUP_ID=$(shell id -g) \
 		--build-arg GROUP_NAME=$(USER) \
-		--file $(DEV_BASE_IMAGE_DIR)/Dockerfile $(DEV_BASE_IMAGE_DIR)
+		--file $(DEV_BASE_IMAGE_DIR)/Dockerfile $(PROJECT_ROOT)
 
 .PHONY: dev/base/destroy
 dev/base/destroy:
