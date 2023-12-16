@@ -88,11 +88,11 @@ install: package/build package/install
 .PHONY: uninstall
 uninstall: package/uninstall
 
-.PHONY: dev
-dev: dev/destroy dev/remote/ssh
+.PHONY: dev/up
+dev/up: dev/down dev/image dev/image/golang remote/ssh
 
-.PHONY: dev/destroy
-dev/destroy: dev/remote/ssh/stop dev/base/destroy
+.PHONY: dev/down
+dev/down: remote/ssh/stop dev/image/destroy
 
 # ################################################################################################ #
 # Python package
@@ -155,32 +155,46 @@ project/format:
 # Development
 # ################################################################################################ #
 
-export DEV_BASE_OS         ?= alpine
-export DEV_BASE_OS_VERSION ?= latest
-export DEV_BASE_IMAGE      := dev.$(PROJECT_NAME).base:$(PROJECT_VERSION)
-export DEV_BASE_IMAGE_DIR  := $(PROJECT_DEVELOPMENT)/linux/$(DEV_BASE_OS)
+export DEV_IMAGE_BASE   := dev.$(PROJECT_NAME).base
+export DEV_IMAGE_GOLANG := dev.$(PROJECT_NAME).golang
 
-.PHONY: dev/base
-dev/base: dev/base/destroy
+.PHONY: dev/image
+dev/image: dev/image/base dev/image/golang
+
+.PHONY: dev/image/destroy
+dev/image/destroy: dev/image/base/destroy dev/image/golang/destroy
+
+.PHONY: dev/image/base
+dev/image/base: dev/image/base/destroy
 	@docker build \
-		--tag $(DEV_BASE_IMAGE) \
-		--build-arg OS_VERSION=$(DEV_BASE_OS_VERSION) \
+		--tag $(DEV_IMAGE_BASE) \
 		--build-arg USER_ID=$(shell id -u) \
 		--build-arg USER_NAME=$(USER) \
 		--build-arg GROUP_ID=$(shell id -g) \
 		--build-arg GROUP_NAME=$(USER) \
-		--file $(DEV_BASE_IMAGE_DIR)/Dockerfile $(PROJECT_ROOT)
+		--file $(PROJECT_DEVELOPMENT)/images/base.dockerfile $(PROJECT_ROOT)
 
-.PHONY: dev/base/destroy
-dev/base/destroy:
-	@docker image ls -q --filter "reference=$(DEV_BASE_IMAGE)" | grep -q . && docker image rm -f $(DEV_BASE_IMAGE) || true
+.PHONY: dev/image/base/destroy
+dev/image/base/destroy:
+	@docker image ls -q --filter "reference=$(DEV_IMAGE_BASE)" | grep -q . && docker image rm -f $(DEV_IMAGE_BASE) || true
+
+.PHONY: dev/image/golang
+dev/image/golang: dev/image/golang/destroy
+	@docker build \
+		--tag $(DEV_IMAGE_GOLANG) \
+		--build-arg BASE=$(DEV_IMAGE_BASE) \
+		--file $(PROJECT_DEVELOPMENT)/images/golang.dockerfile $(PROJECT_ROOT)
+
+.PHONY: dev/image/golang/destroy
+dev/image/golang/destroy:
+	@docker image ls -q --filter "reference=$(DEV_IMAGE_GOLANG)" | grep -q . && docker image rm -f $(DEV_IMAGE_GOLANG) || true
 
 # ################################################################################################ #
 # Development remotes
 # ################################################################################################ #
 
-.PHONY: dev/remote/ssh
-dev/remote/ssh: dev/remote/ssh/stop
+.PHONY: remote/ssh
+remote/ssh: remote/ssh/stop
 	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml up -d --build
 	@echo 'Test SSH server run in container "dev.unimake.ssh"'
 	@echo " - ip:   171.16.14.2"
@@ -188,6 +202,6 @@ dev/remote/ssh: dev/remote/ssh/stop
 	@echo " - user: unimake"
 	@echo " - pass: unimake"
 
-.PHONY: dev/remote/ssh/stop
-dev/remote/ssh/stop:
+.PHONY: remote/ssh/stop
+remote/ssh/stop:
 	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml down --remove-orphans --rmi all
