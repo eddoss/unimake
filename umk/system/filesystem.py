@@ -109,13 +109,15 @@ def copy(
      - copy(Path('./main.py'), Path('./hello.py'))
      - copy(Path('./hellp.py'), Path('./some/dir/hello.py'))
     """
-    if not dst.exists():
-        os.mkdir(dst)
+#    if not dst.exists():
+#        p = Permissions(user='rwx', group=group, other=mode)
+#        FS.makedirs(dst, permissions=p)
     if os.access(dst, os.W_OK):
-        cp.copy_file(src, dst, preserve_time=timestamp)
-        Permissions(group=group, other=mode)
+        shutil.copyfile(src, dst)
     else:
-        pass
+        os.makedirs(dst)
+        shutil.copyfile(src, dst)
+    pass
 
 
 @overload
@@ -140,13 +142,20 @@ def copy(
     Examples
      - copy(local(..), 'some/file.txt', ftp(..), 'file.txt')
     """
-#    if not dst.exists():
-#        os.mkdir(dst)
-    if dst.is_writable:
-        cp.copy_fs(src[0], dst[0], preserve_time=timestamp)
-        Permissions(group=group, other=mode)
+
+#    if not FS.isdir(dst[1]):
+#        p = Permissions(user='rwx', group=group, other=mode)
+#        FS.makedirs(path=dst[1], permissions=p)
+    if os.path.isdir(src[1]):
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        cp.copy_dir(src[0], src[1], dst[0], dst[1], preserve_time=timestamp)
     else:
-        pass
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        cp.copy_file(src[0], src[1], dst[0], dst[1], preserve_time=timestamp)
+#    cp.copy_fs(src[0], dst[0], on_copy=(src[0], src[1], dst[0], dst[1]), preserve_time=timestamp)
+    pass
 
 
 @overload
@@ -155,8 +164,7 @@ def copy(
     dst: tuple[FS, str],
     timestamp: bool = True,
     group: str = '',
-    mode: str = '',
-    owner: str = ''
+    mode: str = ''
 ):
     """
     Copies specific local file/directory to destination filesystem.
@@ -167,11 +175,21 @@ def copy(
     :param timestamp: Preserve timestamp or not
     :param group: Destination file mode.
     :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
      - copy('./some/file.txt', (ftp(..), 'description.ini'))
     """
+
+    if os.path.isfile(src):
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        cp.copy_file(local, src, dst[0], dst[1], preserve_time=timestamp)
+    elif os.path.isdir(src):
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        cp.copy_dir(local, src, dst[0], dst[1], preserve_time=timestamp)
+    else:
+        print("Object not found")
     pass
 
 
@@ -181,8 +199,7 @@ def copy(
     dst: Union[str, Path],
     timestamp: bool = True,
     group: str = '',
-    mode: str = '',
-    owner: str = ''
+    mode: str = ''
 ):
     """
     Copies specific file or directory from source filesystem to local file.
@@ -193,11 +210,20 @@ def copy(
     :param timestamp: Preserve timestamp or not
     :param group: Destination file mode.
     :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
      - copy((ftp(..), 'description.ini'), './some/file.txt')
     """
+    if os.path.isfile(src[1]):
+        if not os.path.exists(dst):
+            os.makedirs(dst[1])
+        cp.copy_file(src[0], src[1], local, dst, preserve_time=timestamp)
+    elif os.path.isdir(src[1]):
+        if not os.path.exists(dst):
+            os.makedirs(dst[1])
+        cp.copy_dir(src[0], src[1], local, dst, preserve_time=timestamp)
+    else:
+        print("Object not found")
     pass
 
 
@@ -207,9 +233,7 @@ def copy(
     dst: FS,
     wlk: Walker,
     timestamp: bool = True,
-    group: str = '',
-    mode: str = '',
-    owner: str = ''
+    group: str = ''
 ):
     """
     Copies walker items from source FS to destination FS.
@@ -221,13 +245,15 @@ def copy(
     :param wlk: Walker from source filesystem
     :param timestamp: Preserve timestamp or not
     :param group: Destination file mode.
-    :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples:
     ::
      - copy(local(..), ftp(..), walker(..))
     """
+#    if not FS.isdir(dst):
+#        p = Permissions(user='rwx', group=group, other="r--")
+#        FS.makedirs(path=dst[1], permissions=p)
+    cp.copy_fs(src, dst, walker=wlk, preserve_time=timestamp)
     pass
 
 
@@ -248,12 +274,16 @@ def move(
      - move(Path('./main.py'), Path('./hello.py'))
      - move(Path('./hellp.py'), Path('./some/dir/hello.py'))
     """
-    if not dst.exists():
-        os.mkdir(dst)
-    if os.access(dst, os.W_OK):
-        mv.move_file(src[0], src[1], dst[0], dst[1])
+    if os.path.isfile(src):
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+        mv.move_file(local, src, local, dst)
+    elif os.path.isdir(src):
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+        mv.move_dir(local, src, local, dst)
     else:
-        pass
+        print("Object not found")
 
 
 @overload
@@ -271,11 +301,16 @@ def move(
     Examples
      - move('./some/file.txt', (ftp(..), 'description.ini'))
     """
- #   if not dst.exists():
- #       os.mkdir(dst)
- #   if os.access(dst, os.W_OK):
-    mv.move_fs(src, dst[0])
-#    else:
+    if os.path.isfile(src):
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        cp.copy_file(local, src, dst[0], dst[1])
+    elif os.path.isdir(src[1]):
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        cp.copy_dir(local, src, dst[0], dst[1])
+    else:
+        print("Object not found")
     pass
 
 
@@ -294,8 +329,16 @@ def move(
     Examples
      - move((ftp(..), 'description.ini'), './some/file.txt')
     """
-    mv.move_fs(src[0], dst)
-    pass
+    if os.path.isfile(src[1]):
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+        mv.move_file(src[0], src[1], local, dst)
+    elif os.path.isdir(src[1]):
+        if not os.path.exists(dst):
+            os.makedirs(dst)
+        mv.move_dir(src[0], src[1], local, dst)
+    else:
+        print("Object not found")
 
 
 @overload
@@ -313,9 +356,16 @@ def move(
     Examples
      - move(local(..), 'some/file.txt', ftp(..), 'file.txt')
     """
-    FS
-    mv.move_fs(src[0], dst[0])
-    pass
+    if os.path.isfile(src[1]):
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        mv.move_file(src[0], src[1], dst[0], dst[1])
+    elif os.path.isdir(src[1]):
+        if not os.path.exists(dst[1]):
+            os.makedirs(dst[1])
+        mv.move_dir(src[0], src[1], dst[0], dst[1])
+    else:
+        print("Object not found")
 
 
 @overload
@@ -335,7 +385,7 @@ def move(
     Examples:
      - move(local(..), ftp(..), walker(..))
     """
-    mv.move_fs(src, dst,)
+    mv.move_fs(src, dst)
     pass
 
 
