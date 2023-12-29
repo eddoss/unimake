@@ -1,146 +1,28 @@
 import os
+from pathlib import Path
 from textwrap import dedent
+
 from beartype import beartype
 from beartype.typing import Iterable
-from pathlib import Path
-from umk.globals import Global
+from pydantic import Field
+
+from umk.framework.remote.interface import Interface
 from umk.framework.system import environs as envs
 from umk.framework.system.shell import Shell
-from umk.framework.remote.interface import Interface, Property
-
-
-class Container(Interface):
-    @property
-    def cmd(self) -> list[str]:
-        return self._cmd
-
-    @property
-    def container(self) -> str:
-        return self._container
-
-    @container.setter
-    @beartype
-    def container(self, value: str):
-        self._container = value
-        self._details['container'].value = self._container
-
-    @property
-    def sh(self) -> str:
-        return self._sh
-
-    @sh.setter
-    @beartype
-    def sh(self, value: str):
-        self._sh = value
-        self._details['shell'].value = self._sh
-
-    @beartype
-    def __init__(
-        self,
-        name: str = "",
-        description: str = "Docker container environment",
-        default: bool = False,
-        container: str = "",
-        shell: str = "sh",
-        cmd: str = "docker"
-    ):
-        super().__init__(name=name, default=default, description=description)
-        self._container = container
-        self._sh = shell
-        self._cmd = [cmd]
-        self._details['shell'] = Property('shell', 'Default shell name', self.sh)
-        self._details['command'] = Property('command', 'Docker command', self.cmd)
-        self._details['container'] = Property('container', 'Default container name', self.container)
-
-    @beartype
-    def shell(self, *args, **kwargs):
-        command = self.cmd.copy()
-        command.extend(["exec", "-i", "-t", self.container, self.sh])
-        Shell(command, name=self.name).sync()
-
-    @beartype
-    def execute(self, cmd: list[str], cwd: str = "", env: envs.Optional = None, *args, **kwargs):
-        command = self._cmd.copy()
-        command.extend(["exec", "-t"])
-        if cwd:
-            command.extend(["-w", cwd])
-        if env:
-            for k, v in env.items():
-                command.extend(["-e", f"{k}={v}"])
-        command.append(self._container)
-        command.extend(cmd)
-        Shell(command, name=self.name).sync()
-
-    @beartype
-    def upload(self, paths: dict[str, str], *args, **kwargs):
-        if not paths:
-            return
-        for src, dst in paths.items():
-            Global.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
-            cmd = self.cmd
-            cmd.extend(['container', 'cp', '-q', src, f"{self.container}:{dst}"])
-            Shell(command=cmd, name=self.name, log=False).sync()
-
-    @beartype
-    def download(self, paths: dict[str, str], *args, **kwargs):
-        if not paths:
-            return
-        for src, dst in paths.items():
-            Global.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
-            dst = Path(dst).expanduser().resolve().absolute()
-            if not dst.parent.exists():
-                os.makedirs(dst.parent)
-            cmd = self.cmd
-            cmd.extend(['container', 'cp', '-q', f"{self.container}:{src}", dst.as_posix()])
-            Shell(command=cmd, name=self.name, log=False).sync()
 
 
 class Compose(Interface):
-    @property
-    def cmd(self) -> list[str]:
-        result = self._cmd.copy()
-        result.extend(["--file", self._file.as_posix()])
-        return result
-
-    @property
-    def service(self) -> str:
-        return self._service
-
-    @service.setter
-    @beartype
-    def service(self, value: str):
-        self._service = value
-        self._details['service'].value = self._service
-
-    @property
-    def file(self) -> Path:
-        return self._file
-
-    @file.setter
-    @beartype
-    def file(self, value: Path):
-        self._file = value
-        self._details['file'].value = self._file
-
-    @property
-    def arguments(self) -> dict[str, str]:
-        return self._args
-
-    @arguments.setter
-    @beartype
-    def arguments(self, value: dict[str, str]):
-        self._args = value
-        self._details['arguments'].value = self._args
-
-    @property
-    def sh(self) -> str:
-        return self._sh
-
-    @sh.setter
-    @beartype
-    def sh(self, value: str):
-        self._sh = value
-        self._details['shell'].value = self._sh
+    service: str = Field(
+        default="",
+        description="Target compose service"
+    )
+    file: Path = Field(
+        default=Path(),
+        description="Compose file path"
+    )
+    arguments: dict[str, str] = Field(
+        default_factory=dict,
+    )
 
     @beartype
     def __init__(

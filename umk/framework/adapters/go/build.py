@@ -1,8 +1,10 @@
-from beartype.typing import List, Union
-from beartype import beartype
-from pathlib import Path
+from beartype.typing import List
 
-Source = Union[str, Path]
+from umk import core
+from umk.framework.filesystem import Path
+
+
+Source = str | Path
 
 
 class BuildFlags:
@@ -11,7 +13,7 @@ class BuildFlags:
         return self._go
 
     @go.setter
-    @beartype
+    @core.typeguard
     def go(self, value: List[str]):
         self._go = value
 
@@ -20,7 +22,7 @@ class BuildFlags:
         return self._gc
 
     @gc.setter
-    @beartype
+    @core.typeguard
     def gc(self, value: List[str]):
         self._gc = value
 
@@ -29,7 +31,7 @@ class BuildFlags:
         return self._ld
 
     @ld.setter
-    @beartype
+    @core.typeguard
     def ld(self, value: List[str]):
         self._ld = value
 
@@ -41,7 +43,7 @@ class BuildFlags:
 
 class BuildArgs:
     @staticmethod
-    @beartype
+    @core.typeguard
     def new(mode: str, output: Path = Path(), sources: List[Source] = None) -> 'BuildArgs':
         result = BuildArgs()
         result.output = output
@@ -62,7 +64,7 @@ class BuildArgs:
         return self._sources
 
     @sources.setter
-    @beartype
+    @core.typeguard
     def sources(self, value: List[Path]):
         self._sources = value
 
@@ -71,7 +73,7 @@ class BuildArgs:
         return self._output
 
     @output.setter
-    @beartype
+    @core.typeguard
     def output(self, value: Path):
         self._output = value
 
@@ -80,7 +82,7 @@ class BuildArgs:
         return self._flags
 
     @flags.setter
-    @beartype
+    @core.typeguard
     def flags(self, value: BuildFlags):
         self._flags = value
 

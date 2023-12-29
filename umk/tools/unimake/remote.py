@@ -3,7 +3,7 @@ import asyncclick as click
 from asyncclick import Context
 from rich.table import Table
 from umk.tools.unimake import application
-from umk import dot, framework, Global
+from umk import dot, framework, globals
 
 
 @application.group(
@@ -21,12 +21,12 @@ async def remote(ctx: click.Context, name: str):
     # Load .unimake/remotes.py
     try:
         state = dot.Instance.load(
-            root=Global.paths.unimake,
+            root=globals.paths.unimake,
             remotes=dot.YES,
             project=dot.OPT,
         )
     except Exception as e:
-        Global.console.print(
+        globals.console.print(
             f"[bold red]Unimake error !\n"
             f"Failed to load .unimake/remotes.py: {e}"
         )
@@ -43,12 +43,12 @@ async def remote(ctx: click.Context, name: str):
     ctx.obj["instance"] = framework.remote.find(name)
     if not ctx.obj["instance"]:
         if not name:
-            Global.console.print(
+            globals.console.print(
                 "[bold yellow]Could not find default remote! "
                 "Please specify default remote in the '.unimake/remotes.py'"
             )
         else:
-            Global.console.print(
+            globals.console.print(
                 f"[bold yellow]Failed to find remote '{name}'! "
                 f"Please specify it in the '.unimake/remotes.py'"
             )
@@ -97,7 +97,7 @@ def ls():
             table.add_row(f"{rem.name}", default, rem.description, style="yellow bold")
         else:
             table.add_row(rem.name, default, rem.description)
-    Global.console.print(table)
+    globals.console.print(table)
     sys.exit()
 
 
@@ -122,12 +122,12 @@ def info(ctx: Context):
     table.add_column("Value", justify="left", style="", no_wrap=True)
     for _, prop in rem.details.items():
         table.add_row(prop.name, prop.description, str(prop.value))
-    Global.console.print(f"[bold yellow]\[NAME]")
-    Global.console.print(f"[bold]    {rem.name}")
-    Global.console.print(f"[bold yellow]\[DESCRIPTION]")
-    Global.console.print(f"[bold]    {rem.description or 'No description'}")
-    Global.console.print(f"[bold yellow]\[PROPERTIES]")
-    Global.console.print(table)
+    globals.console.print(f"[bold yellow]\[NAME]")
+    globals.console.print(f"[bold]    {rem.name}")
+    globals.console.print(f"[bold yellow]\[DESCRIPTION]")
+    globals.console.print(f"[bold]    {rem.description or 'No description'}")
+    globals.console.print(f"[bold yellow]\[PROPERTIES]")
+    globals.console.print(table)
 
 
 @remote.command(name='upload', help=framework.remote.Interface.upload.__doc__)
@@ -154,10 +154,10 @@ def download(ctx: Context, items: tuple[str]):
 
 def split(items: tuple[str]) -> dict[str, str]:
     def error():
-        Global.console.print("[bold red]Invalid upload/download item!")
-        Global.console.print("[bold red]Pattern")
-        Global.console.print("[bold red]    upload:   <local/file>:<remote/file>")
-        Global.console.print("[bold red]    download: <remote/file>:<local/file>")
+        globals.console.print("[bold red]Invalid upload/download item!")
+        globals.console.print("[bold red]Pattern")
+        globals.console.print("[bold red]    upload:   <local/file>:<remote/file>")
+        globals.console.print("[bold red]    download: <remote/file>:<local/file>")
     result = {}
     for item in items:
         if ':' not in item:

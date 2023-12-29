@@ -1,12 +1,11 @@
-from beartype.typing import Union
-from beartype import beartype
+from umk import core
 from umk.framework.filesystem.path import Path
 from umk.framework.filesystem.copy import copy
 from umk.framework.filesystem.factories import local
 
 
 class Installer:
-    @beartype
+    @core.typeguard
     def __init__(self, root: Path):
         self._root = local(root.expanduser().resolve().absolute().as_posix())
 
@@ -21,10 +20,10 @@ class Installer:
     def close(self):
         self._root.close()
 
-    @beartype
+    @core.typeguard
     def add(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         name: str = '',
         timestamp: bool = True,
         group: str = '',

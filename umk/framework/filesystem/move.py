@@ -1,18 +1,14 @@
+from fs.base import FS
+from fs.walk import Walker
+
+from umk import core
 from umk.framework.filesystem.path import Path
 
-from beartype.typing import Union
 
-from fs.walk import Walker
-from fs.base import FS
-from fs import move as mv
-
-from multimethod import overload
-
-
-@overload
+@core.overload
 def move(
-    src: Union[str, Path],
-    dst: Union[str, Path],
+    src: str | Path,
+    dst: str | Path,
 ):
     """
     Moves file or directory to destination path (on local filesystem).
@@ -29,9 +25,9 @@ def move(
     raise NotImplemented()
 
 
-@overload
+@core.overload
 def move(
-    src: Union[str, Path],
+    src: str | Path,
     dst: tuple[FS, str]
 ):
     """
@@ -50,7 +46,7 @@ def move(
 @overload
 def move(
     src: tuple[FS, str],
-    dst: Union[str, Path]
+    dst: str | Path
 ):
     """
     Moves specific file or directory from source filesystem to local file.
@@ -65,7 +61,7 @@ def move(
     raise NotImplemented()
 
 
-@overload
+@core.overload
 def move(
     src: tuple[FS, str],
     dst: tuple[FS, str]
@@ -83,7 +79,7 @@ def move(
     raise NotImplemented()
 
 
-@overload
+@core.overload
 def move(
     src: FS,
     dst: FS,

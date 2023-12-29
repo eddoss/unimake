@@ -1,160 +1,227 @@
-from textwrap import dedent
-from beartype import beartype
-from beartype.typing import Any, Optional
-from umk.globals import Global
-from umk.framework.system import environs as envs
+from beartype.typing import Generator
+
+from umk import core, globals
 from umk.framework import utils
+from umk.framework.system import environs as envs
 
 
-class Property:
-    @property
-    def name(self) -> str:
-        return self._name
+class Interface(core.Object):
+    name: str = core.Field(
+        default="",
+        description="Remote environment name",
+    )
+    description: str = core.Field(
+        default="",
+        description="Remote environment description",
+    )
+    default: bool = core.Field(
+        default=False,
+        description="Whether this remote environment are default or not",
+    )
 
-    @name.setter
-    @beartype
-    def name(self, value: str):
-        name = value.strip()
-        if name == '':
-            raise ValueError(f"Remote environment property name should not be empty: '{name}'")
-        self._name = name
-
-    @property
-    def value(self) -> Optional[Any]:
-        return self._value
-
-    @value.setter
-    @beartype
-    def value(self, value: Optional[Any]):
-        self._value = value
-
-    @property
-    def description(self) -> str:
-        return self._description
-
-    @description.setter
-    @beartype
-    def description(self, value: str):
-        self._description = dedent(value)
-
-    @beartype
-    def __init__(self, name: str, description: str = '', value: Any = None):
-        self._name = name
-        self.name = name
-        self._value = value
-        self._description = description
-
-
-class Interface:
-    @property
-    def name(self) -> str:
+    def properties(self) -> Generator[core.Property, None, None]:
         """
-        Remote environment name.
+        Remote environment properties
         """
-        return self._name
+        for name in self._properties:
+            yield core.Property.from_field(self, name)
 
-    @name.setter
-    @beartype
-    def name(self, value: str):
-        name = value.strip()
-        if name == '':
-            raise ValueError(f"Given remote environment name is forbidden: '{name}'")
-        self._name = name
-
-    @property
-    def description(self) -> str:
-        """
-        Remote environment description.
-        """
-        return self._description
-
-    @description.setter
-    @beartype
-    def description(self, value: str):
-        self._description = value
-
-    @property
-    def default(self) -> bool:
-        """
-        Whether this remote environment are default or not.
-        """
-        return self._default
-
-    @default.setter
-    @beartype
-    def default(self, value: bool):
-        self._default = value
-
-    @property
-    def details(self) -> dict[str, Property]:
-        """
-        Remote environment detailed information
-        """
-        return self._details
-
-    def build(self, *args, **kwargs):
+    def build(self, **kwargs):
         """
         Build remote environment.
         """
         self.__not_implemented()
 
-    def destroy(self, *args, **kwargs):
+    def destroy(self, **kwargs):
         """
         Destroy remote environment.
         """
         self.__not_implemented()
 
-    def up(self, *args, **kwargs):
+    def up(self, **kwargs):
         """
         Start remote environment.
         """
         self.__not_implemented()
 
-    def down(self, *args, **kwargs):
+    def down(self, **kwargs):
         """
         Stop remote environment.
         """
         self.__not_implemented()
 
-    def shell(self, *args, **kwargs):
+    def shell(self, **kwargs):
         """
         Open remote environment shell.
         """
         self.__not_implemented()
 
-    @beartype
-    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, *args, **kwargs):
+    @core.typeguard
+    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, **kwargs):
         """
         Execute command in remote environment.
         """
         self.__not_implemented()
 
-    @beartype
-    def upload(self, paths: dict[str, str], *args, **kwargs):
+    @core.typeguard
+    def upload(self, items: dict[str, str], **kwargs):
         """
         Upload given paths to remote environment.
         """
         self.__not_implemented()
 
-    @beartype
-    def download(self, paths: dict[str, str], *args, **kwargs):
+    @core.typeguard
+    def download(self, items: dict[str, str], **kwargs):
         """
         Download given paths from remote environment.
         """
         self.__not_implemented()
 
     def __not_implemented(self):
-        Global.console.print(
+        globals.console.print(
             f"[bold]The '{self.name}' remote environment has no '{utils.caller(2)}' function. "
             f"It`s must be managed outside of this tool."
         )
 
+    def _register_properties(self):
+        self._properties.add("name")
+        self._properties.add("description")
+        self._properties.add("default")
+
     def __hash__(self) -> int:
         return hash(self.name)
 
-    @beartype
-    def __init__(self, name: str = "", description: str = "", default: bool = False):
-        self._name: str = name
-        self._default: bool = default
-        self._description = description
-        self._details: dict[str, Property] = {}
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._properties: set[str] = set()
+        self._register_properties()
+
+
+class Events:
+    BUILD_BEFORE = "remote.build.before"
+    BUILD_AFTER = "remote.build.after"
+
+    DESTROY_BEFORE = "remote.destroy.before"
+    DESTROY_AFTER = "remote.destroy.after"
+
+    UP_BEFORE = "remote.up.before"
+    UP_AFTER = "remote.up.after"
+
+    DOWN_BEFORE = "remote.down.before"
+    DOWN_AFTER = "remote.down.after"
+
+    EXECUTE_BEFORE = "remote.execute.before"
+    EXECUTE_AFTER = "remote.execute.after"
+
+    SHELL_BEFORE = "remote.shell.before"
+    SHELL_AFTER = "remote.shell.after"
+
+    UPLOAD_BEFORE = "remote.upload.before"
+    UPLOAD_AFTER = "remote.upload.after"
+    UPLOAD_ITEM_BEFORE = "remote.upload.item.before"
+    UPLOAD_ITEM_AFTER = "remote.upload.item.after"
+
+    DOWNLOAD_BEFORE = "remote.download.before"
+    DOWNLOAD_AFTER = "remote.download.after"
+    DOWNLOAD_ITEM_BEFORE = "remote.download.item.before"
+    DOWNLOAD_ITEM_AFTER = "remote.download.item.after"
+
+    @staticmethod
+    def build(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.build.before' / 'remote.build.after' event.
+        """
+        result = core.Event(name=Events.BUILD_BEFORE if before else Events.BUILD_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def destroy(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.destroy.before' / 'remote.destroy.after' event.
+        """
+        result = core.Event(name=Events.DESTROY_BEFORE if before else Events.DESTROY_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def up(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.up.before' / 'remote.up.after' event.
+        """
+        result = core.Event(name=Events.UP_BEFORE if before else Events.UP_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def down(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.down.before' / 'remote.down.after' event.
+        """
+        result = core.Event(name=Events.DOWN_BEFORE if before else Events.DOWN_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def execute(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.execute.before' / 'remote.execute.after' event.
+        """
+        result = core.Event(name=Events.EXECUTE_BEFORE if before else Events.EXECUTE_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def shell(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.shell.before' / 'remote.shell.after' event.
+        """
+        result = core.Event(name=Events.SHELL_BEFORE if before else Events.SHELL_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def upload(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.upload.before' / 'remote.upload.after' event.
+        """
+        result = core.Event(name=Events.UPLOAD_BEFORE if before else Events.UPLOAD_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def upload_item(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.upload.item.before' / 'remote.upload.item.after' event.
+        """
+        result = core.Event(name=Events.UPLOAD_ITEM_BEFORE if before else Events.UPLOAD_ITEM_AFTER)
+        result.data = data if data else core.EventData()
+        result.data.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def download(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.download.before' / 'remote.download.after' event.
+        """
+        result = core.Event(name=Events.DOWNLOAD_BEFORE if before else Events.DOWNLOAD_AFTER)
+        result.data = data if data else core.EventData()
+        result.new("instance", instance, "Remote interface instance")
+        return result
+
+    @staticmethod
+    def download_item(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
+        """
+        Creates 'remote.download.item.before' / 'remote.download.item.after' event.
+        """
+        result = core.Event(name=Events.DOWNLOAD_ITEM_BEFORE if before else Events.DOWNLOAD_ITEM_AFTER)
+        result.data = data if data else core.EventData()
+        result.new("instance", instance, "Remote interface instance")
+        return result

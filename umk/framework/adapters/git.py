@@ -1,9 +1,10 @@
-from beartype import beartype
 from git import Repo as Repository
-from umk.globals import Global, Path
+
+from umk import globals, core
+from umk.framework.filesystem import Path
 
 
-@beartype
+@core.typeguard
 def tag(repo: Repository, on_error: str) -> str:
     result = on_error
     if repo and repo.tags:
@@ -11,6 +12,6 @@ def tag(repo: Repository, on_error: str) -> str:
     return result
 
 
-@beartype
-def repository(root: Path = Global.paths.work):
+@core.typeguard
+def repository(root: Path = globals.paths.work):
     return Repository(root)

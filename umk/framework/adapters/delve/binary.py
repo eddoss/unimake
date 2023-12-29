@@ -1,14 +1,13 @@
-from beartype import beartype
-from pathlib import Path
+from umk.framework.filesystem import Path
 from umk.framework.adapters.delve.flags import Flags
 from umk.framework.system import environs as envs
 from umk.framework.system.shell import Shell
-from umk.globals import Global
+from umk import globals, core
 
 
 class Delve:
     @staticmethod
-    @beartype
+    @core.typeguard
     def find():
         # TODO Implement search  algorithm
         return Delve(Path('/usr/bin/dlv'))
@@ -18,7 +17,7 @@ class Delve:
         return self._binary
 
     @binary.setter
-    @beartype
+    @core.typeguard
     def binary(self, value: Path):
         if not value.exists():
             raise FileNotFoundError(f"Invalid path to 'delve' binary: {value}")
@@ -29,7 +28,7 @@ class Delve:
         return self._flags
 
     @flags.setter
-    @beartype
+    @core.typeguard
     def flags(self, value: Flags):
         self._flags = value
 
@@ -38,18 +37,18 @@ class Delve:
         return self._pwd
 
     @pwd.setter
-    @beartype
+    @core.typeguard
     def pwd(self, value: Path):
         self._pwd = value
 
-    @beartype
-    def __init__(self, binary: Path, flags: Flags = Flags(2345), pwd: Path = Global.paths.work):
+    @core.typeguard
+    def __init__(self, binary: Path, flags: Flags = Flags(2345), pwd: Path = globals.paths.work):
         self._binary = Path()
         self.binary = binary
         self._flags = flags
         self._pwd = pwd
 
-    @beartype
+    @core.typeguard
     def attach(self, pid: int, exe: str = '', contin: bool = False, env: envs.Environs = None) -> Shell:
         cmd = f'{self.binary} {self.flags} attach {pid}'
         if exe.strip():
@@ -62,7 +61,7 @@ class Delve:
             environs=env
         )
 
-    @beartype
+    @core.typeguard
     def exec(self, binary: Path, args: list[str] = None, contin: bool = False, tty: str = "", env: envs.Optional = None) -> Shell:
         cmd = f'{self.binary} {self.flags} exec'
         if tty:

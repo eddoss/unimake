@@ -6,10 +6,9 @@ from umk.framework.remote.registerer import Registerer as RemoteInterfaceRegiste
 from enum import Enum
 from pathlib import Path
 from importlib import util as importer
-from umk.globals import Global
+from umk import globals
 from umk.framework.project.base import Project
 from umk.framework.project.base import Registerer as ProjectRegisterer
-from beartype.typing import Optional
 from umk.dot import states
 
 
@@ -26,13 +25,13 @@ NO = Require.NO
 
 class Containers:
     def __init__(self):
-        self.project: Optional[Project] = None
+        self.project: Project | None = None
         self.remotes: dict[str, framework.remote.Interface] = {}
 
 
 class Dot:
     @property
-    def project(self) -> Optional[Project]:
+    def project(self) -> Project | None:
         return self._containers.project
 
     @property
@@ -80,13 +79,15 @@ class Dot:
     def _load_cli(self, require: Require) -> states.State:
         if require == Require.NO:
             return states.Ok()
-        if require == Require.YES:
-            self._script('cli')
-            return states.Ok()
         try:
             self._script('cli')
-        finally:
-            return states.Ok()
+        except FileNotFoundError:
+            if require == Require.OPT:
+                return states.Ok()
+            return states.CliScriptNotExists()
+        except Exception as e:
+            return states.InternalError(script="cli.py", description=str(e))
+        return states.Ok()
 
     def _load_project(self, require: Require) -> states.State:
         if require == Require.NO:
@@ -94,6 +95,8 @@ class Dot:
         try:
             self._script('project')
         except FileNotFoundError:
+            if require == Require.OPT:
+                return states.Ok()
             return states.ProjectScriptNotExists()
         except Exception as e:
             return states.InternalError(script="project.py", description=str(e))
@@ -119,6 +122,8 @@ class Dot:
         try:
             self._script('remotes')
         except FileNotFoundError:
+            if require == Require.OPT:
+                return states.Ok()
             return states.RemotesScriptNotExists()
         except Exception as e:
             return states.InternalError(script="remotes.py", description=str(e))
@@ -126,7 +131,7 @@ class Dot:
         module = self._modules.get('remotes')
 
         # Find all and collect all remote interface registerer
-        default: Optional[framework.remote.Interface] = None
+        default: framework.remote.Interface | None = None
         for _, value in module.__dict__.items():
             if issubclass(type(value), RemoteInterfaceRegisterer):
                 impl: framework.remote.Interface = copy.deepcopy(value.instance)
@@ -134,7 +139,7 @@ class Dot:
                     if not default and impl.default:
                         default = impl
                     elif default and impl.default:
-                        Global.console.print(
+                        globals.console.print(
                             f"[bold yellow]WARNING! Default remote environment is already "
                             f"exists! Force '{impl.name}.default=False'[/]\n"
                             f"[bold underline]Given[/] \n"
@@ -150,7 +155,7 @@ class Dot:
                     self._containers.remotes[impl.name] = impl
                 else:
                     exist = self._containers.remotes.get(impl.name)
-                    Global.console.print(
+                    globals.print(
                         f"[bold yellow]WARNING! Skip '{impl.name}' remote environment, it is "
                         f"already exists![/]\n"
                         f"[bold underline]Given[/] \n"
@@ -167,7 +172,7 @@ class Dot:
 
     def _script(self, name: str):
         if name in self._modules:
-            Global.console.log(f"DotUnimake.script(): module '{name}' already exists")
+            globals.console.log(f"DotUnimake.script(): module '{name}' already exists")
             sys.exit(-1)
         file = self._root / f'{name}.py'
         if not file.exists():

@@ -3,14 +3,14 @@ import asyncio
 import subprocess
 import sys
 from asyncio import subprocess as async_subprocess
-from beartype.typing import Union, Optional, Iterable
-from beartype import beartype
 from pathlib import Path
+
+from beartype.typing import Iterable
+
+from umk import globals, core
 from umk.framework.system import environs as env
-from umk.globals import Global
 
-
-Command = Union[str, list[str]]
+Command = str | list[str]
 
 
 class Handler:
@@ -31,7 +31,7 @@ class Shell:
         return self._name
 
     @name.setter
-    @beartype
+    @core.typeguard
     def name(self, value: str):
         self._name = value
 
@@ -43,7 +43,7 @@ class Shell:
         return self._command
 
     @command.setter
-    @beartype
+    @core.typeguard
     def command(self, value: Command):
         if issubclass(type(value), str):
             self._command = value.strip().split(" ")
@@ -58,7 +58,7 @@ class Shell:
         return self._workdir
 
     @workdir.setter
-    @beartype
+    @core.typeguard
     def workdir(self, value: Path):
         self._workdir = value
 
@@ -70,22 +70,22 @@ class Shell:
         return self._environs
 
     @environs.setter
-    @beartype
+    @core.typeguard
     def environs(self, value: env.Optional):
         self._environs = env.Environs(inherit=True)
         if value:
             self._environs.update(value)
 
     @property
-    def handler(self) -> Optional[Handler]:
+    def handler(self) -> Handler | None:
         """
         Callbacks to handle output when pipe is used.
         """
         return self._handler
 
     @handler.setter
-    @beartype
-    def handler(self, value: Optional[Handler]):
+    @core.typeguard
+    def handler(self, value: Handler | None):
         self._handler = value
 
     @property
@@ -96,7 +96,7 @@ class Shell:
         return self._log
 
     @log.setter
-    @beartype
+    @core.typeguard
     def log(self, value: bool):
         self._log = value
 
@@ -105,13 +105,13 @@ class Shell:
     stdout = sys.stdout
     stderr = sys.stderr
 
-    @beartype
+    @core.typeguard
     def __init__(
         self,
         command: Command,
-        workdir: Path = Global.paths.work,
+        workdir: Path = globals.paths.work,
         environs: env.Optional = None,
-        handler: Optional[Handler] = None,
+        handler: Handler | None = None,
         name: str = "",
         log: bool = True,
     ):
@@ -133,11 +133,11 @@ class Shell:
         self._handler = handler
         self._log = log
 
-    async def asyn(self, *, log: Optional[bool] = None) -> Optional[int]:
+    async def asyn(self, *, log: bool | None = None) -> int | None:
         cmd = self.stringify(self.command)
         self._log_cmd(log, cmd)
         inp, out, err = self._descriptors()
-        prc: Optional[async_subprocess.Process] = None
+        prc: async_subprocess.Process | None = None
         try:
             prc = await asyncio.create_subprocess_shell(
                 cmd=cmd,
@@ -169,10 +169,10 @@ class Shell:
 
         return await prc.wait()
 
-    def sync(self, *, log: Optional[bool] = None) -> Optional[int]:
+    def sync(self, *, log: bool | None = None) -> int | None:
         cmd = self.stringify(self.command)
         self._log_cmd(log, cmd)
-        prc: Optional[subprocess.Popen] = None
+        prc: subprocess.Popen | None = None
         inp, out, err = self._descriptors()
 
         try:
@@ -234,13 +234,13 @@ class Shell:
         elif err == self.pipe:
             self.handler.on_error(str(e))
 
-    def _log_cmd(self, need: Optional[bool], cmd: str):
+    def _log_cmd(self, need: bool | None, cmd: str):
         need_log = need if need is not None else self.log
         if need_log:
             if self.name:
-                Global.console.print(f"[bold]shell\['{self.name}']: {cmd}")
+                globals.console.print(f"[bold]shell\['{self.name}']: {cmd}")
             else:
-                Global.console.print(f"[bold]shell: {cmd}")
+                globals.console.print(f"[bold]shell: {cmd}")
 
 
 class Devnull(Handler):
@@ -255,7 +255,7 @@ class ColorPrinter(Handler):
         return self._out
 
     @out.setter
-    @beartype
+    @core.typeguard
     def out(self, value: str):
         self._out = value
 
@@ -264,11 +264,11 @@ class ColorPrinter(Handler):
         return self._err
 
     @err.setter
-    @beartype
+    @core.typeguard
     def err(self, value: str):
         self._err = value
 
-    @beartype
+    @core.typeguard
     def __init__(self, out: str = ' ', err: str = '[error]'):
         """
         :param out: Output prefix.
@@ -283,7 +283,7 @@ class ColorPrinter(Handler):
             prefix = '\\' + prefix
         for line in text.split('\n'):
             if line.strip():
-                Global.console.print(f'[bold red]{prefix}[/] [bold]{line}')
+                globals.console.print(f'[bold red]{prefix}[/] [bold]{line}')
 
     def on_output(self, text: str):
         prefix = self.out
@@ -291,4 +291,4 @@ class ColorPrinter(Handler):
             prefix = '\\' + prefix
         for line in text.split('\n'):
             if line.strip():
-                Global.console.print(f'[bold green]{prefix}[/] [bold]{line}')
+                globals.console.print(f'[bold green]{prefix}[/] [bold]{line}')

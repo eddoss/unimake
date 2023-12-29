@@ -1,4 +1,4 @@
-from beartype import beartype
+from umk import core
 
 
 class Section:
@@ -7,7 +7,7 @@ class Section:
         return self._name
 
     @name.setter
-    @beartype
+    @core.typeguard
     def name(self, value: str):
         self._name = value
 
@@ -16,11 +16,11 @@ class Section:
         return self._description
 
     @description.setter
-    @beartype
+    @core.typeguard
     def description(self, value: str):
         self._description = value
 
-    @beartype
+    @core.typeguard
     def __init__(self, name: str, description: str = ''):
         self._name = name
         self._description = description

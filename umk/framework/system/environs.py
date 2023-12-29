@@ -1,9 +1,8 @@
 import os
-from beartype import beartype
-from beartype.typing import Optional
+from umk import core
 
 
-@beartype
+@core.typeguard
 def prepend(envs: dict[str, str], name: str, *values: str) -> None:
     nonempty = filter(None, values)
     value = os.pathsep.join(nonempty)
@@ -12,7 +11,7 @@ def prepend(envs: dict[str, str], name: str, *values: str) -> None:
     envs[name] = value
 
 
-@beartype
+@core.typeguard
 def append(envs: dict[str, str], name: str, *values: str) -> None:
     nonempty = filter(None, values)
     appended = os.pathsep.join(nonempty)
@@ -22,7 +21,7 @@ def append(envs: dict[str, str], name: str, *values: str) -> None:
 
 
 class Environs(dict):
-    @beartype
+    @core.typeguard
     def __init__(self, inherit=True, **var):
         super().__init__()
         if inherit:
@@ -31,13 +30,13 @@ class Environs(dict):
         for k, v in var.items():
             self[k] = v
 
-    @beartype
+    @core.typeguard
     def prepend(self, name: str, *values: str) -> None:
         prepend(self, name, *values)
 
-    @beartype
+    @core.typeguard
     def append(self, name: str, *values: str) -> None:
         append(self, name, *values)
 
 
-Optional = Optional[Environs]
+Optional = Environs | None

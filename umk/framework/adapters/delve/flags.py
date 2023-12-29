@@ -1,7 +1,6 @@
 import os
-from beartype.typing import Optional
-from beartype import beartype
-from pathlib import Path
+from umk import core
+from umk.framework.filesystem import Path
 from umk.framework.adapters.go.build import BuildArgs as GoBuildArgs
 
 
@@ -12,39 +11,39 @@ class Flags:
             return self._enabled
 
         @enabled.setter
-        @beartype
+        @core.typeguard
         def enabled(self, value: bool):
             self._enabled = value
 
         @property
-        def dest(self) -> Optional[Path]:
+        def dest(self) -> Path | None:
             return self._dest
 
         @dest.setter
-        @beartype
-        def dest(self, value: Optional[Path]):
+        @core.typeguard
+        def dest(self, value: Path | None):
             self._dest = value
 
         @property
-        def out(self) -> Optional[Path]:
+        def out(self) -> Path | None:
             return self._out
 
         @out.setter
-        @beartype
-        def out(self, value: Optional[Path]):
+        @core.typeguard
+        def out(self, value: Path | None):
             self._out = value
 
-        def __init__(self, enabled: bool = False, dest: Optional[Path] = None, out: Optional[Path] = None):
+        def __init__(self, enabled: bool = False, dest: Path | None = None, out: Path | None = None):
             self._enabled: bool = enabled
-            self._dest: Optional[Path] = dest
-            self._out: Optional[Path] = out
+            self._dest: Path | None = dest
+            self._out: Path | None = out
 
     @property
     def port(self) -> int:
         return self._port
 
     @port.setter
-    @beartype
+    @core.typeguard
     def port(self, value: int):
         self._port = value
 
@@ -53,7 +52,7 @@ class Flags:
         return self._log
 
     @log.setter
-    @beartype
+    @core.typeguard
     def log(self, value: Log):
         self._log = value
 
@@ -62,7 +61,7 @@ class Flags:
         return self._multiclient
 
     @multiclient.setter
-    @beartype
+    @core.typeguard
     def multiclient(self, value: bool):
         self._multiclient = value
 
@@ -71,7 +70,7 @@ class Flags:
         return self._allow_non_terminal_interactive
 
     @allow_non_terminal_interactive.setter
-    @beartype
+    @core.typeguard
     def allow_non_terminal_interactive(self, value: bool):
         self._allow_non_terminal_interactive = value
 
@@ -80,7 +79,7 @@ class Flags:
         return self._api
 
     @api.setter
-    @beartype
+    @core.typeguard
     def api(self, value: int):
         self._api = value
 
@@ -89,7 +88,7 @@ class Flags:
         return self._backend
 
     @backend.setter
-    @beartype
+    @core.typeguard
     def backend(self, value: str):
         self._backend = value
 
@@ -98,17 +97,17 @@ class Flags:
         return self._headless
 
     @headless.setter
-    @beartype
+    @core.typeguard
     def headless(self, value: bool):
         self._headless = value
 
     @property
-    def build_args(self) -> Optional[GoBuildArgs]:
+    def build_args(self) -> GoBuildArgs | None:
         return self._build_args
 
     @build_args.setter
-    @beartype
-    def build_args(self, value: Optional[GoBuildArgs]):
+    @core.typeguard
+    def build_args(self, value: GoBuildArgs | None):
         self._build_args = value
 
     @property
@@ -116,7 +115,7 @@ class Flags:
         return self._validate
 
     @validate.setter
-    @beartype
+    @core.typeguard
     def validate(self, value: bool):
         self._validate = value
 
@@ -125,17 +124,17 @@ class Flags:
         return self._aslr
 
     @aslr.setter
-    @beartype
+    @core.typeguard
     def aslr(self, value: bool):
         self._aslr = value
 
     @property
-    def init(self) -> Optional[Path]:
+    def init(self) -> Path | None:
         return self._init
 
     @init.setter
-    @beartype
-    def init(self, value: Optional[Path]):
+    @core.typeguard
+    def init(self, value: Path | None):
         self._init = value
 
     @property
@@ -143,17 +142,17 @@ class Flags:
         return self._redirect
 
     @redirect.setter
-    @beartype
+    @core.typeguard
     def redirect(self, value: list[str]):
         self._redirect = value
 
     @property
-    def cwd(self) -> Optional[Path]:
+    def cwd(self) -> Path | None:
         return self._cwd
 
     @cwd.setter
-    @beartype
-    def cwd(self, value: Optional[Path]):
+    @core.typeguard
+    def cwd(self, value: Path | None):
         self._cwd = value
 
     @property
@@ -161,7 +160,7 @@ class Flags:
         return self._only_same_user
 
     @only_same_user.setter
-    @beartype
+    @core.typeguard
     def only_same_user(self, value: bool):
         self._only_same_user = value
 
@@ -173,12 +172,12 @@ class Flags:
         self._api: int = 2
         self._backend: str = 'default'
         self._headless: bool = True
-        self._build_args: Optional[GoBuildArgs] = None
+        self._build_args: GoBuildArgs | None = None
         self._validate: bool = True
         self._aslr: bool = False
-        self._init: Optional[os.PathLike] = None
+        self._init: os.PathLike | None = None
         self._redirect: list[str] = []
-        self._cwd: Optional[os.PathLike] = None
+        self._cwd: os.PathLike | None = None
         self._only_same_user: bool = False
 
     def __str__(self) -> str:

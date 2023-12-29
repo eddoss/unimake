@@ -1,7 +1,8 @@
 import string
-from beartype import beartype
-from beartype.typing import Optional, Callable, Union, Type
-from umk.globals import Global
+
+from beartype.typing import Callable, Type
+
+from umk import globals, core
 
 
 class Description:
@@ -10,7 +11,7 @@ class Description:
         return self._short
 
     @short.setter
-    @beartype
+    @core.typeguard
     def short(self, value: str):
         self._short = value
 
@@ -19,11 +20,11 @@ class Description:
         return self._full
 
     @full.setter
-    @beartype
+    @core.typeguard
     def full(self, value: str):
         self._full = value
 
-    @beartype
+    @core.typeguard
     def __init__(self, short: str = "", full: str = ""):
         self._short = short
         self._full = full
@@ -43,7 +44,7 @@ class Name(Description):
             and self.short[0] not in signs \
             and set(self.short) <= allowed
 
-    @beartype
+    @core.typeguard
     def __init__(self, short: str = '', full: str = ''):
         super().__init__(short, full)
 
@@ -54,7 +55,7 @@ class Author:
         return self._name
 
     @name.setter
-    @beartype
+    @core.typeguard
     def name(self, value: str):
         self._name = value
 
@@ -63,7 +64,7 @@ class Author:
         return self._email
 
     @email.setter
-    @beartype
+    @core.typeguard
     def email(self, value: str):
         self._email = value
 
@@ -72,11 +73,11 @@ class Author:
         return self._socials
 
     @socials.setter
-    @beartype
+    @core.typeguard
     def socials(self, value: dict[str, str]):
         self._socials = value
 
-    @beartype
+    @core.typeguard
     def __init__(self, name: str = '', email: str = '', socials: dict[str, str] = None):
         self._name = name
         self._email = email
@@ -89,7 +90,7 @@ class Info:
         return self._name
 
     @name.setter
-    @beartype
+    @core.typeguard
     def name(self, value: Name):
         self._name = value
 
@@ -98,7 +99,7 @@ class Info:
         return self._version
 
     @version.setter
-    @beartype
+    @core.typeguard
     def version(self, value: str):
         self._version = value
 
@@ -107,7 +108,7 @@ class Info:
         return self._description
 
     @description.setter
-    @beartype
+    @core.typeguard
     def description(self, value: Description):
         self._description = value
 
@@ -116,7 +117,7 @@ class Info:
         return self._authors
 
     @authors.setter
-    @beartype
+    @core.typeguard
     def authors(self, value: list[Author]):
         self._authors = value
 
@@ -128,7 +129,7 @@ class Info:
 
 
 class Layout:
-    def __init__(self, root=Global.paths.work):
+    def __init__(self, root=globals.paths.work):
         self.root = root
         self.umk = self.root / ".unimake"
 
@@ -139,7 +140,7 @@ class Project:
         return self._info
 
     @info.setter
-    @beartype
+    @core.typeguard
     def info(self, value: Info):
         self._info = value
 
@@ -152,7 +153,7 @@ class Registerer:
     def instance(self) -> Project:
         return self._creator()
 
-    def __init__(self, value: Optional[Union[Type, Callable[[], Project]]] = None):
+    def __init__(self, value: Type | Callable[[] | Project] | None = None):
         self._creator = value
 
 
@@ -160,6 +161,6 @@ def register(creator):
     return Registerer(creator)
 
 
-def get() -> Optional[Project]:
+def get() -> Project | None:
     # See implementation in dot/implementation.py
     raise NotImplemented()

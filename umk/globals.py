@@ -2,6 +2,8 @@ import logging
 from pathlib import Path
 from rich.console import Console
 from rich.logging import RichHandler
+from beartype.typing import Any
+from umk import core
 
 
 class Paths:
@@ -10,24 +12,24 @@ class Paths:
         self.unimake = self.work / '.unimake'
 
 
-class Globals:
-    def __init__(self):
-        self.console = Console()
-        handler = RichHandler(
-            rich_tracebacks=True,
-            show_time=False,
-            console=self.console,
-            markup=False,
-        )
-        logging.basicConfig(
-            level="INFO",
-            format="%(message)s",
-            datefmt="[%X]",
-            handlers=[handler],
-        )
-        self.log = logging.getLogger("rich")
-        self.paths = Paths(Path.cwd())
-        self.completion = ''
+console = Console()
+handler = RichHandler(
+    rich_tracebacks=True,
+    show_time=False,
+    console=console,
+    markup=False,
+)
+logging.basicConfig(
+    level="INFO",
+    format="%(message)s",
+    datefmt="[%X]",
+    handlers=[handler],
+)
+log = logging.getLogger("rich")
+paths = Paths(Path.cwd())
+completion = ''
+events = core.Emitter()
 
 
-Global = Globals()
+def print(*objects: Any):
+    console.print(*objects)

@@ -41,13 +41,12 @@ help:
 	@echo ""
 	@echo "Check the Makefile to know exactly what each target is doing."
 
+# ################################################################################################ #
+# Global variables
+# ################################################################################################ #
 
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-#                                       AHTUNG SECTION BEGIN
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #
-
-# Its super important to export varibles below.
-
+# Project
+# ................................................................................................ #
 export PROJECT_NAME           := unimake
 export PROJECT_NAME_SHORT     := umk
 export PROJECT_ROOT           := $(CURDIR)
@@ -57,12 +56,22 @@ export PROJECT_EXAMPLES       := $(PROJECT_ROOT)/examples
 export PROJECT_VERSION        := $(shell git describe --abbrev=0 --tags)
 export PROJECT_VERSION_RAW    := $(subst v,,$(PROJECT_VERSION))
 
+# Development docker images
+# ................................................................................................ #
+export IMAGE            := dev.$(PROJECT_NAME)
+export IMAGE_DEV_BASE   := $(IMAGE).base
+export IMAGE_DEV_GOLANG := $(IMAGE).base
+
+export IMAGE__BASE   := $(IMAGE).base
+
+# Secure variables from .env
+# ................................................................................................ #
+-include $(PROJECT_ROOT)/.env
+
 # Private artifactory attributes will be loaded from .env
 #  - PRIVATE_PIPY_URL    private PyPi url
 #  - PRIVATE_PIPY_USER   private PyPi user name
 #  - PRIVATE_PIPY_TOKEN  private PyPi user identity token
-
--include $(PROJECT_ROOT)/.env
 
 
 # ################################################################################################ #
@@ -89,10 +98,10 @@ install: package/build package/install
 uninstall: package/uninstall
 
 .PHONY: dev/up
-dev/up: dev/down dev/image dev/image/golang remote/ssh
+dev/up: dev/down dev/image dev/image/golang remote/ssh remote/container
 
 .PHONY: dev/down
-dev/down: remote/ssh/stop dev/image/destroy
+dev/down: remote/ssh/stop remote/container/stop dev/image/destroy
 
 # ################################################################################################ #
 # Python package
@@ -193,10 +202,13 @@ dev/image/golang/destroy:
 # Development remotes
 # ################################################################################################ #
 
+export REMOTES_IMAGE_NAME := dev.$(PROJECT_NAME).remotes
+
 .PHONY: remote/ssh
 remote/ssh: remote/ssh/stop
 	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml up -d --build
-	@echo 'Test SSH server run in container "dev.unimake.ssh"'
+	@docker compose exec $(REMOTES_IMAGE_NAME).ssh make install
+	@echo 'SSH remote environment run in container "dev.unimake.ssh"'
 	@echo " - ip:   171.16.14.2"
 	@echo " - port: 22"
 	@echo " - user: unimake"
@@ -205,3 +217,44 @@ remote/ssh: remote/ssh/stop
 .PHONY: remote/ssh/stop
 remote/ssh/stop:
 	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml down --remove-orphans --rmi all
+
+.PHONY: remote/container
+remote/container: remote/container/stop
+	@echo "Build 'remotes/container' image"
+	@docker build \
+		--tag dev.$(REMOTES_IMAGE_NAME).container \
+		--file $(PROJECT_DEVELOPMENT)/remotes/container/Dockerfile \
+		$(PROJECT_ROOT)
+	@echo "Create 'remotes/container' container"
+	@docker container create \
+		--name $(REMOTES_IMAGE_NAME).container \
+		--volume="$(PROJECT_ROOT):/home/$(USER)/workdir" \
+		--workdir /home/$(USER)/workdir \
+		--user "$(shell id -u):$(shell id -g)" \
+		$(REMOTES_IMAGE_NAME).container
+	@docker exec $(REMOTES_IMAGE_NAME).container make install
+	@echo "Container remote environment is created"
+	@echo " - image:     $(REMOTES_IMAGE_NAME).container"
+	@echo " - container: $(REMOTES_IMAGE_NAME).container"
+
+.PHONY: remote/container/stop
+remote/container/stop:
+	@docker container ls -a -q --filter "name=$(REMOTES_IMAGE_NAME).container" | grep -q . && docker container rm -f $(REMOTES_IMAGE_NAME).container || true
+
+# ################################################################################################ #
+# Examples
+# ################################################################################################ #
+
+export EXAMPLE_IMAGE ?= dev.$(PROJECT_NAME).example
+
+.PHONY: example/%
+example/%:
+	@docker image ls -q --filter "reference=$(EXAMPLE_IMAGE).$@" | grep -q . && docker image rm -f $(EXAMPLE_IMAGE).$@ || true
+	@docker container ls -a -q --filter "name=$(EXAMPLE_IMAGE).$@" | grep -q . && docker container rm -f $(EXAMPLE_IMAGE).$@ || true
+	@docker build \
+		--tag $(EXAMPLE_IMAGE).$@ \
+		--file $(PROJECT_EXAMPLES)/$@/Dockerfile $(PROJECT_EXAMPLES)/$@
+	@docker container create \
+		--name $(EXAMPLE_IMAGE).$@ \
+		--user "$(shell id -u):$(shell id -g)" \
+		$(DEV_IMAGE)

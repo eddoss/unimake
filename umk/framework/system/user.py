@@ -2,7 +2,7 @@ import os
 import pwd
 import grp
 
-from beartype import beartype
+from umk import core
 
 
 class Group:
@@ -14,7 +14,7 @@ class Group:
     def id(self) -> int:
         return self._id
 
-    @beartype
+    @core.typeguard
     def __init__(self, name: str, id: int):
         self._name = name
         self._id = id
@@ -25,7 +25,7 @@ class User(Group):
     def group(self) -> Group:
         return self._group
 
-    @beartype
+    @core.typeguard
     def __init__(self, name: str, id: int, group: Group):
         super().__init__(name, id)
         self._group = group

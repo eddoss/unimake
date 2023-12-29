@@ -1,9 +1,8 @@
 import sys
 import asyncclick
 from rich.table import Table
-from umk.globals import Global
 from umk.framework.project import BaseProject
-from umk import framework, dot
+from umk import framework, dot, globals
 
 Sections = dict[framework.cli.Section, list[asyncclick.Command]]
 DefaultSection = framework.cli.Section(name='Default', description='Default commands')
@@ -26,7 +25,7 @@ class Group(asyncclick.Group):
 
 class HelpMessage:
     def render(self, project: BaseProject, section: Sections):
-        console = Global.console
+        console = globals.console
         info = project.info
         console.print(f"[blue bold]Welcome to[/] [bold yellow]{info.name.full or info.name.short}\n")
 
@@ -80,13 +79,13 @@ def application(ctx: asyncclick.Context, remote: str, r: bool):
 
     rem = framework.remote.find("" if default_remote else specific_remote)
     if default_remote and not rem:
-        Global.console.print(
+        globals.console.print(
             '[bold red]Failed to find default remote environment! '
             'Please specify it in the .unimake/remotes.py'
         )
         sys.exit()
     elif not rem and specific_remote:
-        Global.console.print(
+        globals.console.print(
             f"[bold red]Failed to find remote environment '{specific_remote}'! "
             f"Please create it in the .unimake/remotes.py"
         )

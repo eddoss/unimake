@@ -1,18 +1,17 @@
-import umk
-from umk import framework
+from umk import framework, core
 from umk.framework.project.base import Project
 from umk.dot.instance import Dot
-from beartype.typing import Optional
 
 
-Instance: Optional[Dot] = Dot()
+Instance: Dot | None = Dot()
 
 
 # ####################################################################################
 # Remote environment utils implementation
 # ####################################################################################
 
-def find_remote(name: str = "") -> Optional[framework.remote.Interface]:
+@core.typeguard
+def find_remote(name: str = "") -> framework.remote.Interface | None:
     global Instance
     if not Instance:
         return
@@ -38,7 +37,7 @@ framework.remote.iterate = iterate_remotes
 # Project stuff implementation
 # ####################################################################################
 
-def get_project() -> Optional[Project]:
+def get_project() -> Project | None:
     global Instance
     return Instance.project
 

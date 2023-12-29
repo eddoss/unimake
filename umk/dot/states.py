@@ -1,7 +1,7 @@
 from textwrap import dedent
 from rich.syntax import Syntax
 from rich.table import Table
-from umk.globals import Global
+from umk import globals
 from beartype import beartype
 
 
@@ -40,7 +40,7 @@ class InternalError(State):
 
     def print(self):
         desc = self._description if self._description else "No error description"
-        Global.console.print(
+        globals.print(
             f"[red bold]Unimake internal error occurred when loaded '{self._script}'!\n"
             f"{desc}"
         )
@@ -62,14 +62,14 @@ class RootNotExists(State):
         super().__init__(code=100, name="Root not exists")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "Current directory is not a Unimake project. "
             "Unimake project must contain '.unimake' directory with 'project.py' script. "
             "If you need to create a project get initialization help at first and after "
             "setup a '.unimake'"
         )
-        Global.console.print(_table_init)
+        globals.print(_table_init)
 
 
 class RootNotDirectory(State):
@@ -78,12 +78,12 @@ class RootNotDirectory(State):
         super().__init__(code=101, name="Root it not a directory")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "Found [underline]'.unimake'[/underline] but it's not a folder. "
             "Try to remove '.unimake' at first and init a project."
         )
-        Global.console.print(_table_init)
+        globals.print(_table_init)
 
 
 # Loading errors: .unimake/project.py problems
@@ -95,7 +95,7 @@ class ProjectScriptNotExists(State):
         super().__init__(code=200, name="No project.py")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "File [underline].unimake/project.py[/underline] does not exists"
         )
@@ -132,16 +132,16 @@ class ProjectCreatorNotExists(State):
         super().__init__(code=201, name="No project creator")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "[underline].unimake/project.py[/underline] must register project\n"
         )
-        Global.console.print("[bold red]Example with function:\n")
-        Global.console.print(
+        globals.print("[bold red]Example with function:\n")
+        globals.print(
             Syntax(_project_register_function, "python", theme='monokai', line_numbers=False)
         )
-        Global.console.print("[bold red]Example with class:\n")
-        Global.console.print(
+        globals.print("[bold red]Example with class:\n")
+        globals.print(
             Syntax(_project_register_function, "python", theme='monokai', line_numbers=False)
         )
 
@@ -152,16 +152,16 @@ class ProjectCreatorBadType(State):
         super().__init__(code=202, name="Project creator bad type")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "[underline].unimake/project.py[/underline] must register valid project type\n"
         )
-        Global.console.print("[bold red]Example with function:\n")
-        Global.console.print(
+        globals.print("[bold red]Example with function:\n")
+        globals.print(
             Syntax(_project_register_function, "python", theme='monokai', line_numbers=False)
         )
-        Global.console.print("[bold red]Example with class:\n")
-        Global.console.print(
+        globals.print("[bold red]Example with class:\n")
+        globals.print(
             Syntax(_project_register_function, "python", theme='monokai', line_numbers=False)
         )
 
@@ -175,7 +175,7 @@ class RemotesScriptNotExists(State):
         super().__init__(code=300, name="No remotes.py")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "File [underline].unimake/remotes.py[/underline] does not exists"
         )
@@ -219,16 +219,16 @@ class RemoteCreatorBadType(State):
         super().__init__(code=301, name="Project creator bad type")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "[underline].unimake/remotes.py[/underline] must register valid remotes type\n"
         )
-        Global.console.print("[bold red]Example with function:\n")
-        Global.console.print(
+        globals.print("[bold red]Example with function:\n")
+        globals.print(
             Syntax(_project_register_function, "python", theme='monokai', line_numbers=False)
         )
-        Global.console.print("[bold red]Example with class:\n")
-        Global.console.print(
+        globals.print("[bold red]Example with class:\n")
+        globals.print(
             Syntax(_project_register_function, "python", theme='monokai', line_numbers=False)
         )
 
@@ -242,7 +242,7 @@ class CliScriptNotExists(State):
         super().__init__(code=400, name="No remotes.py")
 
     def print(self):
-        Global.console.print(
+        globals.print(
             "[bold red]Unimake error !\n"
             "File [underline].unimake/remotes.py[/underline] does not exists"
         )
