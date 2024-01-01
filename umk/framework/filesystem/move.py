@@ -43,7 +43,7 @@ def move(
     raise NotImplemented()
 
 
-@overload
+@core.overload
 def move(
     src: tuple[FS, str],
     dst: str | Path
