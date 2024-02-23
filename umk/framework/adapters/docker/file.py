@@ -371,7 +371,7 @@ class Space(Instruction):
 
 
 class File(core.Object):
-    instructions: list[Commentable] = core.Field(
+    instructions: list[Instruction] = core.Field(
         description="Dockerfile instruction list",
         default_factory=list,
     )
@@ -380,6 +380,6 @@ class File(core.Object):
         for instruction in self.instructions:
             instruction.write(buffer)
 
-    def __iadd__(self, instruction: Commentable):
+    def __iadd__(self, instruction: Instruction):
         self.instructions.append(instruction)
         return self
