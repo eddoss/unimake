@@ -74,21 +74,3 @@ class Container(common.Base):
 
         e.name = Events.EXECUTE_AFTER
         globals.events.dispatch(e)
-
-
-if __name__ == '__main__':
-    from umk import print, core
-    from umk.framework.remote import Interface
-
-    def on_remote_execute_before(e: core.Event):
-        rem: Interface = e.data["instance"]
-        print(f"Execute in '{rem.name}' ({rem.description})")
-        for prop in e.data:
-            print(f"{prop.name} {prop.value}")
-
-    globals.events.on(Events.EXECUTE_BEFORE, on_remote_execute_before)
-    r = Container(name="con", default=True, container="tester")
-    for prop in r.properties():
-        print(prop)
-    r.execute(["echo", '"Hello"'])
-

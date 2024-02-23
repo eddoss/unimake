@@ -1,9 +1,9 @@
 import os
 
 from umk import globals, core
+from umk.framework.filesystem import Path
 from umk.framework.remote.interface import Interface, Events
 from umk.framework.system.shell import Shell
-from umk.framework.filesystem import Path
 
 
 class Base(Interface):
