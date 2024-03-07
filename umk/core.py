@@ -14,7 +14,12 @@ from pydantic import Field
 class Object(BaseModel):
     class Config:
         arbitrary_types_allowed = True
- 
+        validate_assignment = True
+
+
+def extra(obj: Object, field: str, key: str) -> Any:
+    return obj.model_fields[field].json_schema_extra.get(key)
+
  
 class Property(Object):
     name: str = ""
@@ -23,7 +28,8 @@ class Property(Object):
 
     @staticmethod
     def from_field(instance: Any, field: str):
-        f = type(instance).__fields__[field]
+        # f = type(instance).__fields__[field]
+        f = instance.model_fields[field]
         return Property(
             name=field,
             description=f.description,

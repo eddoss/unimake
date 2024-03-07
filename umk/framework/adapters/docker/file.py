@@ -1,11 +1,11 @@
 import io
+import os
 from datetime import timedelta
 
 from beartype.typing import TextIO, Optional, Any
-
 from umk import core
-
 from umk.framework.system import User as OSUser
+from umk.framework.filesystem import Path
 
 
 class Instruction(core.Object):
@@ -121,13 +121,12 @@ class Entrypoint(Commentable):
     """
     args: list[str] = core.Field(default_factory=list)
 
-    def __init__(self, args: list[str], **kwargs):
-        super().__init__(**kwargs)
-        self.args = args
-
     def write(self, buffer: TextIO):
         super().write(buffer)
-        text = f"ENTRYPOINT {self.args}\n"
+        text = "ENTRYPOINT ["
+        for i, arg in enumerate(self.args):
+            text += f'"{arg}"' + [", ", ""][int(i == len(self.args) - 1)]
+        text += "]\n"
         buffer.write(text)
 
 
@@ -262,14 +261,26 @@ class Run(Commentable):
 
     def write(self, buffer: TextIO):
         super().write(buffer)
-        text = "RUN"
-        if len(self.commands) == 1:
-            text += f" {self.commands[0]}"
-        else:
-            text += "<<EOF\n"
-            for cmd in self.commands:
-                text += f"{cmd}\n"
-            text += "EOF\n"
+        text = "RUN " + " && \\\n    ".join(self.commands) + "\n"
+        # for i, cmd in enumerate(self.commands):
+        #     if i == 0:
+        #         if len(self.commands) > 1:
+        #             text += f"RUN {cmd}\n"
+        #     elif i == len(self.commands) - 1:
+        #         text += f"{cmd}"
+        #     else:
+        #         text += f"{cmd}"
+        #         if
+        #             text += ""
+
+        # text = "RUN"
+        # if len(self.commands) == 1:
+        #     text += f" {self.commands[0]}"
+        # else:
+        #     text += " <<EOF\n"
+        #     for cmd in self.commands:
+        #         text += f"{cmd}\n"
+        #     text += "EOF\n"
         buffer.write(text)
 
 
@@ -380,6 +391,22 @@ class File(core.Object):
         for instruction in self.instructions:
             instruction.write(buffer)
 
+    def save(self, file: Path):
+        if not file.parent.exists():
+            os.makedirs(file.parent)
+        with open(file, "w") as stream:
+            self.write(stream)
+
+    def text(self) -> str:
+        buf = io.StringIO()
+        self.write(buf)
+        return buf.getvalue()
+
     def __iadd__(self, instruction: Instruction):
         self.instructions.append(instruction)
         return self
+
+    def __str__(self) -> str:
+        buf = io.StringIO()
+        self.write(buf)
+        return buf.getvalue()

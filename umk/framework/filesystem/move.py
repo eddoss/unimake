@@ -1,7 +1,9 @@
 from fs.base import FS
+from fs.osfs import OSFS
 from fs.walk import Walker
+from fs import move as _mv
 
-from umk import core
+from umk import core, globals
 from umk.framework.filesystem.path import Path
 
 
@@ -22,7 +24,17 @@ def move(
      - move(Path('./main.py'), Path('./hello.py'))
      - move(Path('./hellp.py'), Path('./some/dir/hello.py'))
     """
-    raise NotImplemented()
+    s = OSFS(src.parent.as_posix())
+    d = OSFS(dst.parent.as_posix(), create=True)
+    try:
+        _mv.move_file(s, src.name, d, dst.name)
+    except Exception as err:
+        e = core.Event(name=globals.EventNames.FILESYSTEM_MOVE)
+        e.data.new("src", src, "Source file")
+        e.data.new("dst", dst, "Destination file")
+        e.data.new("err", err, "Exception object")
+        globals.events.dispatch(e)
+        return
 
 
 @core.overload

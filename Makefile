@@ -80,7 +80,8 @@ export IMAGE__BASE   := $(IMAGE).base
 
 .PHONY: clean
 clean: package/clean
-	@find . -type d -name "__pycache__" | xargs rm -rf {};
+	find . -type f -name "*.py[co]" -delete -or -type d -name "__pycache__" -delete
+	@#find . -type d -name "__pycache__" | xargs rm -rf {};
 	@rm -rf build
 	@rm -f ./$(PROJECT_NAME).spec
 	@rm -f ./$(PROJECT_NAME_SHORT).spec

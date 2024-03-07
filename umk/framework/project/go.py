@@ -1,5 +1,5 @@
-from umk.framework.project.base import Project as BaseProject
 from umk.framework.project.base import Layout as BaseLayout
+from umk.framework.project.scratch import Scratch
 from umk import globals
 
 
@@ -27,7 +27,7 @@ class Layout(BaseLayout):
         self.output = self.root / "output"
 
 
-class Project(BaseProject):
+class Project(Scratch):
     def __init__(self):
         super().__init__()
         self.layout = Layout()

@@ -1,7 +1,9 @@
-from umk import core
+from umk import core, globals
 from umk.framework.filesystem.path import Path
 from fs.walk import Walker
 from fs.base import FS
+from fs.osfs import OSFS
+from fs import copy as _cp
 
 
 @core.overload
@@ -9,9 +11,6 @@ def copy(
     src: Path,
     dst: Path,
     timestamp: bool = True,
-    group: str = '',
-    mode: str = '',
-    owner: str = ''
 ):
     """
     Copies file or directory to destination path (on local filesystem).
@@ -21,16 +20,23 @@ def copy(
     :param src: Path to file or directory to move from.
     :param dst: Path to file or directory to move to.
     :param timestamp: Preserve timestamp or not
-    :param group: Destination file mode.
-    :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
     ::
      - copy(Path('./main.py'), Path('./hello.py'))
      - copy(Path('./hellp.py'), Path('./some/dir/hello.py'))
     """
-    raise NotImplemented()
+    s = OSFS(src.parent.as_posix())
+    d = OSFS(dst.parent.as_posix(), create=True)
+    try:
+        _cp.copy_file(s, src.name, d, dst.name, timestamp)
+    except Exception as err:
+        e = core.Event(name=globals.EventNames.FILESYSTEM_COPY)
+        e.data.new("src", src, "Source file")
+        e.data.new("dst", dst, "Destination file")
+        e.data.new("err", err, "Exception object")
+        globals.events.dispatch(e)
+        return
 
 
 @core.overload
@@ -38,9 +44,6 @@ def copy(
     src: tuple[FS, str],
     dst: tuple[FS, str],
     timestamp: bool = True,
-    group: str = '',
-    mode: str = '',
-    owner: str = ''
 ):
     """
     Copies specific file or directory from source FS to destination FS.
@@ -50,9 +53,6 @@ def copy(
     :param src: Tuple of filesystem to copy from and path to file/directory in source filesystem
     :param dst: Tuple of filesystem to copy to and path to file/directory in destination filesystem
     :param timestamp: Preserve timestamp or not
-    :param group: Destination file mode.
-    :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
      - copy(local(..), 'some/file.txt', ftp(..), 'file.txt')
@@ -65,9 +65,6 @@ def copy(
     src: str | Path,
     dst: tuple[FS, str],
     timestamp: bool = True,
-    group: str = '',
-    mode: str = '',
-    owner: str = ''
 ):
     """
     Copies specific local file/directory to destination filesystem.
@@ -76,9 +73,6 @@ def copy(
     :param src: Source file/directory path
     :param dst: Tuple of filesystem to copy to and path to file/directory in destination filesystem
     :param timestamp: Preserve timestamp or not
-    :param group: Destination file mode.
-    :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
      - copy('./some/file.txt', (ftp(..), 'description.ini'))
@@ -91,9 +85,6 @@ def copy(
     src: tuple[FS, str],
     dst: str | Path,
     timestamp: bool = True,
-    group: str = '',
-    mode: str = '',
-    owner: str = ''
 ):
     """
     Copies specific file or directory from source filesystem to local file.
@@ -102,9 +93,6 @@ def copy(
     :param src: Tuple of filesystem to copy from and path to file/directory in source filesystem
     :param dst: Destination file/directory path
     :param timestamp: Preserve timestamp or not
-    :param group: Destination file mode.
-    :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples
      - copy((ftp(..), 'description.ini'), './some/file.txt')
@@ -118,9 +106,6 @@ def copy(
     dst: FS,
     wlk: Walker,
     timestamp: bool = True,
-    group: str = '',
-    mode: str = '',
-    owner: str = ''
 ):
     """
     Copies walker items from source FS to destination FS.
@@ -131,9 +116,6 @@ def copy(
     :param dst: Filesystem to copy to
     :param wlk: Walker from source filesystem
     :param timestamp: Preserve timestamp or not
-    :param group: Destination file mode.
-    :param mode: Destination file group.
-    :param owner: Destination file ownership (required super-user permission).
 
     Examples:
     ::
