@@ -3,7 +3,7 @@ from .interface import Events
 
 from .ssh import SecureShell
 
-from .docker import Container as DockerContainer
+from .docker import ExistingContainer as DockerExistingContainer
 # from .docker import Compose as DockerCompose
 # from .docker import CustomCompose as DockerCustomCompose
 

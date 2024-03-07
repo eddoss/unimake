@@ -53,29 +53,29 @@ class Compose(Interface):
         command.extend(["build"])
         for k, v in self._args.items():
             command.extend(["--build-arg", f"{k}={v}"])
-        Shell(command, name=self.name).sync()
+        Shell(cmd, name=self.name).sync()
 
     def destroy(self, *args, **kwargs):
         command = self.cmd
         command.extend(["down", "--remove-orphans", "--rmi", "all"])
-        Shell(command, name=self.name).sync()
+        Shell(cmd, name=self.name).sync()
 
     @beartype
     def up(self, *args, **kwargs):
         command = self.cmd
         command.extend(["up", "--detach", "--no-recreate"])
-        Shell(command, name=self.name).sync()
+        Shell(cmd, name=self.name).sync()
 
     def down(self, *args, **kwargs):
         command = self.cmd
         command.append("down")
-        Shell(command, name=self.name).sync()
+        Shell(cmd, name=self.name).sync()
 
     @beartype
     def shell(self, *args, **kwargs):
         command = self.cmd
         command.extend(["exec", "-i", "-t", self._service, self.sh])
-        Shell(command, name=self.name).sync()
+        Shell(cmd, name=self.name).sync()
 
     @beartype
     def execute(self, cmd: list[str], cwd: str = "", env: envs.Optional = None, *args, **kwargs):
@@ -88,7 +88,7 @@ class Compose(Interface):
                 command.extend(["-e", f"{k}={v}"])
         command.append(self._service)
         command.extend(cmd)
-        Shell(command, name=self.name).sync()
+        Shell(cmd, name=self.name).sync()
 
     @beartype
     def upload(self, paths: dict[str, str], *args, **kwargs):
