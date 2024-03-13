@@ -7,7 +7,7 @@ from paramiko import util as paramiko_util
 from umk import globals, core
 from umk.framework.filesystem import Path
 from umk.framework.remote.interface import Interface
-from umk.framework.system import environs as envs
+from umk.framework.system import Environs
 from umk.framework.system.shell import Shell
 
 
@@ -33,41 +33,24 @@ class SecureShell(Interface):
         description="Default shell (bash, sh, zsh ...)"
     )
 
-    @core.typeguard
-    def __init__(
-        self,
-        name: str = "",
-        description: str = "Secure shell",
-        default: bool = False,
-        host: str = "",
-        username: str = "",
-        password: str = "",
-        port: int = 22,
-        shell: str | None = None
-    ):
-        super().__init__(
-            name=name, 
-            description=description, 
-            default=default,
-        )
-
+    def client(self) -> paramiko.SSHClient:
         paramiko_util.get_logger('paramiko').setLevel(logging.ERROR)
-
-        self.host = host
-        self.port = port
-        self.password = password
-        self.username = username
-        self.sh = shell
+        result = paramiko.SSHClient()
+        result.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        result.connect(self.host, self.port, self.username, self.password)
+        return result
 
     def shell(self, **kwargs):
+        paramiko_util.get_logger('paramiko').setLevel(logging.ERROR)
         cmd = ["ssh", f"{self.username}@{self.host}", "-p", str(self.port)]
         if self.sh:
             cmd.extend(["-t", self.sh.strip()])
-        Shell(name=self.name, command=cmd).sync()
+        Shell(name=self.name, cmd=cmd).sync()
 
     @core.typeguard
-    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, **kwargs):
-        client = self._client()
+    def execute(self, cmd: list[str], cwd: None | Path | str = None, env: None | Environs = None, **kwargs):
+        paramiko_util.get_logger('paramiko').setLevel(logging.ERROR)
+        client = self.client()
         _, out, err = client.exec_command(
             command=Shell.stringify(cmd),
             environment=None,
@@ -79,24 +62,24 @@ class SecureShell(Interface):
             print(line.rstrip())
 
     @core.typeguard
-    def upload(self, paths: dict[str, str], **kwargs):
+    def upload(self, paths: dict[str | Path, str | Path], **kwargs):
         if not paths:
             return
-        client = self._client()
+        client = self.client()
         with client.open_sftp() as transport:
             for src, dst in paths.items():
                 globals.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
                 transport.put(
-                    localpath=Path(src).expanduser().resolve().absolute().as_posix(),
-                    remotepath=dst
+                    localpath=str(Path(src).expanduser().resolve().absolute()),
+                    remotepath=str(dst)
                 )
         client.close()
 
     @core.typeguard
-    def download(self, items: dict[str, str], **kwargs):
+    def download(self, items: dict[str | Path, str | Path], **kwargs):
         if not items:
             return
-        client = self._client()
+        client = self.client()
         with client.open_sftp() as transport:
             for src, dst in items.items():
                 globals.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
@@ -104,21 +87,7 @@ class SecureShell(Interface):
                 if not dst.parent.exists():
                     os.makedirs(dst.parent)
                 transport.get(
-                    remotepath=src,
-                    localpath=dst.as_posix()
+                    remotepath=str(src),
+                    localpath=str(dst)
                 )
         client.close()
-
-    def _client(self):
-        result = paramiko.SSHClient()
-        result.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        result.connect(self.host, self.port, self.username, self.password)
-        return result
-
-    def _register_properties(self):
-        super()._register_properties()
-        self._properties.add("host")
-        self._properties.add("port")
-        self._properties.add("username")
-        self._properties.add("password")
-        self._properties.add("sh")

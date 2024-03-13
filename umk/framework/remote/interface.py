@@ -2,7 +2,8 @@ from beartype.typing import Generator
 
 from umk import core, globals
 from umk.framework import utils
-from umk.framework.system import environs as envs
+from umk.framework.filesystem import Path
+from umk.framework.system import Environs
 
 
 class Interface(core.Object):
@@ -23,9 +24,20 @@ class Interface(core.Object):
         """
         Remote environment properties
         """
-        # for field in type(self).__fields__:
-        for field in self.model_fields:
-            yield core.Property.from_field(self, field)
+        for name in self.model_fields:
+            result = self.property(name)
+            for prop in result:
+                yield prop
+
+    def property(self, name: str) -> list[core.Property]:
+        field = self.model_fields[name]
+        if not field.repr:
+            return []
+        return [core.Property(
+            name=name,
+            description=field.description,
+            value=getattr(self, name)
+        )]
 
     def build(self, **kwargs):
         """
@@ -58,21 +70,21 @@ class Interface(core.Object):
         self.__not_implemented()
 
     @core.typeguard
-    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, **kwargs):
+    def execute(self, cmd: list[str], cwd: None | Path | str = None, env: None | Environs = None, **kwargs):
         """
         Execute command in remote environment.
         """
         self.__not_implemented()
 
     @core.typeguard
-    def upload(self, items: dict[str, str], **kwargs):
+    def upload(self, items: dict[str | Path, str | Path], **kwargs):
         """
         Upload given paths to remote environment.
         """
         self.__not_implemented()
 
     @core.typeguard
-    def download(self, items: dict[str, str], **kwargs):
+    def download(self, items: dict[str | Path, str | Path], **kwargs):
         """
         Download given paths from remote environment.
         """
@@ -86,115 +98,3 @@ class Interface(core.Object):
 
     def __hash__(self) -> int:
         return hash(self.name)
-
-
-class Events:
-    @staticmethod
-    def build(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.build.before' / 'remote.build.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_BUILD if before else globals.EventNames.REMOTE_BUILD)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def destroy(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.destroy.before' / 'remote.destroy.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_DESTROY if before else globals.EventNames.REMOTE_DESTROY)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def up(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.up.before' / 'remote.up.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_UP if before else globals.EventNames.REMOTE_UP)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def down(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.down.before' / 'remote.down.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_DOWN if before else globals.EventNames.REMOTE_DOWN)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def execute(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.execute.before' / 'remote.execute.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_EXECUTE if before else globals.EventNames.REMOTE_EXECUTE)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def shell(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.shell.before' / 'remote.shell.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_SHELL if before else globals.EventNames.REMOTE_SHELL)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def upload(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.upload.before' / 'remote.upload.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_UPLOAD if before else globals.EventNames.REMOTE_UPLOAD)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def upload_item(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.upload.item.before' / 'remote.upload.item.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_UPLOAD_ITEM if before else globals.EventNames.REMOTE_UPLOAD_ITEM)
-        result.data = data if data else core.EventData()
-        result.data.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def download(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.download.before' / 'remote.download.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_DOWNLOAD if before else globals.EventNames.REMOTE_DOWNLOAD)
-        result.data = data if data else core.EventData()
-        result.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result
-
-    @staticmethod
-    def download_item(before: bool, instance: Interface, data: core.EventData | None = None) -> core.Event:
-        """
-        Creates 'remote.download.item.before' / 'remote.download.item.after' event.
-        """
-        result = core.Event(name=globals.EventNames.REMOTE_DOWNLOAD_ITEM if before else globals.EventNames.REMOTE_DOWNLOAD_ITEM)
-        result.data = data if data else core.EventData()
-        result.new("instance", instance, "Remote interface instance")
-        result.data.new("state", "before" if before else "after", "Is action at the beginning")
-        return result

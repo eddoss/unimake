@@ -1,5 +1,8 @@
 import copy
+import os
 from typing import Any
+
+import yaml
 
 from umk import core
 from umk.framework.filesystem import Path
@@ -10,7 +13,7 @@ from umk.framework.filesystem import Path
 # ####################################################################################
 
 class Build(core.Object):
-    context: None | Path = core.Field(
+    context: None | Path | str = core.Field(
         default=None,
         description="Either a path to a directory containing a Dockerfile, or a url to a git repository."
     )
@@ -18,11 +21,11 @@ class Build(core.Object):
         default=None,
         description="Alternate Dockerfile name (relative to build context)."
     )
-    args: dict[str, str] = core.Field(
+    args: dict[str, Any] = core.Field(
         default=None,
         description="Build arguments."
     )
-    ssh: str | dict[str, str] = core.Field(
+    ssh: str | dict[str, Any] = core.Field(
         default=None,
         description="SSH authentications that the image builder should use during image build (e.g., cloning private repository)"
     )
@@ -34,7 +37,7 @@ class Build(core.Object):
         default=None,
         description="List of export locations to be used to share build cache with future builds."
     )
-    additional_context: dict[str,str] = core.Field(
+    additional_context: dict[str, str | Path] = core.Field(
         default=None,
         description="List of named contexts the image builder should use during image build"
     )
@@ -87,10 +90,6 @@ class Build(core.Object):
         description="List of target platforms."
     )
 
-    @core.field_serializer('context')
-    def serialize_context(self, value: Path, _info):
-        return str(value)
-
     @core.field_serializer('args')
     def serialize_args(self, value: dict[str, str], _info):
         res = copy.deepcopy(value)
@@ -140,11 +139,11 @@ class Build(core.Object):
 
 class BlockIo(core.Object):
     class Weight(core.Object):
-        path: str
+        path: str | Path
         weight: int
 
     class Rate(core.Object):
-        path: str
+        path: str | Path
         rate: int | str
 
     weight: int = None
@@ -156,7 +155,7 @@ class BlockIo(core.Object):
 
 
 class Credential(core.Object):
-    file: str = core.Field(None)
+    file: str | Path = core.Field(None)
     registry: str = core.Field(None)
     config: str = core.Field(None)
 
@@ -307,7 +306,7 @@ class Deploy(core.Object):
 
 
 class Watch(core.Object):
-    path: None | str = core.Field(None)
+    path: None | str | Path = core.Field(None)
     action: None | str = core.Field(None)
     target: None | str = core.Field(None)
     ignore: list[str] = core.Field(None)
@@ -318,7 +317,7 @@ class Develop(core.Object):
 
 
 class EnvFile(core.Object):
-    path: Path = core.Field(
+    path: Path | str = core.Field(
         description="Environment file path."
     )
     required: bool = core.Field(
@@ -367,9 +366,9 @@ class Logging(core.Object):
     )
 
 
-class Secret(core.Object):
+class SecretAccess(core.Object):
     source: str
-    target: str
+    target: str | Path
     uid: str
     gid: str
     mode: int
@@ -420,9 +419,34 @@ class Mount(core.Object):
     class Info(core.Object):
         nocopy: bool = True
     type: str
-    source: str
-    target: str
-    volume: Info = core.Field(default_factory=Info)
+    source: Path | str
+    target: Path | str
+    volume: None | Info = None
+
+
+class Volumes(core.Object):
+    mounts: list[Mount] = core.Field(default_factory=list)
+
+    def volume(self, src: str | Path, dst: str | Path, nocopy: bool = None):
+        self._add("volume", src, dst, nocopy)
+
+    def bind(self, src: str | Path, dst: str | Path, nocopy: bool = None):
+        self._add("bind", src, dst, nocopy)
+
+    def tmpfs(self, src: str | Path, dst: str | Path, nocopy: bool = None):
+        self._add("tmpfs", src, dst, nocopy)
+
+    def npipe(self, src: str | Path, dst: str | Path, nocopy: bool = None):
+        self._add("npipe", src, dst, nocopy)
+
+    def add(self, mount: Mount):
+        self.mounts.append(mount)
+
+    def _add(self, t: str, src: str | Path, dst: str | Path, nocopy: bool = None):
+        mount = Mount(type=t, source=str(src), target=str(dst))
+        if nocopy is not None:
+            mount.volume = Mount.Info(nocopy=nocopy)
+        self.mounts.append(mount)
 
 
 class Service(core.Object):
@@ -668,7 +692,7 @@ class Service(core.Object):
         default=None,
         description="specifies the default number of containers to deploy for this service. When both are set, 'scale' must be consistent with the 'replicas' attribute in the Deploy Specification."
     )
-    secrets: list[str] | list[Secret] = core.Field(
+    secrets: list[str] | list[SecretAccess] = core.Field(
         default=None,
         description="Grants access to sensitive data defined by secrets on a per-service basis."
     )
@@ -724,25 +748,30 @@ class Service(core.Object):
         default=None,
         description="Configures the UTS namespace mode set for the service container. When unspecified it is the runtime's decision to assign a UTS namespace, if supported. "
     )
-    volumes: list[Mount] = core.Field(
-        default=None,
+    volumes: Volumes = core.Field(
+        default_factory=Volumes,
         description="Mounts host paths or named volumes that are accessible by service containers. You can use volumes to define multiple types of mounts; volume, bind, tmpfs, or npipe."
     )
     volumes_from: list[str] = core.Field(
         default=None,
         description="Mounts all of the volumes from another service or container. You can optionally specify read-only access 'ro' or read-write 'rw'. If no access level is specified, then read-write access is used."
     )
-    working_dir: None | Path = core.Field(
+    working_dir: None | Path | str = core.Field(
         default=None,
         description="Overrides the container's working directory which is specified by the image, for example Dockerfile's WORKDIR"
     )
 
-    # @core.field_serializer('command')
-    # def serialize_command(self, value: list[str], _info):
-    #     res = []
-    #     for chunk in value:
-    #         res.append(f'"{chunk}"')
-    #     return res
+    @core.field_serializer("volumes")
+    def serialize_volumes(self, value: Volumes, _info):
+        bind_only = True
+        for mount in value.mounts:
+            if mount.type != "bind":
+                bind_only = False
+                break
+        if bind_only:
+            return [f"{m.source}:{m.target}" for m in value.mounts]
+        else:
+            return value.mounts
 
 
 # ####################################################################################
@@ -802,7 +831,7 @@ class Network(core.Object):
     )
     external: None | bool = core.Field(
         default=None,
-        description="Is network external"
+        description="Is network external."
     )
     ipam: None | IPAM = core.Field(
         default=None,
@@ -814,7 +843,7 @@ class Network(core.Object):
     )
     labels: None | dict[str, str] = core.Field(
         default=None,
-        description="Add metadata to containers using labels."
+        description="Network metadata."
     )
     name: None | str = core.Field(
         default=None,
@@ -823,14 +852,85 @@ class Network(core.Object):
 
 
 # ####################################################################################
+# Volumes models
+# ####################################################################################
+
+class Volume(core.Object):
+    driver: None | str = core.Field(
+        default=None,
+        description="Specifies which volume driver should be used."
+    )
+    driver_opts: dict[str, Any] = core.Field(
+        default=None,
+        description="Specifies a list of options as key-value pairs to pass to the driver for this volume."
+    )
+    external: None | bool = core.Field(
+        default=None,
+        description="Is volume external."
+    )
+    labels: None | dict[str, str] = core.Field(
+        default=None,
+        description="Volume metadata."
+    )
+    name: None | str = core.Field(
+        default=None,
+        description="Sets a custom name for a volume. The name field can be used to reference volumes that contain special characters. The name is used as is and is not scoped with the stack name."
+    )
+
+
+# ####################################################################################
+# Configs models
+# ####################################################################################
+
+class Config(core.Object):
+    file: None | str = core.Field(
+        default=None,
+        description="The config is created with the contents of the file at the specified path."
+    )
+    environment: dict[str, Any] = core.Field(
+        default=None,
+        description="The config content is created with the value of an environment variable."
+    )
+    content: list[str] = core.Field(
+        default=None,
+        description="The content is created with the inlined value."
+    )
+    external: None | bool = core.Field(
+        default=None,
+        description="Is config external."
+    )
+    name: None | str = core.Field(
+        default=None,
+        description="The name of the config object in the container engine to look up. This field can be used to reference configs that contain special characters. The name is used as is and will not be scoped with the project name."
+    )
+
+    @core.field_serializer("content")
+    def serialize_content(self, value: list[str], _info):
+        if not value:
+            return ""
+        return "\n".join(value)
+
+
+# ####################################################################################
+# Secrets models
+# ####################################################################################
+
+class Secret(core.Object):
+    file: None | str = core.Field(
+        default=None,
+        description="The secret is created with the contents of the file at the specified path."
+    )
+    environment: dict[str, Any] = core.Field(
+        default=None,
+        description="The secret is created with the value of an environment variable."
+    )
+
+
+# ####################################################################################
 # File
 # ####################################################################################
 
 class File(core.Object):
-    name: None | str = core.Field(
-        default=None,
-        description="The top-level name."
-    )
     services: dict[str, Service] = core.Field(
         default_factory=dict,
         description="List of the services."
@@ -839,25 +939,52 @@ class File(core.Object):
         default_factory=dict,
         description="List of the networks."
     )
+    volumes: dict[str, Volume] = core.Field(
+        default_factory=dict,
+        description="List of the volumes."
+    )
+    configs: dict[str, Config] = core.Field(
+        default_factory=dict,
+        description="List of the configs."
+    )
+    secrets: dict[str, Config] = core.Field(
+        default_factory=dict,
+        description="List of the secrets."
+    )
+    path: Path = core.Field(
+        default=None,
+        description="Output directory path.",
+        exclude=True
+    )
+    name: str = core.Field(
+        default="docker-compose.yaml",
+        description="Output file name.",
+        exclude=True
+    )
+
+    @property
+    def file(self) -> Path:
+        if self.path is None:
+            raise ValueError("Composefile: output path is None")
+        return self.path / self.name
 
     def __str__(self):
         return self.text()
 
     def text(self) -> str:
-        self.services = self.services
-        self.networks = self.networks
-        return self.model_dump_yaml(exclude_none=True)
+        data = self.model_dump(exclude_none=True)
+        keys = []
+        for k, v in data.items():
+            if not v:
+                keys.append(k)
+        for k in keys:
+            data.pop(k)
+        return yaml.safe_dump(data, sort_keys=False)
 
-
-if __name__ == '__main__':
-    app = Service()
-    app.build = Build()
-    app.build.context = Path("/hello/world")
-    app.build.dockerfile = "app.dockerfile"
-    app.build.args = {"REPO": "git"}
-
-    compose = File()
-    compose.name = "foo-bar"
-    compose.services = {"app": app}
-
-    print(compose.text())
+    def save(self):
+        file = self.file
+        if not file.parent.exists():
+            os.makedirs(file.parent)
+        text = self.text()
+        with open(file, "w") as stream:
+            stream.write(text)

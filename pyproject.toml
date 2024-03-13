@@ -25,13 +25,14 @@ rich = "^13.6.0"
 gitpython = "^3.1.37"
 asyncclick = "^8.1"
 anyio = "^4.0.0"
-python-dotenv = "^1.0.0"
 beartype = "^0.16.3"
 fs = "^2.4.16"
 multimethod = "^1.10"
 paramiko = "^3.3.1"
-docker = "^7.0.0"
 pydantic = "^2.5.3"
+python-on-whales = "^0.69.0"
+pyyaml = "^6.0.1"
+python-dotenv = "^1.0.1"
 
 [tool.black]
 line-length = 100

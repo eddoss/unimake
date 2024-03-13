@@ -64,10 +64,10 @@ class Fetch(Handler, core.Object):
     def on_exception(self, exc: Exception):
         self.exc = exc
 
-    def outstr(self, splitter="") -> str:
+    def outstr(self, splitter="\n") -> str:
         return splitter.join(self.out)
 
-    def errstr(self, splitter="") -> str:
+    def errstr(self, splitter="\n") -> str:
         return splitter.join(self.err)
 
     def excstr(self) -> str:

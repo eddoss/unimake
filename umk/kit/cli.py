@@ -52,20 +52,17 @@ class Int(Opt):
 class Bool(Opt):
     value: bool = core.Field(default=False, description="Option value")
     surr: str = core.Field(default="", description="Surrounded symbols")
-    kind: str = core.Field(default="alpha", description="Represent style (alpha, digit, word)")
+    kind: str = core.Field(default="", description="Represent style (alpha, digit, word)")
     equal: str = core.Field(default="", description="CLI option (flag) equal symbol (--opt=val, --opt val, ...)")
 
     def list(self) -> list[str]:
         self.surr = self.surr.strip()
-        res = str(self.value).lower()
+        quoted = lambda string: f"{self.surr}{string}{self.surr}"
         if self.kind == "digit":
-            res = str(int(self.value))
+            return [self.name, quoted(str(int(self.value)))]
         elif self.kind == "word":
-            res = {True: "yes", False: "no"}
-        if self.equal == "":
-            return [self.name, f'{self.surr}{res}{self.surr}']
-        else:
-            return [f"{self.name}{self.equal}{self.surr}{res}{self.surr}"]
+            return [self.name, quoted({True: "yes", False: "no"}[self.value])]
+        return {True: [self.name], False: []}[self.value]
 
 
 class List(Opt):
@@ -145,8 +142,10 @@ class Obj(Opt):
         else:
             return [f"{self.name}{self.equal}{self.surr}{res}{self.surr}"]
 
+
 class Arg(Opt):
     value: Any = core.Field(default=None, description="Argument value")
+    # required: bool = core.Field(default=False, description="Whether argument is required or not")
 
     def list(self) -> list[str]:
         if self.value is not None:
@@ -156,6 +155,7 @@ class Arg(Opt):
 
 class Args(Opt):
     value: list[Any] = core.Field(default=None, description="Argument values")
+    # required: bool = core.Field(default=False, description="Whether arguments are required or not")
 
     def list(self) -> list[str]:
         result = []
@@ -180,7 +180,6 @@ class Options(core.Object):
                 result.extend(self._args(cli, name))
             else:
                 result.extend(self._other(cli, name))
-
         return result
 
     def _opt(self, opt: Opt, field: str) -> list[str]:

@@ -13,7 +13,7 @@ class Instruction(core.Object):
         pass
 
 
-class Commentable(core.Object):
+class Commentable(Instruction):
     comment: list[str] = core.Field(
         description="Instruction comment lines",
         default_factory=list,
@@ -81,10 +81,6 @@ class Cmd(Commentable):
     """
     args: list[str] = core.Field(default_factory=list)
 
-    def __init__(self, *args: str):
-        super().__init__()
-        self.args = list(args)
-
     def write(self, buffer: TextIO):
         super().write(buffer)
         text = f"CMD {self.args}\n"
@@ -135,11 +131,14 @@ class Env(Commentable):
     Set environment variables.
     """
     name: str
-    value: Any
+    value: Any = None
 
     def write(self, buffer: TextIO):
         super().write(buffer)
-        text = f"ENV {self.name}={self.value}\n"
+        if self.value:
+            text = f"ENV {self.name}={self.value}\n"
+        else:
+            text = f"ENV {self.name}\n"
         buffer.write(text)
 
 
@@ -242,7 +241,7 @@ class OnBuild(Commentable):
     """
     Specify instructions for when the image is used in a build.
     """
-    instruction: Commentable = core.Field(kw_only=False)
+    instruction: Instruction = core.Field(kw_only=False)
 
     def write(self, buffer: TextIO):
         super().write(buffer)
@@ -262,25 +261,6 @@ class Run(Commentable):
     def write(self, buffer: TextIO):
         super().write(buffer)
         text = "RUN " + " && \\\n    ".join(self.commands) + "\n"
-        # for i, cmd in enumerate(self.commands):
-        #     if i == 0:
-        #         if len(self.commands) > 1:
-        #             text += f"RUN {cmd}\n"
-        #     elif i == len(self.commands) - 1:
-        #         text += f"{cmd}"
-        #     else:
-        #         text += f"{cmd}"
-        #         if
-        #             text += ""
-
-        # text = "RUN"
-        # if len(self.commands) == 1:
-        #     text += f" {self.commands[0]}"
-        # else:
-        #     text += " <<EOF\n"
-        #     for cmd in self.commands:
-        #         text += f"{cmd}\n"
-        #     text += "EOF\n"
         buffer.write(text)
 
 
@@ -289,10 +269,6 @@ class Shell(Commentable):
     Set the default shell of an image.
     """
     args: list[str] = core.Field(default_factory=list)
-
-    def __init__(self, *args: str):
-        super().__init__()
-        self.args = list(args)
 
     def write(self, buffer: TextIO):
         super().write(buffer)
@@ -383,15 +359,30 @@ class Space(Instruction):
 
 class File(core.Object):
     instructions: list[Instruction] = core.Field(
-        description="Dockerfile instruction list",
         default_factory=list,
+        description="Dockerfile instruction list",
     )
+    path: None | Path = core.Field(
+        default=None,
+        description="Dockerfile output directory",
+    )
+    name: str = core.Field(
+        default="Dockerfile",
+        description="Dockerfile output name",
+    )
+
+    @property
+    def file(self) -> Path:
+        if self.path is None:
+            raise ValueError("Dockerfile: output path is None")
+        return self.path / self.name
 
     def write(self, buffer: TextIO):
         for instruction in self.instructions:
             instruction.write(buffer)
 
-    def save(self, file: Path):
+    def save(self):
+        file = self.file
         if not file.parent.exists():
             os.makedirs(file.parent)
         with open(file, "w") as stream:
@@ -401,6 +392,126 @@ class File(core.Object):
         buf = io.StringIO()
         self.write(buf)
         return buf.getvalue()
+
+    @core.typeguard
+    def add(self, src: str, dst: str, chown: None | OSUser = None, chmod: None | int = None, checksum: None | str = None, *, space: int = 1, comment: list[str] = None):
+        instruction = Add(comment=comment or [], space=space, src=src, dst=dst, chmod=chmod, chown=chown, checksum=checksum)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def arg(self, name: str, value: Any = None, *, space: int = 1, comment: list[str] = None):
+        instruction = Arg(comment=comment or [], space=space, name=name, value=value)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def cmd(self, args: list[str], *, space: int = 1, comment: list[str] = None):
+        instruction = Cmd(comment=comment or [], space=space, args=args)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def copy(self, src: str, dst: str, chown: None | OSUser = None, chmod: None | int = None, *, space: int = 1, comment: list[str] = None):
+        instruction = Copy(comment=comment or [], space=space, src=src, dst=dst, chmod=chmod, chown=chown)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def entrypoint(self, args: list[str], *, space: int = 1, comment: list[str] = None):
+        instruction = Entrypoint(comment=comment or [], space=space, args=args)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def env(self, name: str, value: Any=None, *, space: int = 1, comment: list[str] = None):
+        instruction = Env(comment=comment or [], space=space, name=name, value=value)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def expose(self, port: int, protocol: None | str = None, *, space: int = 1, comment: list[str] = None):
+        instruction = Expose(comment=comment or [], space=space, port=port, protocol=protocol)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def froms(self, image: str, platform: None | str = None, alias: None | str = None, *, space: int = 1, comment: list[str] = None):
+        instruction = From(comment=comment or [], space=space, image=image, platform=platform, alias=alias)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def healthcheck(
+        self,
+        interval: None | timedelta=None,
+        timeout: None | timedelta = None,
+        start_period: None | timedelta = None,
+        start_interval: None | timedelta = None,
+        retries: None | int = None,
+        command: list[str] = None,
+        *,
+        space: int = 1,
+        comment: list[str] = None
+    ):
+        instruction = Healthcheck(
+            comment=comment or[],
+            space=space,
+            interval=interval,
+            timeout=timeout,
+            start_period=start_period,
+            start_interval=start_interval,
+            retries=retries,
+            command=command
+        )
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def label(self, items: dict[str, str], *, space: int = 1, comment: list[str] = None):
+        instruction = Label(comment=comment or[], space=space, items=items)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def maintainer(self, name: str, *, space: int = 1, comment: list[str] = None):
+        instruction = Maintainer(comment=comment or[], space=space, name=name)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def on_build(self, instruction: Instruction, *, space: int = 1, comment: list[str] = None):
+        inst = OnBuild(comment=comment or[], space=space, instruction=instruction)
+        self.instructions.append(inst)
+
+    @core.typeguard
+    def run(self, commands: list[str], *, space: int = 1, comment: list[str] = None):
+        instruction = Run(comment=comment or[], space=space, commands=commands)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def shell(self, args: list[str], *, space: int = 1, comment: list[str] = None):
+        instruction = Shell(comment=comment or [], space=space, args=args)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def stop_signal(self, signal: int, *, space: int = 1, comment: list[str] = None):
+        instruction = StopSignal(comment=comment or[], space=space, signal=signal)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def user(self, user: str, group: None | str = None, *, space: int = 1, comment: list[str] = None):
+        instruction = User(comment=comment or[], space=space, user=user, group=group)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def volume(self, path: str, *, space: int = 1, comment: list[str] = None):
+        instruction = Volume(comment=comment or[], space=space, path=path)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def workdir(self, path: str, *, space: int = 1, comment: list[str] = None):
+        instruction = Workdir(comment=comment or[], space=space, path=path)
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def comment(self, *lines: str):
+        instruction = Comment(lines=list(lines))
+        self.instructions.append(instruction)
+
+    @core.typeguard
+    def space(self, count: int = 1):
+        instruction = Space(count=count)
+        self.instructions.append(instruction)
 
     def __iadd__(self, instruction: Instruction):
         self.instructions.append(instruction)
