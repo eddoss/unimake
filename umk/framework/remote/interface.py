@@ -6,7 +6,7 @@ from umk.framework.filesystem import Path
 from umk.framework.system import Environs
 
 
-class Interface(core.Object):
+class Interface(core.Model):
     name: str = core.Field(
         default="",
         description="Remote environment name",

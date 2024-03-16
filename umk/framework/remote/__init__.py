@@ -14,6 +14,7 @@ __all__ = [
     "Interface",
     "DockerContainer",
     "DockerCompose",
+    "SecureShell",
     "register",
     "iterate",
     "find"

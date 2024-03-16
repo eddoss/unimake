@@ -1,4 +1,4 @@
 from . import git
 from . import go
-from . import delve
+from .delve import Delve
 from . import docker

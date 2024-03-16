@@ -1,151 +1,83 @@
 import string
 
 from beartype.typing import Callable, Type
-
 from umk import globals, core
+from umk.framework.filesystem import Path
 
 
-class Description:
-    @property
-    def short(self) -> str:
-        return self._short
-
-    @short.setter
-    @core.typeguard
-    def short(self, value: str):
-        self._short = value
-
-    @property
-    def full(self) -> str:
-        return self._full
-
-    @full.setter
-    @core.typeguard
-    def full(self, value: str):
-        self._full = value
-
-    @core.typeguard
-    def __init__(self, short: str = "", full: str = ""):
-        self._short = short
-        self._full = full
+class Description(core.Model):
+    short: str = ""
+    full: str = ""
 
 
 class Name(Description):
-    @property
-    def ok(self) -> bool:
+    @core.field.validator("short")
+    @classmethod
+    def _validate(cls, value: str):
         signs = set('.-+_')
         digits = set(string.digits)
         alphabet = set(string.ascii_lowercase)
         allowed = set()
         allowed.update(digits, signs, alphabet)
 
-        return self.short != "" \
-            and self.short[0] not in digits \
-            and self.short[0] not in signs \
-            and set(self.short) <= allowed
-
-    @core.typeguard
-    def __init__(self, short: str = '', full: str = ''):
-        super().__init__(short, full)
+        if value[0] in digits:
+            raise ValueError(f"Name should not starts with digit: {value}")
+        if value[0] in signs:
+            raise ValueError(f"Name should not starts with sign: {value}")
+        if set(value) > allowed:
+            raise ValueError(f"Name should contains only [alphas {' '.join(signs)}]: {value}")
 
 
 class Author:
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    @core.typeguard
-    def name(self, value: str):
-        self._name = value
-
-    @property
-    def email(self) -> str:
-        return self._email
-
-    @email.setter
-    @core.typeguard
-    def email(self, value: str):
-        self._email = value
-
-    @property
-    def socials(self) -> dict[str, str]:
-        return self._socials
-
-    @socials.setter
-    @core.typeguard
-    def socials(self, value: dict[str, str]):
-        self._socials = value
-
-    @core.typeguard
-    def __init__(self, name: str = '', email: str = '', socials: dict[str, str] = None):
-        self._name = name
-        self._email = email
-        self._socials = {} if not socials else socials
+    name: str = core.Field(
+        default="",
+        description="Author name."
+    )
+    email: list[str] = core.Field(
+        default_factory=list,
+        description="Author emails."
+    )
+    socials: dict[str, str] = core.Field(
+        default_factory=dict,
+        description="Author social networks.",
+    )
 
 
 class Info:
-    @property
-    def name(self) -> Name:
-        return self._name
-
-    @name.setter
-    @core.typeguard
-    def name(self, value: Name):
-        self._name = value
-
-    @property
-    def version(self) -> str:
-        return self._version
-
-    @version.setter
-    @core.typeguard
-    def version(self, value: str):
-        self._version = value
-
-    @property
-    def description(self) -> Description:
-        return self._description
-
-    @description.setter
-    @core.typeguard
-    def description(self, value: Description):
-        self._description = value
-
-    @property
-    def authors(self) -> list[Author]:
-        return self._authors
-
-    @authors.setter
-    @core.typeguard
-    def authors(self, value: list[Author]):
-        self._authors = value
-
-    def __init__(self):
-        self._name = Name()
-        self._version = ""
-        self._description = Description()
-        self._authors = []
+    name: Name = core.Field(
+        default_factory=Name,
+        description="Project name."
+    )
+    version: str = core.Field(
+        default="",
+        description="Project version."
+    )
+    description: Description = core.Field(
+        default_factory=Description,
+        description="Project description."
+    )
+    authors: list[Author] = core.Field(
+        default_factory=list,
+        description="Project authors."
+    )
 
 
 class Layout:
-    def __init__(self, root=globals.paths.work):
-        self.root = root
-        self.umk = self.root / ".unimake"
+    root: Path = core.Field(
+        default=globals.paths.work,
+        description="Project root directory."
+    )
+    unimake: Path = core.Field(
+        default=globals.paths.work / ".unimake",
+        description="'.unimake' root directory."
+    )
 
 
 class Project:
-    @property
-    def info(self) -> Info:
-        return self._info
-
-    @info.setter
-    @core.typeguard
-    def info(self, value: Info):
-        self._info = value
-
-    def __init__(self):
-        self._info = Info()
+    info: Info = core.Field(
+        default_factory=Info,
+        description="Project info."
+    )
 
 
 class Registerer:
@@ -164,3 +96,93 @@ def register(creator):
 def get() -> Project | None:
     # See implementation in dot/implementation.py
     raise NotImplemented()
+
+
+class Scratch(Project):
+    pass
+
+
+class GoLayout(Layout):
+    assets: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "assets",
+        description="Path to 'assets' directory."
+    )
+    build: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "build",
+        description="Path to 'build' directory."
+    )
+    cmd: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "cmd",
+        description="Path to 'cmd' directory."
+    )
+    configs: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "configs",
+        description="Path to 'configs' directory."
+    )
+    deployment: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "deployment",
+        description="Path to 'deployment' directory."
+    )
+    docs: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "docs",
+        description="Path to 'docs' directory."
+    )
+    examples: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "examples",
+        description="Path to 'examples' directory."
+    )
+    githooks: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "githooks",
+        description="Path to 'githooks' directory."
+    )
+    init: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "init",
+        description="Path to 'init' directory."
+    )
+    internal: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "internal",
+        description="Path to 'internal' directory."
+    )
+    pkg: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "pkg",
+        description="Path to 'pkg' directory."
+    )
+    scripts: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "scripts",
+        description="Path to 'scripts' directory."
+    )
+    test: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "test",
+        description="Path to 'test' directory."
+    )
+    third_party: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "third_party",
+        description="Path to 'third_party' directory."
+    )
+    tools: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "tools",
+        description="Path to 'tools' directory."
+    )
+    vendor: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "vendor",
+        description="Path to 'vendor' directory."
+    )
+    web: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "web",
+        description="Path to 'web' directory."
+    )
+    website: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "website",
+        description="Path to 'website' directory."
+    )
+    output: Path = core.Field(
+        default_factory=lambda: globals.paths.work / "output",
+        description="Path to 'output' directory."
+    )
+
+
+class GoProject(Scratch):
+    layout: GoLayout = core.Field(
+        default_factory=GoLayout,
+        description="Golang project structure."
+    )

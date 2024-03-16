@@ -4,7 +4,7 @@ from typing import Optional as Opt
 
 
 class EnvironmentNotExistsError(Exception):
-    def __init__(self, name: str, message: str=""):
+    def __init__(self, name: str, message: str = ""):
         self.name = name
         self.message = message
 
@@ -45,14 +45,6 @@ class Environs(dict):
     def require(self, name: str, message: str = ""):
         if name in self:
             return
-        # e = core.Event(name=globals.EventNames.SYSTEM_ENV_REQUIRE)
-        # e.data.new("variable", name, "Environment variable name")
-        # msg = message
-        # if not message:
-        #     msg = "Not found"
-        # e.data.new("message", msg)
-        # globals.events.dispatch(e)
-        # if exit_code:
         globals.close(EnvironmentNotExistsError(name=name, message=message))
 
 

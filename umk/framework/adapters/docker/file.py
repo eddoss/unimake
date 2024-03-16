@@ -8,7 +8,7 @@ from umk.framework.system import User as OSUser
 from umk.framework.filesystem import Path
 
 
-class Instruction(core.Object):
+class Instruction(core.Model):
     def write(self, buffer: TextIO):
         pass
 
@@ -357,7 +357,7 @@ class Space(Instruction):
         buffer.write(max(1, self.count) * "\n")
 
 
-class File(core.Object):
+class File(core.Model):
     instructions: list[Instruction] = core.Field(
         default_factory=list,
         description="Dockerfile instruction list",

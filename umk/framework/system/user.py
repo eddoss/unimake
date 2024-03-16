@@ -5,30 +5,22 @@ import grp
 from umk import core
 
 
-class Group:
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @property
-    def id(self) -> int:
-        return self._id
-
-    @core.typeguard
-    def __init__(self, name: str, id: int):
-        self._name = name
-        self._id = id
+class Group(core.Model):
+    id: None | int = core.Field(
+        default=None,
+        description="Group ID."
+    )
+    name: None | str = core.Field(
+        default=None,
+        description="Group name."
+    )
 
 
 class User(Group):
-    @property
-    def group(self) -> Group:
-        return self._group
-
-    @core.typeguard
-    def __init__(self, name: str, id: int, group: Group):
-        super().__init__(name, id)
-        self._group = group
+    group: Group = core.Field(
+        default_factory=Group,
+        description="User group info."
+    )
 
 
 def user() -> User:

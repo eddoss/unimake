@@ -31,7 +31,7 @@ class Devnull(Handler):
     def on_exception(self, exc: Exception): ...
 
 
-class Colorful(Handler, core.Object):
+class Colorful(Handler, core.Model):
     out: str = core.Field(default="[bold green]${msg}", description="Output pattern")
     err: str = core.Field(default="[bold red]${msg}", description="Error pattern")
     exc: str = core.Field(default="[bold red]${exc}", description="Error pattern")
@@ -50,7 +50,7 @@ class Colorful(Handler, core.Object):
         globals.console.print(self.err.replace("${exc}", str(exc)))
 
 
-class Fetch(Handler, core.Object):
+class Fetch(Handler, core.Model):
     out: list[str] = core.Field(default_factory=list, description="Output buffer")
     err: list[str] = core.Field(default_factory=list, description="Error buffer")
     exc: None | Exception = core.Field(default=None, description="Exception object")
@@ -89,16 +89,16 @@ stdout = sys.stdout
 stderr = sys.stderr
 
 
-class Shell(core.Object):
+class Shell(core.Model):
     name: str = core.Field(
         default="",
         description="Shell name (just for convenience)"
     )
-    cmd: list[str] = core.Field(
+    cmd: list[str | Path] = core.Field(
         default_factory=list,
         description="Shell command and it's options"
     )
-    workdir: None | Path = core.Field(
+    workdir: None | Path | str = core.Field(
         default=None,
         description="Shell working directory"
     )
@@ -114,8 +114,8 @@ class Shell(core.Object):
         default=False,
         description="Print command or not"
     )
-    stringifier: Callable[[list[str]], str] = core.Field(
-        default=lambda args: " ".join(args),
+    stringifier: Callable[[list[str | Path]], str] = core.Field(
+        default=lambda args: " ".join([str(entry) for entry in args]),
         description="List to string converter (it's need to convert command list to string)"
     )
 

@@ -9,5 +9,5 @@ from .base import register, get
 
 
 # golang
-from .go import Project as Go
-from .go import Layout as GoLayout
+from .base import GoProject
+from .base import GoLayout

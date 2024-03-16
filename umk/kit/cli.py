@@ -6,7 +6,7 @@ from umk.kit.code import caller
 from umk.framework.filesystem import Path
 
 
-class Opt(core.Object):
+class Opt(core.Model):
     name: str = core.Field(default="", description="CLI option (or flag) qualified name")
 
     def list(self) -> list[str]: ...
@@ -165,7 +165,7 @@ class Args(Opt):
         return result
 
 
-class Options(core.Object):
+class Options(core.Model):
     def serialize(self) -> list[str]:
         result = []
         for name in self.model_fields:

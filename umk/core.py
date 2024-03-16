@@ -1,54 +1,150 @@
+import pathlib
 from collections import OrderedDict
 from copy import deepcopy
 
 import beartype
-import yaml
+import yaml as yamllib
+import json as jsonlib
 
 beartype.BeartypeConf.is_color = False
 
 from beartype.typing import Any, Callable
 from beartype import beartype as typeguard
 from multimethod import overload
-from pydantic import BaseModel
 from pydantic import Field
-from pydantic import field_serializer
-from pathlib import PosixPath, WindowsPath
+from pydantic import ValidationInfo
+from pydantic import SerializationInfo
+import pydantic as pd
 
 
-def _yaml_str_presenter(dumper, data):
-    """configures yaml for dumping multiline strings
-    Ref: https://stackoverflow.com/questions/8640959/how-can-i-control-what-scalar-form-pyyaml-uses-for-my-data"""
+# ////////////////////////////////////////////////////////////////////////////////////
+# Model
+# ////////////////////////////////////////////////////////////////////////////////////
+
+class model:
+    serializer = pd.model_serializer
+
+    @staticmethod
+    def dict(obj: pd.BaseModel) -> dict[str, Any]:
+        if model is not None:
+            return obj.model_dump()
+
+class field:
+    serializer = pd.field_serializer
+    validator = pd.field_validator
+
+    @staticmethod
+    def empty(value: Any) -> bool:
+        t = type(value)
+        if issubclass(t, bool):
+            return False
+        return not bool(value)
+
+
+class Model(pd.BaseModel):
+    class Config:
+        arbitrary_types_allowed = True
+        validate_assignment = True
+
+    @model.serializer
+    def _serialize_model(self):
+        result = {}
+        for name, f in self.model_fields.items():
+            value = getattr(self, name)
+            excluder = (f.json_schema_extra or {}).get("excluder")
+            if excluder and excluder(value):
+                continue
+            result[name] = value
+        return result
+
+
+# ////////////////////////////////////////////////////////////////////////////////////
+# YAML
+# ////////////////////////////////////////////////////////////////////////////////////
+
+class yaml:
+    @staticmethod
+    def representer(*types):
+        def inner(func):
+            def wrapped(dumper, data):
+                return func
+
+            for t in types:
+                yamllib.add_representer(t, func)
+                yamllib.representer.SafeRepresenter.add_representer(t, func)
+            return wrapped
+
+        return inner
+
+    @staticmethod
+    def text(data: Model | dict[str, Any]) -> str:
+        if issubclass(type(data), Model):
+            d = data.model_dump()
+            return yamllib.safe_dump(d)
+        return yamllib.safe_dump(data)
+
+
+@yaml.representer(str)
+def _yaml_multiline_string(dumper, data):
     if len(data.splitlines()) > 1:  # check for multiline string
         return dumper.represent_scalar('tag:yaml.org,2002:str', data, style='|')
     return dumper.represent_scalar('tag:yaml.org,2002:str', data)
 
 
-yaml.add_representer(str, _yaml_str_presenter)
-yaml.representer.SafeRepresenter.add_representer(str, _yaml_str_presenter)
-
-
-def _yaml_pathlib_path_representer(dumper, data):
+@yaml.representer(pathlib.PosixPath, pathlib.WindowsPath)
+def _yaml_pathlib(dumper, data):
     return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
-    # return dumper.represent_scalar('!Path', str(data))
 
 
-yaml.add_representer(PosixPath, _yaml_pathlib_path_representer)
-yaml.add_representer(WindowsPath, _yaml_pathlib_path_representer)
-yaml.representer.SafeRepresenter.add_representer(PosixPath, _yaml_pathlib_path_representer)
-yaml.representer.SafeRepresenter.add_representer(WindowsPath, _yaml_pathlib_path_representer)
+# ////////////////////////////////////////////////////////////////////////////////////
+# JSON
+# ////////////////////////////////////////////////////////////////////////////////////
+
+_json_representers = {}
 
 
-class Object(BaseModel):
-    class Config:
-        arbitrary_types_allowed = True
-        validate_assignment = True
+class _JsonEncoder(jsonlib.JSONEncoder):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def default(self, value: Any):
+        t = type(value)
+        for rt, re in _json_representers.items():
+            if issubclass(t, rt):
+                return re(value)
+        return super().default(value)
 
 
-def extra(obj: Object, field: str, key: str) -> Any:
-    return obj.model_fields[field].json_schema_extra.get(key)
+class json:
+    @staticmethod
+    def representer(*types):
+        def inner(func):
+            def wrapped(data):
+                return func
+            global _json_representers
+            for t in types:
+                _json_representers[t] = func
+            return wrapped
+        return inner
+
+    @staticmethod
+    def text(data: Model | dict | list, indent=None) -> str:
+        if issubclass(type(data), Model):
+            d = data.model_dump()
+            return jsonlib.dumps(d, indent=indent, cls=_JsonEncoder)
+        return jsonlib.dumps(data, indent=indent, cls=_JsonEncoder)
 
 
-class Property(Object):
+@json.representer(pathlib.PosixPath, pathlib.WindowsPath)
+def _json_pathlib(data):
+    return str(data)
+
+
+def extra(model: Model, field: str, key: str) -> Any:
+    return model.model_fields[field].json_schema_extra.get(key)
+
+
+class Property(Model):
     name: str = ""
     description: str = ""
     value: Any = None
@@ -103,7 +199,7 @@ EventListener = Callable[[...], ...]
 EventData = Properties
 
 
-class Event(Object):
+class Event(Model):
     name: str = Field(description="Event name")
     data: EventData = Field(description="Event details", default_factory=EventData)
 

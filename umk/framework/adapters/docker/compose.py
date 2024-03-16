@@ -12,7 +12,7 @@ from umk.framework.filesystem import Path
 # Service models
 # ####################################################################################
 
-class Build(core.Object):
+class Build(core.Model):
     context: None | Path | str = core.Field(
         default=None,
         description="Either a path to a directory containing a Dockerfile, or a url to a git repository."
@@ -137,12 +137,12 @@ class Build(core.Object):
         return res
 
 
-class BlockIo(core.Object):
-    class Weight(core.Object):
+class BlockIo(core.Model):
+    class Weight(core.Model):
         path: str | Path
         weight: int
 
-    class Rate(core.Object):
+    class Rate(core.Model):
         path: str | Path
         rate: int | str
 
@@ -154,19 +154,19 @@ class BlockIo(core.Object):
     device_write_iops: list[Rate] = None
 
 
-class Credential(core.Object):
+class Credential(core.Model):
     file: str | Path = core.Field(None)
     registry: str = core.Field(None)
     config: str = core.Field(None)
 
 
-class Dependency(core.Object):
+class Dependency(core.Model):
     name: str = core.Field(None)
     condition: str = core.Field(None)
     restart: bool = core.Field(None)
 
 
-class Placement(core.Object):
+class Placement(core.Model):
     constraints: dict[str, Any] = core.Field(
         default=None,
         description="Defines a required property the platform's node must fulfill to run the service container. It can be set either by a list or a map with string values."
@@ -177,7 +177,7 @@ class Placement(core.Object):
     )
 
 
-class Device(core.Object):
+class Device(core.Model):
     capabilities: list[str] = core.Field(
         default=None,
         description="List of the generic and driver specific capabilities."
@@ -200,7 +200,7 @@ class Device(core.Object):
     )
 
 
-class Resource(core.Object):
+class Resource(core.Model):
     cpus: None | int = core.Field(
         default=None,
         description="Limit or reservation for how much of the available CPU resources, as number of cores, a container can use."
@@ -219,12 +219,12 @@ class Resource(core.Object):
     )
 
 
-class Resources(core.Object):
+class Resources(core.Model):
     limits: None | Resource = core.Field(None)
     reservations: None | Resource = core.Field(None)
 
 
-class Restart(core.Object):
+class Restart(core.Model):
     condition: None | str = core.Field(
         default=None,
         description="Restart condition."
@@ -243,7 +243,7 @@ class Restart(core.Object):
     )
 
 
-class Update(core.Object):
+class Update(core.Model):
     parallelism: None | int = core.Field(
         default=None,
         description="The number of containers to rollback at a time. If set to 0, all containers rollback simultaneously."
@@ -270,7 +270,7 @@ class Update(core.Object):
     )
 
 
-class Deploy(core.Object):
+class Deploy(core.Model):
     endpoint_mode: None | str = core.Field(
         default=None,
         description="Specifies a service discovery method for external clients connecting to a service."
@@ -305,18 +305,18 @@ class Deploy(core.Object):
     )
 
 
-class Watch(core.Object):
+class Watch(core.Model):
     path: None | str | Path = core.Field(None)
     action: None | str = core.Field(None)
     target: None | str = core.Field(None)
     ignore: list[str] = core.Field(None)
 
 
-class Develop(core.Object):
+class Develop(core.Model):
     watch: list[Watch] = core.Field(None)
 
 
-class EnvFile(core.Object):
+class EnvFile(core.Model):
     path: Path | str = core.Field(
         description="Environment file path."
     )
@@ -326,7 +326,7 @@ class EnvFile(core.Object):
     )
 
 
-class Extend(core.Object):
+class Extend(core.Model):
     service: str = core.Field(
         description="The name of the service being referenced as a base."
     )
@@ -336,7 +336,7 @@ class Extend(core.Object):
     )
 
 
-class Healthcheck(core.Object):
+class Healthcheck(core.Model):
     test: list[str] = core.Field(
         description="Command to run to check health"
     )
@@ -357,7 +357,7 @@ class Healthcheck(core.Object):
     )
 
 
-class Logging(core.Object):
+class Logging(core.Model):
     driver: str = core.Field(
         description="The logging driver."
     )
@@ -366,7 +366,7 @@ class Logging(core.Object):
     )
 
 
-class SecretAccess(core.Object):
+class SecretAccess(core.Model):
     source: str
     target: str | Path
     uid: str
@@ -374,13 +374,13 @@ class SecretAccess(core.Object):
     mode: int
 
 
-class StorageOpt(core.Object):
+class StorageOpt(core.Model):
     size: str = core.Field(
         description="Storage size."
     )
 
 
-class Net(core.Object):
+class Net(core.Model):
     aliases: list[str] = core.Field(
         default=None,
         description="Alternative hostnames for the service on the network. "
@@ -407,16 +407,16 @@ class Net(core.Object):
     )
 
 
-class ULimits(core.Object):
-    class Nofile(core.Object):
+class ULimits(core.Model):
+    class Nofile(core.Model):
         soft: int
         hard: int
     nproc: int
     nofile: Nofile
 
 
-class Mount(core.Object):
-    class Info(core.Object):
+class Mount(core.Model):
+    class Info(core.Model):
         nocopy: bool = True
     type: str
     source: Path | str
@@ -424,7 +424,7 @@ class Mount(core.Object):
     volume: None | Info = None
 
 
-class Volumes(core.Object):
+class Volumes(core.Model):
     mounts: list[Mount] = core.Field(default_factory=list)
 
     def volume(self, src: str | Path, dst: str | Path, nocopy: bool = None):
@@ -449,7 +449,7 @@ class Volumes(core.Object):
         self.mounts.append(mount)
 
 
-class Service(core.Object):
+class Service(core.Model):
     build: None | Build = core.Field(
         default=None,
         description="Defines either a path to a directory containing a Dockerfile, or a URL to a git repository."
@@ -778,7 +778,7 @@ class Service(core.Object):
 # Network models
 # ####################################################################################
 
-class IpamConfig(core.Object):
+class IpamConfig(core.Model):
     subnet: None | str = core.Field(
         default=None,
         description="Subnet in CIDR format that represents a network segment."
@@ -797,7 +797,7 @@ class IpamConfig(core.Object):
     )
 
 
-class IPAM(core.Object):
+class IPAM(core.Model):
     driver: None | str = core.Field(
         default=None,
         description="Custom IPAM driver, instead of the default."
@@ -812,7 +812,7 @@ class IPAM(core.Object):
     )
 
 
-class Network(core.Object):
+class Network(core.Model):
     driver: None | str = core.Field(
         default=None,
         description="Specifies which driver should be used for this network."
@@ -855,7 +855,7 @@ class Network(core.Object):
 # Volumes models
 # ####################################################################################
 
-class Volume(core.Object):
+class Volume(core.Model):
     driver: None | str = core.Field(
         default=None,
         description="Specifies which volume driver should be used."
@@ -882,7 +882,7 @@ class Volume(core.Object):
 # Configs models
 # ####################################################################################
 
-class Config(core.Object):
+class Config(core.Model):
     file: None | str = core.Field(
         default=None,
         description="The config is created with the contents of the file at the specified path."
@@ -915,7 +915,7 @@ class Config(core.Object):
 # Secrets models
 # ####################################################################################
 
-class Secret(core.Object):
+class Secret(core.Model):
     file: None | str = core.Field(
         default=None,
         description="The secret is created with the contents of the file at the specified path."
@@ -930,7 +930,7 @@ class Secret(core.Object):
 # File
 # ####################################################################################
 
-class File(core.Object):
+class File(core.Model):
     services: dict[str, Service] = core.Field(
         default_factory=dict,
         description="List of the services."
