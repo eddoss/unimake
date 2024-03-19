@@ -1,34 +1,34 @@
 from umk.framework import project
-from umk.framework.adapters import git, go, delve
-from umk.framework.system import Environs
+from umk.framework.adapters import go, Delve
 
 
 @project.register
-class Project(project.Go):
+class Project(project.Golang):
     def __init__(self):
         super().__init__()
-        self.layout = project.GoLayout()
-        self.info.name.short = self.layout.root.name
-        self.info.name.full = "Message Publisher"
+        self.layout = project.GolangLayout()
+        self.info.id = "go-example"
+        self.info.name = self.info.id
+        self.info.description = "Unimake project example (golang based)"
         self.info.version = "v1.0.0"
         self.info.authors = [
-            project.Author('Edward Sarkisyan', 'edw.sarkisyan@gmail.com')
+            project.Author(name='Edward Sarkisyan', email=['edw.sarkisyan@gmail.com'])
         ]
-        self.info.description.short = "Unimake project example (golang based)"
-        self.go = go.Binary.find("1.18")
-        self.dlv = delve.Binary.find()
+        self.go = go.Go()
+        self.dlv = Delve()
 
-    async def build(self,  mode: str):
-        args = go.BuildArgs.new(mode=mode)
-        args.output = self.layout.output / "app"
-        args.sources.append(self.layout.cmd / "app")
-
-        await self.go.build(args=args).asyn()
+    async def build(self, mode: str):
+        options = go.Build.new(
+            mode,
+            self.layout.output / self.info.name,
+            self.layout.cmd / self.info.name
+        )
+        await self.go.build(options).asyn()
 
     def vendor(self):
         self.go.mod.tidy().sync()
         self.go.mod.vendor().sync()
 
-    def debug(self,  port=2345):
+    def debug(self, port=2345):
         self.dlv.flags.port = port
-        self.dlv.exec(self.layout.output / "app").sync()
+        self.dlv.exec(cmd=[self.layout.output / self.info.name]).sync()

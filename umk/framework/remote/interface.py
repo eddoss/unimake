@@ -1,9 +1,9 @@
-from beartype.typing import Generator
+from umk.typing import Generator
 
 from umk import core, globals
 from umk.framework import utils
-from umk.framework.filesystem import Path
-from umk.framework.system import Environs
+from umk.framework.filesystem import AnyPath, OptPath
+from umk.framework.system import OptEnv
 
 
 class Interface(core.Model):
@@ -70,21 +70,21 @@ class Interface(core.Model):
         self.__not_implemented()
 
     @core.typeguard
-    def execute(self, cmd: list[str], cwd: None | Path | str = None, env: None | Environs = None, **kwargs):
+    def execute(self, cmd: list[AnyPath], cwd: OptPath = None, env: OptEnv = None, **kwargs):
         """
         Execute command in remote environment.
         """
         self.__not_implemented()
 
     @core.typeguard
-    def upload(self, items: dict[str | Path, str | Path], **kwargs):
+    def upload(self, items: dict[AnyPath, AnyPath], **kwargs):
         """
         Upload given paths to remote environment.
         """
         self.__not_implemented()
 
     @core.typeguard
-    def download(self, items: dict[str | Path, str | Path], **kwargs):
+    def download(self, items: dict[AnyPath, AnyPath], **kwargs):
         """
         Download given paths from remote environment.
         """
@@ -98,3 +98,6 @@ class Interface(core.Model):
 
     def __hash__(self) -> int:
         return hash(self.name)
+
+    def __str__(self):
+        return f"umk.remote.Interface(name='{self.name}', description='{self.description}')"

@@ -1,18 +1,18 @@
 import copy
 import os
-from typing import Any
 
 import yaml
 
-from umk import core
+from umk import core, kit
 from umk.framework.filesystem import Path
+from umk.core.typing import Any
 
 
 # ####################################################################################
 # Service models
 # ####################################################################################
 
-class Build(core.Model):
+class Build(kit.cli.NoEmpty):
     context: None | Path | str = core.Field(
         default=None,
         description="Either a path to a directory containing a Dockerfile, or a url to a git repository."
@@ -90,7 +90,7 @@ class Build(core.Model):
         description="List of target platforms."
     )
 
-    @core.field_serializer('args')
+    @core.field.serializer('args')
     def serialize_args(self, value: dict[str, str], _info):
         res = copy.deepcopy(value)
         for name in res:
@@ -99,7 +99,7 @@ class Build(core.Model):
                 res[name] = f'"{val}"'
         return res
 
-    @core.field_serializer('ssh')
+    @core.field.serializer('ssh')
     def serialize_ssh(self, value: str | dict[str, str], _info):
         if issubclass(type(value), str):
             return [value]
@@ -111,18 +111,18 @@ class Build(core.Model):
                 res.append(f'{k}={v}')
         return res
 
-    @core.field_serializer('extra_hosts')
+    @core.field.serializer('extra_hosts')
     def serialize_extra_hosts(self, value: dict[str, str], _info):
         return {k: f'"{v}"' for k, v in value.items()}
 
-    @core.field_serializer('labels')
+    @core.field.serializer('labels')
     def serialize_labels(self, value: dict[str, str], _info):
         res = copy.deepcopy(value)
         for name in res:
             res[name] = f'"{res[name]}"'
         return res
 
-    @core.field_serializer('tags')
+    @core.field.serializer('tags')
     def serialize_tags(self, value: dict[str, str], _info):
         res = []
         for k, v in value.items():
@@ -137,12 +137,12 @@ class Build(core.Model):
         return res
 
 
-class BlockIo(core.Model):
-    class Weight(core.Model):
+class BlockIo(kit.cli.NoEmpty):
+    class Weight(kit.cli.NoEmpty):
         path: str | Path
         weight: int
 
-    class Rate(core.Model):
+    class Rate(kit.cli.NoEmpty):
         path: str | Path
         rate: int | str
 
@@ -154,19 +154,19 @@ class BlockIo(core.Model):
     device_write_iops: list[Rate] = None
 
 
-class Credential(core.Model):
+class Credential(kit.cli.NoEmpty):
     file: str | Path = core.Field(None)
     registry: str = core.Field(None)
     config: str = core.Field(None)
 
 
-class Dependency(core.Model):
+class Dependency(kit.cli.NoEmpty):
     name: str = core.Field(None)
     condition: str = core.Field(None)
     restart: bool = core.Field(None)
 
 
-class Placement(core.Model):
+class Placement(kit.cli.NoEmpty):
     constraints: dict[str, Any] = core.Field(
         default=None,
         description="Defines a required property the platform's node must fulfill to run the service container. It can be set either by a list or a map with string values."
@@ -177,7 +177,7 @@ class Placement(core.Model):
     )
 
 
-class Device(core.Model):
+class Device(kit.cli.NoEmpty):
     capabilities: list[str] = core.Field(
         default=None,
         description="List of the generic and driver specific capabilities."
@@ -200,7 +200,7 @@ class Device(core.Model):
     )
 
 
-class Resource(core.Model):
+class Resource(kit.cli.NoEmpty):
     cpus: None | int = core.Field(
         default=None,
         description="Limit or reservation for how much of the available CPU resources, as number of cores, a container can use."
@@ -219,12 +219,12 @@ class Resource(core.Model):
     )
 
 
-class Resources(core.Model):
+class Resources(kit.cli.NoEmpty):
     limits: None | Resource = core.Field(None)
     reservations: None | Resource = core.Field(None)
 
 
-class Restart(core.Model):
+class Restart(kit.cli.NoEmpty):
     condition: None | str = core.Field(
         default=None,
         description="Restart condition."
@@ -243,7 +243,7 @@ class Restart(core.Model):
     )
 
 
-class Update(core.Model):
+class Update(kit.cli.NoEmpty):
     parallelism: None | int = core.Field(
         default=None,
         description="The number of containers to rollback at a time. If set to 0, all containers rollback simultaneously."
@@ -270,7 +270,7 @@ class Update(core.Model):
     )
 
 
-class Deploy(core.Model):
+class Deploy(kit.cli.NoEmpty):
     endpoint_mode: None | str = core.Field(
         default=None,
         description="Specifies a service discovery method for external clients connecting to a service."
@@ -305,18 +305,18 @@ class Deploy(core.Model):
     )
 
 
-class Watch(core.Model):
+class Watch(kit.cli.NoEmpty):
     path: None | str | Path = core.Field(None)
     action: None | str = core.Field(None)
     target: None | str = core.Field(None)
     ignore: list[str] = core.Field(None)
 
 
-class Develop(core.Model):
+class Develop(kit.cli.NoEmpty):
     watch: list[Watch] = core.Field(None)
 
 
-class EnvFile(core.Model):
+class EnvFile(kit.cli.NoEmpty):
     path: Path | str = core.Field(
         description="Environment file path."
     )
@@ -326,7 +326,7 @@ class EnvFile(core.Model):
     )
 
 
-class Extend(core.Model):
+class Extend(kit.cli.NoEmpty):
     service: str = core.Field(
         description="The name of the service being referenced as a base."
     )
@@ -336,7 +336,7 @@ class Extend(core.Model):
     )
 
 
-class Healthcheck(core.Model):
+class Healthcheck(kit.cli.NoEmpty):
     test: list[str] = core.Field(
         description="Command to run to check health"
     )
@@ -357,7 +357,7 @@ class Healthcheck(core.Model):
     )
 
 
-class Logging(core.Model):
+class Logging(kit.cli.NoEmpty):
     driver: str = core.Field(
         description="The logging driver."
     )
@@ -366,7 +366,7 @@ class Logging(core.Model):
     )
 
 
-class SecretAccess(core.Model):
+class SecretAccess(kit.cli.NoEmpty):
     source: str
     target: str | Path
     uid: str
@@ -374,13 +374,13 @@ class SecretAccess(core.Model):
     mode: int
 
 
-class StorageOpt(core.Model):
+class StorageOpt(kit.cli.NoEmpty):
     size: str = core.Field(
         description="Storage size."
     )
 
 
-class Net(core.Model):
+class Net(kit.cli.NoEmpty):
     aliases: list[str] = core.Field(
         default=None,
         description="Alternative hostnames for the service on the network. "
@@ -407,16 +407,16 @@ class Net(core.Model):
     )
 
 
-class ULimits(core.Model):
-    class Nofile(core.Model):
+class ULimits(kit.cli.NoEmpty):
+    class Nofile(kit.cli.NoEmpty):
         soft: int
         hard: int
     nproc: int
     nofile: Nofile
 
 
-class Mount(core.Model):
-    class Info(core.Model):
+class Mount(kit.cli.NoEmpty):
+    class Info(kit.cli.NoEmpty):
         nocopy: bool = True
     type: str
     source: Path | str
@@ -424,7 +424,7 @@ class Mount(core.Model):
     volume: None | Info = None
 
 
-class Volumes(core.Model):
+class Volumes(kit.cli.NoEmpty):
     mounts: list[Mount] = core.Field(default_factory=list)
 
     def volume(self, src: str | Path, dst: str | Path, nocopy: bool = None):
@@ -449,7 +449,7 @@ class Volumes(core.Model):
         self.mounts.append(mount)
 
 
-class Service(core.Model):
+class Service(kit.cli.NoEmpty):
     build: None | Build = core.Field(
         default=None,
         description="Defines either a path to a directory containing a Dockerfile, or a URL to a git repository."
@@ -761,7 +761,7 @@ class Service(core.Model):
         description="Overrides the container's working directory which is specified by the image, for example Dockerfile's WORKDIR"
     )
 
-    @core.field_serializer("volumes")
+    @core.field.serializer("volumes")
     def serialize_volumes(self, value: Volumes, _info):
         bind_only = True
         for mount in value.mounts:
@@ -778,7 +778,7 @@ class Service(core.Model):
 # Network models
 # ####################################################################################
 
-class IpamConfig(core.Model):
+class IpamConfig(kit.cli.NoEmpty):
     subnet: None | str = core.Field(
         default=None,
         description="Subnet in CIDR format that represents a network segment."
@@ -797,7 +797,7 @@ class IpamConfig(core.Model):
     )
 
 
-class IPAM(core.Model):
+class IPAM(kit.cli.NoEmpty):
     driver: None | str = core.Field(
         default=None,
         description="Custom IPAM driver, instead of the default."
@@ -812,7 +812,7 @@ class IPAM(core.Model):
     )
 
 
-class Network(core.Model):
+class Network(kit.cli.NoEmpty):
     driver: None | str = core.Field(
         default=None,
         description="Specifies which driver should be used for this network."
@@ -855,7 +855,7 @@ class Network(core.Model):
 # Volumes models
 # ####################################################################################
 
-class Volume(core.Model):
+class Volume(kit.cli.NoEmpty):
     driver: None | str = core.Field(
         default=None,
         description="Specifies which volume driver should be used."
@@ -882,7 +882,7 @@ class Volume(core.Model):
 # Configs models
 # ####################################################################################
 
-class Config(core.Model):
+class Config(kit.cli.NoEmpty):
     file: None | str = core.Field(
         default=None,
         description="The config is created with the contents of the file at the specified path."
@@ -904,7 +904,7 @@ class Config(core.Model):
         description="The name of the config object in the container engine to look up. This field can be used to reference configs that contain special characters. The name is used as is and will not be scoped with the project name."
     )
 
-    @core.field_serializer("content")
+    @core.field.serializer("content")
     def serialize_content(self, value: list[str], _info):
         if not value:
             return ""
@@ -915,7 +915,7 @@ class Config(core.Model):
 # Secrets models
 # ####################################################################################
 
-class Secret(core.Model):
+class Secret(kit.cli.NoEmpty):
     file: None | str = core.Field(
         default=None,
         description="The secret is created with the contents of the file at the specified path."
@@ -930,7 +930,7 @@ class Secret(core.Model):
 # File
 # ####################################################################################
 
-class File(core.Model):
+class File(kit.cli.NoEmpty):
     services: dict[str, Service] = core.Field(
         default_factory=dict,
         description="List of the services."
@@ -972,7 +972,7 @@ class File(core.Model):
         return self.text()
 
     def text(self) -> str:
-        data = self.model_dump(exclude_none=True)
+        data = core.model.dict(self)
         keys = []
         for k, v in data.items():
             if not v:

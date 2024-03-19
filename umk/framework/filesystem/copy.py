@@ -28,15 +28,7 @@ def copy(
     """
     s = OSFS(src.parent.as_posix())
     d = OSFS(dst.parent.as_posix(), create=True)
-    try:
-        _cp.copy_file(s, src.name, d, dst.name, timestamp)
-    except Exception as err:
-        e = core.Event(name=globals.EventNames.FILESYSTEM_COPY)
-        e.data.new("src", src, "Source file")
-        e.data.new("dst", dst, "Destination file")
-        e.data.new("err", err, "Exception object")
-        globals.events.dispatch(e)
-        return
+    _cp.copy_file(s, src.name, d, dst.name, timestamp)
 
 
 @core.overload

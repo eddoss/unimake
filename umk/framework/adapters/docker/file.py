@@ -2,7 +2,7 @@ import io
 import os
 from datetime import timedelta
 
-from beartype.typing import TextIO, Optional, Any
+from umk.typing import TextIO, Optional, Any
 from umk import core
 from umk.framework.system import User as OSUser
 from umk.framework.filesystem import Path
@@ -371,6 +371,9 @@ class File(core.Model):
         description="Dockerfile output name",
     )
 
+    def __repr__(self):
+        return self.text()
+
     @property
     def file(self) -> Path:
         if self.path is None:
@@ -394,8 +397,10 @@ class File(core.Model):
         return buf.getvalue()
 
     @core.typeguard
-    def add(self, src: str, dst: str, chown: None | OSUser = None, chmod: None | int = None, checksum: None | str = None, *, space: int = 1, comment: list[str] = None):
-        instruction = Add(comment=comment or [], space=space, src=src, dst=dst, chmod=chmod, chown=chown, checksum=checksum)
+    def add(self, src: str, dst: str, chown: None | OSUser = None, chmod: None | int = None,
+            checksum: None | str = None, *, space: int = 1, comment: list[str] = None):
+        instruction = Add(comment=comment or [], space=space, src=src, dst=dst, chmod=chmod, chown=chown,
+                          checksum=checksum)
         self.instructions.append(instruction)
 
     @core.typeguard
@@ -409,7 +414,8 @@ class File(core.Model):
         self.instructions.append(instruction)
 
     @core.typeguard
-    def copy(self, src: str, dst: str, chown: None | OSUser = None, chmod: None | int = None, *, space: int = 1, comment: list[str] = None):
+    def copy(self, src: str, dst: str, chown: None | OSUser = None, chmod: None | int = None, *, space: int = 1,
+             comment: list[str] = None):
         instruction = Copy(comment=comment or [], space=space, src=src, dst=dst, chmod=chmod, chown=chown)
         self.instructions.append(instruction)
 
@@ -419,7 +425,7 @@ class File(core.Model):
         self.instructions.append(instruction)
 
     @core.typeguard
-    def env(self, name: str, value: Any=None, *, space: int = 1, comment: list[str] = None):
+    def env(self, name: str, value: Any = None, *, space: int = 1, comment: list[str] = None):
         instruction = Env(comment=comment or [], space=space, name=name, value=value)
         self.instructions.append(instruction)
 
@@ -429,25 +435,26 @@ class File(core.Model):
         self.instructions.append(instruction)
 
     @core.typeguard
-    def froms(self, image: str, platform: None | str = None, alias: None | str = None, *, space: int = 1, comment: list[str] = None):
+    def froms(self, image: str, platform: None | str = None, alias: None | str = None, *, space: int = 1,
+              comment: list[str] = None):
         instruction = From(comment=comment or [], space=space, image=image, platform=platform, alias=alias)
         self.instructions.append(instruction)
 
     @core.typeguard
     def healthcheck(
-        self,
-        interval: None | timedelta=None,
-        timeout: None | timedelta = None,
-        start_period: None | timedelta = None,
-        start_interval: None | timedelta = None,
-        retries: None | int = None,
-        command: list[str] = None,
-        *,
-        space: int = 1,
-        comment: list[str] = None
+            self,
+            interval: None | timedelta = None,
+            timeout: None | timedelta = None,
+            start_period: None | timedelta = None,
+            start_interval: None | timedelta = None,
+            retries: None | int = None,
+            command: list[str] = None,
+            *,
+            space: int = 1,
+            comment: list[str] = None
     ):
         instruction = Healthcheck(
-            comment=comment or[],
+            comment=comment or [],
             space=space,
             interval=interval,
             timeout=timeout,
@@ -460,22 +467,22 @@ class File(core.Model):
 
     @core.typeguard
     def label(self, items: dict[str, str], *, space: int = 1, comment: list[str] = None):
-        instruction = Label(comment=comment or[], space=space, items=items)
+        instruction = Label(comment=comment or [], space=space, items=items)
         self.instructions.append(instruction)
 
     @core.typeguard
     def maintainer(self, name: str, *, space: int = 1, comment: list[str] = None):
-        instruction = Maintainer(comment=comment or[], space=space, name=name)
+        instruction = Maintainer(comment=comment or [], space=space, name=name)
         self.instructions.append(instruction)
 
     @core.typeguard
     def on_build(self, instruction: Instruction, *, space: int = 1, comment: list[str] = None):
-        inst = OnBuild(comment=comment or[], space=space, instruction=instruction)
+        inst = OnBuild(comment=comment or [], space=space, instruction=instruction)
         self.instructions.append(inst)
 
     @core.typeguard
     def run(self, commands: list[str], *, space: int = 1, comment: list[str] = None):
-        instruction = Run(comment=comment or[], space=space, commands=commands)
+        instruction = Run(comment=comment or [], space=space, commands=commands)
         self.instructions.append(instruction)
 
     @core.typeguard
@@ -485,22 +492,22 @@ class File(core.Model):
 
     @core.typeguard
     def stop_signal(self, signal: int, *, space: int = 1, comment: list[str] = None):
-        instruction = StopSignal(comment=comment or[], space=space, signal=signal)
+        instruction = StopSignal(comment=comment or [], space=space, signal=signal)
         self.instructions.append(instruction)
 
     @core.typeguard
-    def user(self, user: str, group: None | str = None, *, space: int = 1, comment: list[str] = None):
-        instruction = User(comment=comment or[], space=space, user=user, group=group)
+    def user(self, user: str | int, group: None | str | int = None, *, space: int = 1, comment: list[str] = None):
+        instruction = User(comment=comment or [], space=space, user=str(user), group=str(group) if group else None)
         self.instructions.append(instruction)
 
     @core.typeguard
     def volume(self, path: str, *, space: int = 1, comment: list[str] = None):
-        instruction = Volume(comment=comment or[], space=space, path=path)
+        instruction = Volume(comment=comment or [], space=space, path=path)
         self.instructions.append(instruction)
 
     @core.typeguard
     def workdir(self, path: str, *, space: int = 1, comment: list[str] = None):
-        instruction = Workdir(comment=comment or[], space=space, path=path)
+        instruction = Workdir(comment=comment or [], space=space, path=path)
         self.instructions.append(instruction)
 
     @core.typeguard

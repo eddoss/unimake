@@ -1,9 +1,10 @@
+import traceback
 import sys
 import asyncclick as click
 from asyncclick import Context
 from rich.table import Table
 from umk.tools.unimake import application
-from umk import dot, framework, globals
+from umk import dot, framework, globals, core
 
 
 @application.group(
@@ -19,21 +20,11 @@ async def remote(ctx: click.Context, name: str):
     ctx.obj["instance"] = None  # remote environment instance
 
     # Load .unimake/remotes.py
-    try:
-        state = dot.Instance.load(
-            root=globals.paths.unimake,
-            remotes=dot.YES,
-            project=dot.OPT,
-        )
-    except Exception as e:
-        globals.console.print(
-            f"[bold red]Unimake error !\n"
-            f"Failed to load .unimake/remotes.py: {e}"
-        )
-        sys.exit()
-    if not state.ok:
-        state.print()
-        sys.exit()
+    state = dot.Instance.load(
+        root=globals.paths.unimake,
+        remotes=dot.YES,
+        project=dot.OPT,
+    )
 
     # We don't need to find remote environment if 'ls' is requested.
     # If no subcommand was passed we assume it is 'ls'
@@ -57,31 +48,36 @@ async def remote(ctx: click.Context, name: str):
 @remote.command(name='build', help=framework.remote.Interface.build.__doc__)
 @click.pass_context
 def build(ctx: click.Context):
-    ctx.obj.get("instance").build()
+    instance = ctx.obj.get("instance")
+    instance.build()
 
 
 @remote.command(name='destroy', help=framework.remote.Interface.destroy.__doc__)
 @click.pass_context
 def destroy(ctx: click.Context):
-    ctx.obj.get("instance").destroy()
+    instance = ctx.obj.get("instance")
+    instance.destroy()
 
 
 @remote.command(name='up', help=framework.remote.Interface.up.__doc__)
 @click.pass_context
 def up(ctx: click.Context):
-    ctx.obj.get("instance").up()
+    instance = ctx.obj.get("instance")
+    instance.up()
 
 
 @remote.command(name='down', help=framework.remote.Interface.down.__doc__)
 @click.pass_context
 def down(ctx: click.Context):
-    ctx.obj.get("instance").down()
+    instance = ctx.obj.get("instance")
+    instance.down()
 
 
 @remote.command(name='shell', help=framework.remote.Interface.shell.__doc__)
 @click.pass_context
 def shell(ctx: click.Context):
-    ctx.obj.get("instance").shell()
+    instance = ctx.obj.get("instance")
+    instance.shell()
 
 
 @remote.command(name='ls', help='List project remote environments')
@@ -112,21 +108,16 @@ def execute(ctx: Context, program: str, arguments: tuple[str]):
     rem.execute(cmd=cmd)
 
 
-@remote.command(name='info', help='Show remote environment details')
+@remote.command(name='inspect', help='Show remote environment details')
 @click.pass_context
-def info(ctx: Context):
+def inspect(ctx: Context):
     rem: framework.remote.Interface = ctx.obj.get("instance")
     table = Table(show_header=True, show_edge=True, show_lines=True)
     table.add_column("Name", justify="left", style="", no_wrap=True)
     table.add_column("Description", justify="left", style="", no_wrap=True)
     table.add_column("Value", justify="left", style="", no_wrap=True)
-    for _, prop in rem.details.items():
+    for prop in rem.properties():
         table.add_row(prop.name, prop.description, str(prop.value))
-    globals.console.print(f"[bold yellow]\[NAME]")
-    globals.console.print(f"[bold]    {rem.name}")
-    globals.console.print(f"[bold yellow]\[DESCRIPTION]")
-    globals.console.print(f"[bold]    {rem.description or 'No description'}")
-    globals.console.print(f"[bold yellow]\[PROPERTIES]")
     globals.console.print(table)
 
 

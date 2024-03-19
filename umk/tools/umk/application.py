@@ -1,7 +1,7 @@
 import sys
 import asyncclick
 from rich.table import Table
-from umk.framework.project import BaseProject
+from umk.framework import project
 from umk import framework, dot, globals
 
 Sections = dict[framework.cli.Section, list[asyncclick.Command]]
@@ -24,9 +24,9 @@ class Group(asyncclick.Group):
 
 
 class HelpMessage:
-    def render(self, project: BaseProject, section: Sections):
+    def render(self, proj: project.Project, section: Sections):
         console = globals.console
-        info = project.info
+        info = proj.info
         console.print(f"[blue bold]Welcome to[/] [bold yellow]{info.name.full or info.name.short}\n")
 
         console.print("    [italic cyan bold]umk <command> \[flags] \[arguments]")

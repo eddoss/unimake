@@ -1,20 +1,69 @@
+import json as jsonlib
 import pathlib
 from collections import OrderedDict
 from copy import deepcopy
+from umk.typing import Any, Callable
 
 import beartype
+import pydantic as pd
 import yaml as yamllib
-import json as jsonlib
+from beartype import beartype as typeguard
+from multimethod import overload as base_overload
+from pydantic import Field
+# from pydantic import validate_call
 
 beartype.BeartypeConf.is_color = False
 
-from beartype.typing import Any, Callable
-from beartype import beartype as typeguard
-from multimethod import overload
-from pydantic import Field
-from pydantic import ValidationInfo
-from pydantic import SerializationInfo
-import pydantic as pd
+TypeValidationError = pd.ValidationError
+SerializationInfo = pd.SerializationInfo
+overload = base_overload
+# typeguard = validate_call
+
+
+# def typeguard(func):
+#     @validate_call(config=dict(arbitrary_types_allowed=True))
+#     def inner(*args, **kwargs):
+#         func(*args, **kwargs)
+#     return inner
+
+
+# ////////////////////////////////////////////////////////////////////////////////////
+# Errors
+# ////////////////////////////////////////////////////////////////////////////////////
+
+class Error(Exception):
+    @property
+    def messages(self) -> list:
+        return self._msg
+
+    @messages.setter
+    @typeguard
+    def messages(self, value: list):
+        self._msg = value
+
+    @typeguard
+    def __init__(self, *messages: Any):
+        super().__init__()
+        self._msg = list(messages)
+
+    def __str__(self):
+        return str(self.messages)
+
+    def __len__(self):
+        len(self.messages)
+
+    @typeguard
+    def __getitem__(self, index: int) -> Any:
+        return self.messages[index]
+
+    def __iter__(self):
+        for message in self.messages:
+            yield message
+
+    @typeguard
+    def print(self, printer: Callable[[...], Any]):
+        for message in self.messages:
+            printer(message)
 
 
 # ////////////////////////////////////////////////////////////////////////////////////
@@ -51,7 +100,9 @@ class Model(pd.BaseModel):
         result = {}
         for name, f in self.model_fields.items():
             value = getattr(self, name)
-            excluder = (f.json_schema_extra or {}).get("excluder")
+            excluder = self.model_config.get("field_excluder")
+            if not excluder:
+                excluder = (f.json_schema_extra or {}).get("excluder")
             if excluder and excluder(value):
                 continue
             result[name] = value
@@ -225,3 +276,5 @@ class Emitter:
         if listeners:
             for listener in listeners:
                 listener(deepcopy(event))
+
+

@@ -1,8 +1,7 @@
 from textwrap import dedent
 from rich.syntax import Syntax
 from rich.table import Table
-from umk import globals
-from beartype import beartype
+from umk import globals, core
 
 
 # ####################################################################################
@@ -32,7 +31,7 @@ class Ok(State):
 
 
 class InternalError(State):
-    @beartype
+    @core.typeguard
     def __init__(self, script: str, description: str):
         super().__init__(code=-1, name="Internal error")
         self._description = description
@@ -57,7 +56,7 @@ _table_init.add_row('$ unimake init ...', 'Initialize a project')
 
 
 class RootNotExists(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=100, name="Root not exists")
 
@@ -73,7 +72,7 @@ class RootNotExists(State):
 
 
 class RootNotDirectory(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=101, name="Root it not a directory")
 
@@ -90,7 +89,7 @@ class RootNotDirectory(State):
 # ------------------------------------------------------------------------------------
 
 class ProjectScriptNotExists(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=200, name="No project.py")
 
@@ -127,7 +126,7 @@ class Project(umk.GoProject):
 
 
 class ProjectCreatorNotExists(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=201, name="No project creator")
 
@@ -147,7 +146,7 @@ class ProjectCreatorNotExists(State):
 
 
 class ProjectCreatorBadType(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=202, name="Project creator bad type")
 
@@ -170,7 +169,7 @@ class ProjectCreatorBadType(State):
 # ------------------------------------------------------------------------------------
 
 class RemotesScriptNotExists(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=300, name="No remotes.py")
 
@@ -214,7 +213,7 @@ class MySecreteRemote(remote.Ssh):
 
 
 class RemoteCreatorBadType(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=301, name="Project creator bad type")
 
@@ -237,7 +236,7 @@ class RemoteCreatorBadType(State):
 # ------------------------------------------------------------------------------------
 
 class CliScriptNotExists(State):
-    @beartype
+    @core.typeguard
     def __init__(self):
         super().__init__(code=400, name="No remotes.py")
 

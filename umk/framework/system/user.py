@@ -15,12 +15,18 @@ class Group(core.Model):
         description="Group name."
     )
 
+    def __str__(self):
+        return f"gid={self.id} group={self.name}"
+
 
 class User(Group):
     group: Group = core.Field(
         default_factory=Group,
         description="User group info."
     )
+
+    def __str__(self):
+        return f"uid={self.id} user={self.name} {self.group}"
 
 
 def user() -> User:

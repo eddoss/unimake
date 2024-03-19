@@ -1,19 +1,11 @@
 from umk import core
 from umk.framework.adapters import docker
-from umk.framework.filesystem import Path
+from umk.framework.filesystem import AnyPath, OptPath
 from umk.framework.remote.interface import Interface
-from umk.framework.system import Shell, Environs, User
+from umk.framework.system import Shell, User, OptEnv
 
 
 class Compose(Interface):
-    dockerfiles: list[docker.File] = core.Field(
-        default_factory=list,
-        description="Dockerfile objects."
-    )
-    composefile: None | docker.ComposeFile = core.Field(
-        default_factory=docker.ComposeFile,
-        description="Docker compose file object."
-    )
     service: str = core.Field(
         default=None,
         description="Target compose service"
@@ -21,6 +13,14 @@ class Compose(Interface):
     sh: list[str] = core.Field(
         default_factory=lambda: ["bash"],
         description="Shell command (sh, bash, zsh, ...)"
+    )
+    composefile: None | docker.ComposeFile = core.Field(
+        default_factory=docker.ComposeFile,
+        description="Docker compose file object."
+    )
+    dockerfiles: list[docker.File] = core.Field(
+        default_factory=list,
+        description="Dockerfile objects."
     )
 
     @property
@@ -73,7 +73,7 @@ class Compose(Interface):
         )
 
     @core.typeguard
-    def execute(self, cmd: list[str], cwd: None | Path | str = None, env: None | Environs = None, **kwargs):
+    def execute(self, cmd: list[AnyPath], cwd: OptPath = None, env: OptEnv = None, **kwargs):
         detach = kwargs.get("detach") or False
         self.client.compose.execute(
             service=self.service,
@@ -85,7 +85,7 @@ class Compose(Interface):
         )
 
     @core.typeguard
-    def upload(self, items: dict[str | Path, str | Path], **kwargs):
+    def upload(self, items: dict[AnyPath, AnyPath], **kwargs):
         service = kwargs.get("service", self.service)
         for i, (src, dst) in enumerate(items.items()):
             shell = Shell(cmd=self.client.compose.docker_compose_cmd)
@@ -93,12 +93,23 @@ class Compose(Interface):
             shell.sync(log=False)
 
     @core.typeguard
-    def download(self, items: dict[str | Path, str | Path], **kwargs):
+    def download(self, items: dict[AnyPath, AnyPath], **kwargs):
         service = kwargs.get("service", self.service)
         for i, (src, dst) in enumerate(items.items()):
             shell = Shell(cmd=self.client.compose.docker_compose_cmd)
             shell.cmd += ["cp", f"{service}:{src}", str(dst)]
             shell.sync(log=False)
+
+    def property(self, name: str) -> list[core.Property]:
+        if name != "dockerfiles":
+            return super().property(name)
+        return [
+            core.Property(
+                name=f"dockerfile[{i}]",
+                description=f"Dockerfile object [{i}]",
+                value=df
+            ) for i, df in enumerate(self.dockerfiles, start=0)
+        ]
 
 
 class Container(Interface):
@@ -110,11 +121,11 @@ class Container(Interface):
         default_factory=lambda: ["bash"],
         description="Shell command (sh, bash, zsh, ...)"
     )
-    workdir: str | Path = core.Field(
+    workdir: OptPath = core.Field(
         default="/",
         description="Shell working directory."
     )
-    environments: None | Environs = core.Field(
+    environments: OptEnv = core.Field(
         default=None,
         description="Shell environment variables."
     )
@@ -132,9 +143,9 @@ class Container(Interface):
         return docker.Client()
 
     def shell(self, *args, **kwargs):
-        user = None
+        usr = None
         if self.user:
-            user = f"{self.user.id}:{self.user.group.id}"
+            usr = f"{self.user.id}:{self.user.group.id}"
         self.client.container.execute(
             container=self.container,
             command=self.sh,
@@ -143,13 +154,13 @@ class Container(Interface):
             interactive=True,
             privileged=self.privileged,
             tty=True,
-            user=user,
+            user=usr,
             workdir=self.workdir,
             stream=False
         )
 
     @core.typeguard
-    def execute(self, cmd: list[str], cwd: None | Path | str = None, env: None | Environs = None, **kwargs):
+    def execute(self, cmd: list[AnyPath], cwd: OptPath = None, env: OptEnv = None, **kwargs):
         envs = {}
         if self.environments:
             envs.update(self.environments)
@@ -157,9 +168,9 @@ class Container(Interface):
             envs.update(env)
         if not envs:
             envs = None
-        user = None
+        usr = None
         if self.user:
-            user = f"{self.user.id}:{self.user.group.id}"
+            usr = f"{self.user.id}:{self.user.group.id}"
         detach = kwargs.get("detach") or False
         self.client.container.execute(
             container=self.container,
@@ -175,7 +186,7 @@ class Container(Interface):
         )
 
     @core.typeguard
-    def upload(self, items: dict[str | Path, str | Path], **kwargs):
+    def upload(self, items: dict[AnyPath, AnyPath], **kwargs):
         for i, (src, dst) in items.items():
             self.client.container.copy(
                 source=src,
@@ -183,7 +194,7 @@ class Container(Interface):
             )
 
     @core.typeguard
-    def download(self, items: dict[str | Path, str | Path], **kwargs):
+    def download(self, items: dict[AnyPath, AnyPath], **kwargs):
         for i, (src, dst) in items.items():
             self.client.container.copy(
                 source=(self.container, src),
@@ -193,6 +204,7 @@ class Container(Interface):
 
 if __name__ == '__main__':
     from umk.framework.system import user
+    from umk.framework.filesystem import Path
 
     u = user()
     dockerfile = docker.File()
@@ -244,6 +256,6 @@ if __name__ == '__main__':
     cont.container = "unimake"
     cont.user = u
     cont.privileged = False
-    cont.workdir = "/home/edward/workdir"
+    cont.workdir = f"/home/{u.name}/workdir"
 
     # cont.shell()

@@ -1,14 +1,13 @@
 from umk import framework, core
-from umk.framework.project.base import Project
 from umk.dot.instance import Dot
-
+from umk.framework.project.base import Project
 
 Instance: Dot | None = Dot()
 
 
-# ####################################################################################
-# Remote environment utils implementation
-# ####################################################################################
+# ////////////////////////////////////////////////////////////////////////////////////
+# Remote environments implementation
+# ////////////////////////////////////////////////////////////////////////////////////
 
 @core.typeguard
 def find_remote(name: str = "") -> framework.remote.Interface | None:
@@ -33,9 +32,9 @@ framework.remote.find = find_remote
 framework.remote.iterate = iterate_remotes
 
 
-# ####################################################################################
-# Project stuff implementation
-# ####################################################################################
+# ////////////////////////////////////////////////////////////////////////////////////
+# Project implementation
+# ////////////////////////////////////////////////////////////////////////////////////
 
 def get_project() -> Project | None:
     global Instance

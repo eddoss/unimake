@@ -26,15 +26,7 @@ def move(
     """
     s = OSFS(src.parent.as_posix())
     d = OSFS(dst.parent.as_posix(), create=True)
-    try:
-        _mv.move_file(s, src.name, d, dst.name)
-    except Exception as err:
-        e = core.Event(name=globals.EventNames.FILESYSTEM_MOVE)
-        e.data.new("src", src, "Source file")
-        e.data.new("dst", dst, "Destination file")
-        e.data.new("err", err, "Exception object")
-        globals.events.dispatch(e)
-        return
+    _mv.move_file(s, src.name, d, dst.name)
 
 
 @core.overload

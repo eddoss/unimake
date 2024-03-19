@@ -1,6 +1,6 @@
 import os
 import tarfile
-from typing import Optional
+from umk.typing import Optional
 
 from umk import core
 from umk.framework.system import User

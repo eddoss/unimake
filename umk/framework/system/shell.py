@@ -4,7 +4,7 @@ import subprocess
 import sys
 from asyncio import subprocess as async_subprocess
 from pathlib import Path
-from typing import Callable
+from umk.typing import Callable
 
 from umk import globals, core
 from umk.framework.system.environs import Environs

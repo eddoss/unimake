@@ -1,4 +1,4 @@
-from umk.framework.filesystem import Path
+from umk.framework.filesystem import Path, AnyPath
 from umk.framework.system import Shell, Environs
 from umk import globals, core, kit
 
@@ -87,7 +87,7 @@ class Options(kit.cli.Options):
 
 
 class Delve(core.Model):
-    cmd: list[str | Path] = core.Field(
+    cmd: list[AnyPath] = core.Field(
         default_factory=lambda: ["dlv"],
         description="Delve command."
     )
@@ -113,7 +113,7 @@ class Delve(core.Model):
         return result
 
     @core.typeguard
-    def attach(self, pid: int, executable: str = '', continues: bool = False) -> Shell:
+    def attach(self, pid: int, executable: AnyPath = '', continues: bool = False) -> Shell:
         shell = self.shell
         shell.cmd += ["attach", str(pid)]
         if executable:
@@ -123,7 +123,7 @@ class Delve(core.Model):
         return shell
 
     @core.typeguard
-    def exec(self, cmd: list[str], continues: bool = False, tty: str = "") -> Shell:
+    def exec(self, cmd: list[AnyPath], continues: bool = False, tty: str = "") -> Shell:
         shell = self.shell
         shell.cmd += ["exec"]
         if tty:

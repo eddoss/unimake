@@ -1,21 +1,22 @@
 from umk import core, globals, kit
-from umk.framework.filesystem import Path
+from umk.framework.filesystem import Path, AnyPath
 from umk.framework.system import Shell, Environs
 
 
 class RootCommand(core.Model):
-    cmd: list[str | Path] = core.Field(
+    cmd: list[AnyPath] = core.Field(
         default_factory=lambda: ["go"],
         description="Golang tool command."
     )
     workdir: Path = core.Field(
-        default_factory=globals.paths.work,
+        default=globals.paths.work,
         description="Working directory."
     )
     environs: None | Environs = core.Field(
         default_factory=Environs,
         description="Shell environment variables."
     )
+
     @property
     def shell(self) -> Shell:
         result = Shell()
@@ -46,6 +47,36 @@ class ModCommands(RootCommand):
 
 
 class BuildOptions(kit.cli.Options):
+    @staticmethod
+    def new(mode: str, output: AnyPath, *sources: AnyPath) -> 'BuildOptions':
+        match mode:
+            case "release":
+                return BuildOptions.release(output, *sources)
+            case "debug":
+                return BuildOptions.debug(output, *sources)
+        raise ValueError(f"Invalid mode for golang build options: given={mode}, expect=[release, debug]")
+
+    @staticmethod
+    def release(output: AnyPath, *sources: AnyPath) -> 'BuildOptions':
+        result = BuildOptions()
+        result.output = output
+        result.flags.gc.append('-dwarf=false')
+        result.flags.ld.append('-s')
+        result.flags.ld.append('-w')
+        if sources:
+            result.sources = sources
+        return result
+
+    @staticmethod
+    def debug(output: AnyPath, *sources: AnyPath) -> 'BuildOptions':
+        result = BuildOptions()
+        result.output = output
+        result.flags.gc.append('all=-N')
+        result.flags.gc.append('-l')
+        if sources:
+            result.sources = sources
+        return result
+
     class Print(kit.cli.Options):
         packages: bool = core.Field(
             default=False,
@@ -251,9 +282,3 @@ class Go(RootCommand):
         shell.cmd.append("build")
         shell.cmd += opt
         return shell
-
-
-__all__ = [
-    "BuildOptions",
-    "Go"
-]

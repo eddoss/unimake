@@ -1,5 +1,5 @@
 import copy
-from typing import Any
+from umk.typing import Any
 
 from umk import core, globals
 from umk.kit.code import caller
@@ -165,11 +165,16 @@ class Args(Opt):
         return result
 
 
-class Options(core.Model):
+class NoEmpty(core.Model):
+    class Config(core.Model.Config):
+        excluder = core.field.empty
+
+
+class Options(NoEmpty):
     def serialize(self) -> list[str]:
         result = []
         for name in self.model_fields:
-            cli: None | Opt | Arg | Args = core.extra(self, name, "cli")
+            cli: None | Opt | Arg | Args = self.model_fields[name].json_schema_extra.get("cli")
             if not cli:
                 continue
             if issubclass(type(cli), Opt):

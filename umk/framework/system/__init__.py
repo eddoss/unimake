@@ -1,5 +1,5 @@
 from .environs import Environs
-from .environs import Optional as OptionalEnvirons
+from .environs import OptEnv
 from .shell import Shell
 from .shell import Devnull
 from .shell import Handler as ShellHandler
