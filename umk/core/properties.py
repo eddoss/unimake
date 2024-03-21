@@ -1,8 +1,8 @@
 from collections import OrderedDict
 
-from umk.core.typing import Any
-from umk.core.typing import Model
-from umk.core.typing import typeguard
+from umk.core.typings import Any
+from umk.core.typings import Model
+from umk.core.typings import typeguard
 
 
 class Property(Model):

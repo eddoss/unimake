@@ -1,6 +1,6 @@
-from umk.typing import Generator
+from umk.core.typings import Generator
 
-from umk import core, globals
+from umk import core
 from umk.framework import utils
 from umk.framework.filesystem import AnyPath, OptPath
 from umk.framework.system import OptEnv
@@ -33,11 +33,13 @@ class Interface(core.Model):
         field = self.model_fields[name]
         if not field.repr:
             return []
-        return [core.Property(
-            name=name,
-            description=field.description,
-            value=getattr(self, name)
-        )]
+        return [
+            core.Property(
+                name=name,
+                description=field.description,
+                value=getattr(self, name)
+            )
+        ]
 
     def build(self, **kwargs):
         """
@@ -91,7 +93,7 @@ class Interface(core.Model):
         self.__not_implemented()
 
     def __not_implemented(self):
-        globals.console.print(
+        core.globals.console.print(
             f"[bold]The '{self.name}' remote environment has no '{utils.caller(2)}' function. "
             f"It`s must be managed outside of this tool."
         )

@@ -180,7 +180,7 @@ class Container(Interface):
             interactive=False,
             privileged=self.privileged,
             tty=False,
-            user=user,
+            user=usr,
             workdir=self.workdir,
             stream=False
         )
@@ -200,62 +200,3 @@ class Container(Interface):
                 source=(self.container, src),
                 destination=dst
             )
-
-
-if __name__ == '__main__':
-    from umk.framework.system import user
-    from umk.framework.filesystem import Path
-
-    u = user()
-    dockerfile = docker.File()
-    dockerfile.froms("ubuntu:latest")
-    dockerfile.run([
-        f"apt update",
-        f"apt -y install sudo",
-        f"mkdir -p /etc/sudoers.d",
-        f'echo "{u.name} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd',
-        f"groupadd -g {u.group.id} edward",
-        f"useradd -m -u {u.id} -d /home/{u.name} -g {u.group.id} -s /bin/sh {u.name}"
-    ])
-    dockerfile.user(str(u.id))
-    dockerfile.run([f"sudo chown {u.name}:{u.name} /home/{u.name}"])
-    dockerfile.path = Path("~/astra/projects/umk/docker").expanduser()
-
-    development = docker.ComposeService()
-    development.build = docker.ComposeBuild()
-    development.build.context = dockerfile.path
-    development.build.dockerfile = dockerfile.name
-    development.image = "unimake"
-    development.container_name = "unimake"
-    development.hostname = development.container_name
-    development.working_dir = f"/home/{u.name}/workdir"
-    development.user = f"{u.id}:{u.group.id}"
-    development.entrypoint = ["sleep", "infinity"]
-    development.volumes.bind(
-        src="/home/edward/astra/projects/umk",
-        dst="/home/edward/workdir"
-    )
-
-    composefile = docker.ComposeFile()
-    composefile.services["development"] = development
-    composefile.path = dockerfile.path
-
-    comp = Compose()
-    comp.description = "Development services for building, testing, debugging, etc."
-    comp.dockerfiles.append(dockerfile)
-    comp.service = "development"
-    comp.composefile = composefile
-    comp.sh = ["bash"]
-
-    comp.build()
-    comp.up()
-    comp.shell()
-    comp.destroy()
-
-    cont = Container()
-    cont.container = "unimake"
-    cont.user = u
-    cont.privileged = False
-    cont.workdir = f"/home/{u.name}/workdir"
-
-    # cont.shell()

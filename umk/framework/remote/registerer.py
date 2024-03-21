@@ -1,10 +1,20 @@
 import inspect
 
-import rich.table
-
 from umk import core
+from umk.core.typings import Type, Callable
 from umk.framework.remote import Interface
-from umk.typing import Type, Callable
+
+
+class RemoteInstanceRegisterError(core.Error):
+    def __init__(self, factory_type: str, factory_name: str, position: str):
+        super().__init__(name=type(self).__name__)
+        self.messages = [
+            "The decorator 'umk.remote.register' must be used with functions "
+            "(or classes) that returns 'umk.remote.Interface' implementation."
+        ]
+        self.details.new(name="factory", value=factory_name, desc="Remote environment factory name")
+        self.details.new(name="type", value=factory_type, desc="Remote environment factory type")
+        self.details.new(name="at", value=position, desc="File position")
 
 
 class Registerer:
@@ -24,12 +34,11 @@ class Registerer:
     def validate(self, imlp):
         if issubclass(type(imlp), Interface):
             return
-        err = core.Error()
-        err["function" if inspect.isfunction(self._creator) else "class"] = f"'{self._name}'"
-        err["at"] = f"{self._frame.filename}:{self._frame.lineno}"
-        err.message = f"The decorator 'umk.remote.register' must be used with functions (or classes) " \
-                      f"that returns 'umk.remote.Interface' implementation."
-        raise err
+        raise RemoteInstanceRegisterError(
+            factory_type="function" if inspect.isfunction(self._creator) else "class",
+            factory_name=self._name,
+            position=f"{self._frame.filename}:{self._frame.lineno}"
+        )
 
 
 def register(creator):

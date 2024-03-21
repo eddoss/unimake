@@ -3,6 +3,7 @@ from umk.dot.instance import Dot
 from umk.framework.project.base import Project
 
 Instance: Dot | None = Dot()
+ErrorPrinter: core.ErrorPrinter = core.ErrorPrinter()
 
 
 # ////////////////////////////////////////////////////////////////////////////////////
@@ -42,3 +43,40 @@ def get_project() -> Project | None:
 
 
 framework.project.get = get_project
+
+
+# ////////////////////////////////////////////////////////////////////////////////////
+# Error printer
+# ////////////////////////////////////////////////////////////////////////////////////
+
+def error_register(*types):
+    def inner(func):
+        def wrapped(error):
+            return func
+        global ErrorPrinter
+        for t in types:
+            ErrorPrinter.printers[t] = func
+        return wrapped
+    return inner
+
+
+def print_error(err: Exception):
+    ErrorPrinter(err)
+
+
+core.error_register = error_register
+core.print_error = print_error
+
+
+@error_register(core.Error)
+def on_error(error: core.Error):
+    error.print(core.globals.error_console.print)
+
+
+@error_register(core.ValidationError)
+def on_validation_error(error: core.ValidationError):
+    core.globals.error_console.print(f"[red]Validation errors for type [bold yellow]'{error.title}'")
+    for err in error.errors():
+        core.globals.error_console.print(f"[bold green]\[{err['loc'][0]}][/] {err['msg']}")
+        core.globals.error_console.print(f"├ expect {err['type']}")
+        core.globals.error_console.print(f"╰▸given  {err['input']}")

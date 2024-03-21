@@ -1,10 +1,8 @@
-import traceback
-import sys
 import asyncclick as click
 from asyncclick import Context
 from rich.table import Table
 from umk.tools.unimake import application
-from umk import dot, framework, globals, core
+from umk import dot, framework, core
 
 
 @application.group(
@@ -20,11 +18,7 @@ async def remote(ctx: click.Context, name: str):
     ctx.obj["instance"] = None  # remote environment instance
 
     # Load .unimake/remotes.py
-    state = dot.Instance.load(
-        root=globals.paths.unimake,
-        remotes=dot.YES,
-        project=dot.OPT,
-    )
+    dot.Instance.load(root=core.globals.paths.unimake, remotes=dot.YES, project=dot.OPT)
 
     # We don't need to find remote environment if 'ls' is requested.
     # If no subcommand was passed we assume it is 'ls'
@@ -34,12 +28,12 @@ async def remote(ctx: click.Context, name: str):
     ctx.obj["instance"] = framework.remote.find(name)
     if not ctx.obj["instance"]:
         if not name:
-            globals.console.print(
+            core.globals.console.print(
                 "[bold yellow]Could not find default remote! "
                 "Please specify default remote in the '.unimake/remotes.py'"
             )
         else:
-            globals.console.print(
+            core.globals.console.print(
                 f"[bold yellow]Failed to find remote '{name}'! "
                 f"Please specify it in the '.unimake/remotes.py'"
             )
@@ -93,8 +87,8 @@ def ls():
             table.add_row(f"{rem.name}", default, rem.description, style="yellow bold")
         else:
             table.add_row(rem.name, default, rem.description)
-    globals.console.print(table)
-    sys.exit()
+    core.globals.console.print(table)
+    core.globals.close()
 
 
 @remote.command(name='exec', help=framework.remote.Interface.execute.__doc__)
@@ -118,7 +112,7 @@ def inspect(ctx: Context):
     table.add_column("Value", justify="left", style="", no_wrap=True)
     for prop in rem.properties():
         table.add_row(prop.name, prop.description, str(prop.value))
-    globals.console.print(table)
+    core.globals.console.print(table)
 
 
 @remote.command(name='upload', help=framework.remote.Interface.upload.__doc__)
@@ -145,10 +139,10 @@ def download(ctx: Context, items: tuple[str]):
 
 def split(items: tuple[str]) -> dict[str, str]:
     def error():
-        globals.console.print("[bold red]Invalid upload/download item!")
-        globals.console.print("[bold red]Pattern")
-        globals.console.print("[bold red]    upload:   <local/file>:<remote/file>")
-        globals.console.print("[bold red]    download: <remote/file>:<local/file>")
+        core.globals.console.print("[bold red]Invalid upload/download item!")
+        core.globals.console.print("[bold red]Pattern")
+        core.globals.console.print("[bold red]    upload:   <local/file>:<remote/file>")
+        core.globals.console.print("[bold red]    download: <remote/file>:<local/file>")
     result = {}
     for item in items:
         if ':' not in item:

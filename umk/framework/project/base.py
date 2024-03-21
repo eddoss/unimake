@@ -1,8 +1,16 @@
 import string
 
-from umk.typing import Callable, Type
-from umk import globals, core
+from umk import core
+from umk.core.typings import Callable, Type
 from umk.framework.filesystem import Path
+
+
+class BadProjectIdError(core.Error):
+    def __init__(self, project_id: str, allowed: str, message: str):
+        super().__init__(name=type(self).__name__)
+        self.messages = [message]
+        self.details.new(name="id", value=project_id, desc="Project ID value")
+        self.details.new(name="allowed", value=allowed, desc="Allowed symbols")
 
 
 class Author(core.Model):
@@ -52,19 +60,22 @@ class Info(core.Model):
         allowed.update(digits, signs, alphabet)
 
         if value[0] in digits:
-            raise core.Error(
-                msg=f"Project ID should not starts with digit",
-                attrs={"Starts with": value[0]}
+            raise BadProjectIdError(
+                project_id=value,
+                allowed=string.ascii_lowercase,
+                message="Project ID should not starts with digit"
             )
         if value[0] in signs:
-            raise core.Error(
-                msg=f"Project ID should not starts with sign",
-                attrs={"Starts with": value[0]}
+            raise BadProjectIdError(
+                project_id=value,
+                allowed=string.ascii_lowercase,
+                message="Project ID should not starts with signs"
             )
         if set(value) > allowed:
-            raise core.Error(
-                msg=f"Project ID should contains only alphas and any signs",
-                attrs={"Alphas": "".join(alphabet), "Signs": "".join(signs)}
+            raise BadProjectIdError(
+                project_id=value,
+                allowed=string.ascii_lowercase + string.digits + "".join(signs),
+                message="Project ID should contains just alphas and signs"
             )
 
         return value
@@ -72,11 +83,11 @@ class Info(core.Model):
 
 class Layout(core.Model):
     root: Path = core.Field(
-        default=globals.paths.work,
+        default=core.globals.paths.work,
         description="Project root directory."
     )
     unimake: Path = core.Field(
-        default=globals.paths.work / ".unimake",
+        default=core.globals.paths.work / ".unimake",
         description="'.unimake' root directory."
     )
 
@@ -110,7 +121,7 @@ class Scratch(Project):
 
 class GolangLayout(Layout):
     root: Path = core.Field(
-        default_factory=lambda: globals.paths.work,
+        default_factory=lambda: core.globals.paths.work,
         description="Layout root directory (golang project root)."
     )
 

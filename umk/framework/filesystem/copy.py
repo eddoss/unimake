@@ -1,5 +1,6 @@
-from umk import core, globals
-from umk.framework.filesystem.path import Path
+from pathlib import Path
+
+from umk import core
 from fs.walk import Walker
 from fs.base import FS
 from fs.osfs import OSFS

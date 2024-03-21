@@ -1,6 +1,6 @@
 import asyncclick as click
 from rich.table import Table
-from umk import globals
+from umk import core
 
 
 @click.group(add_help_option=False, invoke_without_command=True)
@@ -10,7 +10,7 @@ async def application():
 
 @application.command(name='help', help="Display help message")
 def display_help_message():
-    console = globals.console
+    console = core.globals.console
     console.print("[blue bold]Welcome to the Unimake CLI :thumbs_up:\n")
 
     console.print("    [italic cyan bold]unimake <command> \[flags] \[arguments]")

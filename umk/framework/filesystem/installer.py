@@ -1,10 +1,11 @@
 import os
 import tarfile
-from umk.typing import Optional
+from pathlib import Path
+
+from umk.core.typings import Optional
 
 from umk import core
 from umk.framework.system import User
-from umk.framework.filesystem.path import Path
 from umk.framework.filesystem.copy import copy
 from umk.framework.filesystem.factories import local, tar
 

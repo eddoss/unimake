@@ -4,8 +4,8 @@ import os
 import yaml
 
 from umk import core, kit
+from umk.core.typings import Any
 from umk.framework.filesystem import Path
-from umk.core.typing import Any
 
 
 # ####################################################################################
@@ -22,7 +22,7 @@ class Build(kit.cli.NoEmpty):
         description="Alternate Dockerfile name (relative to build context)."
     )
     args: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Build arguments."
     )
     ssh: str | dict[str, Any] = core.Field(
@@ -30,19 +30,19 @@ class Build(kit.cli.NoEmpty):
         description="SSH authentications that the image builder should use during image build (e.g., cloning private repository)"
     )
     cache_from: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="List of sources the image builder should use for cache resolution."
     )
     cache_to: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="List of export locations to be used to share build cache with future builds."
     )
     additional_context: dict[str, str | Path] = core.Field(
-        default=None,
+        default_factory=dict,
         description="List of named contexts the image builder should use during image build"
     )
     extra_hosts: dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Adds hostname mappings at build-time. Use the same syntax as extra_hosts."
     )
     isolation: None | str = core.Field(
@@ -54,7 +54,7 @@ class Build(kit.cli.NoEmpty):
         description="Configures the service image to build with elevated privileges. Support and actual impacts are platform specific."
     )
     labels: dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Metadata to the resulting image. labels can be set either as an array or a map."
     )
     no_cache: None | bool = core.Field(
@@ -78,15 +78,15 @@ class Build(kit.cli.NoEmpty):
         description="The stage to build as defined inside a multi-stage Dockerfile."
     )
     secrets: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Grants access to sensitive data defined by secrets on a per-service build basis."
     )
     tags: dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Dict of tag mappings that must be associated to the build image."
     )
     platforms: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="List of target platforms."
     )
 
@@ -101,6 +101,8 @@ class Build(kit.cli.NoEmpty):
 
     @core.field.serializer('ssh')
     def serialize_ssh(self, value: str | dict[str, str], _info):
+        if not value:
+            return []
         if issubclass(type(value), str):
             return [value]
         res = []
@@ -147,11 +149,11 @@ class BlockIo(kit.cli.NoEmpty):
         rate: int | str
 
     weight: int = None
-    weight_device: list[Weight] = None
-    device_read_bps: list[Rate] = None
-    device_read_iops: list[Rate] = None
-    device_write_bps: list[Rate] = None
-    device_write_iops: list[Rate] = None
+    weight_device: list[Weight] = core.Field(default_factory=list)
+    device_read_bps: list[Rate] = core.Field(default_factory=list)
+    device_read_iops: list[Rate] = core.Field(default_factory=list)
+    device_write_bps: list[Rate] = core.Field(default_factory=list)
+    device_write_iops: list[Rate] = core.Field(default_factory=list)
 
 
 class Credential(kit.cli.NoEmpty):
@@ -168,18 +170,18 @@ class Dependency(kit.cli.NoEmpty):
 
 class Placement(kit.cli.NoEmpty):
     constraints: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Defines a required property the platform's node must fulfill to run the service container. It can be set either by a list or a map with string values."
     )
     preferences: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Defines a property the platform's node should fulfill to run service container. It can be set either by a list or a map with string values."
     )
 
 
 class Device(kit.cli.NoEmpty):
     capabilities: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="List of the generic and driver specific capabilities."
     )
     driver: None | str = core.Field(
@@ -191,11 +193,11 @@ class Device(kit.cli.NoEmpty):
         description="If 'count' is set to 'all' or not specified, Compose reserves all devices that satisfy the requested capabilities. Otherwise, Compose reserves at least the number of devices specified"
     )
     device_ids: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="If device_ids is set, Compose reserves devices with the specified IDs provided they satisfy the requested capabilities. "
     )
     options: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Driver specific options."
     )
 
@@ -214,7 +216,7 @@ class Resource(kit.cli.NoEmpty):
         description="Tunes a container’s PIDs limit, set as an integer."
     )
     devices: list[Device] = core.Field(
-        default=None,
+        default_factory=list,
         description="Reservations of the devices a container."
     )
 
@@ -276,7 +278,7 @@ class Deploy(kit.cli.NoEmpty):
         description="Specifies a service discovery method for external clients connecting to a service."
     )
     labels: dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Service metadata."
     )
     mode: None | str = core.Field(
@@ -309,11 +311,11 @@ class Watch(kit.cli.NoEmpty):
     path: None | str | Path = core.Field(None)
     action: None | str = core.Field(None)
     target: None | str = core.Field(None)
-    ignore: list[str] = core.Field(None)
+    ignore: list[str] = core.Field(default_factory=list)
 
 
 class Develop(kit.cli.NoEmpty):
-    watch: list[Watch] = core.Field(None)
+    watch: list[Watch] = core.Field(default_factory=list)
 
 
 class EnvFile(kit.cli.NoEmpty):
@@ -382,7 +384,7 @@ class StorageOpt(kit.cli.NoEmpty):
 
 class Net(kit.cli.NoEmpty):
     aliases: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Alternative hostnames for the service on the network. "
     )
     ipv4_address: None | str = core.Field(
@@ -394,7 +396,7 @@ class Net(kit.cli.NoEmpty):
         description="Static IP (v6) address for a service container when joining the network."
     )
     link_local_ips: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="List of link-local IPs."
     )
     mac_address: None | str = core.Field(
@@ -491,11 +493,11 @@ class Service(kit.cli.NoEmpty):
         description="CPUs in which to allow execution (0-3, 0,1)"
     )
     cap_add: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Add Linux capabilities"
     )
     cap_drop: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Drop Linux capabilities"
     )
     cgroup: None | str = core.Field(
@@ -509,11 +511,11 @@ class Service(kit.cli.NoEmpty):
         description="Optional parent cgroup for the container"
     )
     command: None | list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Overrides the default command declared by the container image, for example by Dockerfile's CMD."
     )
     configs: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Configs allow services to adapt their behaviour without the need to rebuild a Docker image. Services can only access configs when explicitly granted by the configs attribute"
     )
     container_name: None | str = core.Field(
@@ -541,19 +543,19 @@ class Service(kit.cli.NoEmpty):
         description="Defines a list of device cgroup rules for this container."
     )
     devices: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="List of device mappings for created containers."
     )
     dns: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Custom DNS servers to set on the container network interface configuration."
     )
     dns_opt: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Custom DNS options to be passed to the container’s DNS resolver (/etc/resolv.conf file on Linux)."
     )
     dns_search: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Custom DNS search domains to set on container network interface configuration."
     )
     domainname: None | str = core.Field(
@@ -561,19 +563,19 @@ class Service(kit.cli.NoEmpty):
         description="Custom domain name to use for the service container. It must be a valid RFC 1123 hostname."
     )
     entrypoint: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Entrypoint for the service container."
     )
     env_file: list[EnvFile] = core.Field(
-        default=None,
+        default_factory=list,
         description="Adds environment variables to the container based on the files content."
     )
     environment: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Environment variables set in the container."
     )
     expose: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="The (incoming) port or a range of ports that Compose exposes from the container."
     )
     extends: None | Extend = core.Field(
@@ -581,11 +583,11 @@ class Service(kit.cli.NoEmpty):
         description="'extends' lets you share common configurations among different files, or even different projects entirely. With 'extends'   you can define a common set of service options in one place and refer to it from anywhere. You can refer to another Compose file and select a service you want to also use in your own application, with the ability to override some attributes for your own needs."
     )
     extra_hosts: dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Adds hostname mappings at build-time. Use the same syntax as extra_hosts."
     )
     group_add: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Additional groups, by name or number, which the user inside the container must be a member of."
     )
     healthcheck: None | Healthcheck = core.Field(
@@ -613,11 +615,11 @@ class Service(kit.cli.NoEmpty):
         description="Specifies a container’s isolation technology. Supported values are platform specific."
     )
     labels: dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Container metadata."
     )
     links: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Network link to containers in another service."
     )
     logging: None | Logging = core.Field(
@@ -641,7 +643,7 @@ class Service(kit.cli.NoEmpty):
         description="Sets a service container's network mode."
     )
     networks: dict[str, Net] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Networks that service containers are attached to, referencing entries under the top-level networks key."
     )
     oom_kill_disable: None | bool = core.Field(
@@ -661,7 +663,7 @@ class Service(kit.cli.NoEmpty):
         description="Target platform the containers for the service run on."
     )
     ports: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Exposes container ports. NOTE: port mapping must not be used with 'network_mode: host' otherwise a runtime error occurs."
     )
     privileged: None | bool = core.Field(
@@ -669,7 +671,7 @@ class Service(kit.cli.NoEmpty):
         description="Configures the service container to run with elevated privileges. Support and actual impacts are platform specific."
     )
     profiles: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="A list of named profiles for the service to be enabled under. If unassigned, the service is always started but if assigned, it is only started if the profile is activated."
     )
     pull_policy: None | str = core.Field(
@@ -693,11 +695,11 @@ class Service(kit.cli.NoEmpty):
         description="specifies the default number of containers to deploy for this service. When both are set, 'scale' must be consistent with the 'replicas' attribute in the Deploy Specification."
     )
     secrets: list[str] | list[SecretAccess] = core.Field(
-        default=None,
+        default_factory=list,
         description="Grants access to sensitive data defined by secrets on a per-service basis."
     )
     security_opt: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Overrides the default labeling scheme for each container."
     )
     shm_size: None | str = core.Field(
@@ -721,11 +723,11 @@ class Service(kit.cli.NoEmpty):
         description="Storage options."
     )
     sysctl: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Defines kernel parameters to set in the container."
     )
     tmpfs: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Mounts a temporary file system inside the container."
     )
     tty: None | bool = core.Field(
@@ -753,7 +755,7 @@ class Service(kit.cli.NoEmpty):
         description="Mounts host paths or named volumes that are accessible by service containers. You can use volumes to define multiple types of mounts; volume, bind, tmpfs, or npipe."
     )
     volumes_from: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="Mounts all of the volumes from another service or container. You can optionally specify read-only access 'ro' or read-write 'rw'. If no access level is specified, then read-write access is used."
     )
     working_dir: None | Path | str = core.Field(
@@ -763,15 +765,7 @@ class Service(kit.cli.NoEmpty):
 
     @core.field.serializer("volumes")
     def serialize_volumes(self, value: Volumes, _info):
-        bind_only = True
-        for mount in value.mounts:
-            if mount.type != "bind":
-                bind_only = False
-                break
-        if bind_only:
-            return [f"{m.source}:{m.target}" for m in value.mounts]
-        else:
-            return value.mounts
+        return value.mounts
 
 
 # ####################################################################################
@@ -807,7 +801,7 @@ class IPAM(kit.cli.NoEmpty):
         description="IPAM config."
     )
     options: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Driver-specific options as a key-value mapping."
     )
 
@@ -818,7 +812,7 @@ class Network(kit.cli.NoEmpty):
         description="Specifies which driver should be used for this network."
     )
     driver_opts: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Specifies a list of options as key-value pairs to pass to the driver."
     )
     attachable: None | bool = core.Field(
@@ -842,7 +836,7 @@ class Network(kit.cli.NoEmpty):
         description="By default, Compose provides external connectivity to networks. 'internal', when set to true, allows you to create an externally isolated network."
     )
     labels: None | dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Network metadata."
     )
     name: None | str = core.Field(
@@ -861,7 +855,7 @@ class Volume(kit.cli.NoEmpty):
         description="Specifies which volume driver should be used."
     )
     driver_opts: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Specifies a list of options as key-value pairs to pass to the driver for this volume."
     )
     external: None | bool = core.Field(
@@ -869,7 +863,7 @@ class Volume(kit.cli.NoEmpty):
         description="Is volume external."
     )
     labels: None | dict[str, str] = core.Field(
-        default=None,
+        default_factory=dict,
         description="Volume metadata."
     )
     name: None | str = core.Field(
@@ -888,11 +882,11 @@ class Config(kit.cli.NoEmpty):
         description="The config is created with the contents of the file at the specified path."
     )
     environment: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="The config content is created with the value of an environment variable."
     )
     content: list[str] = core.Field(
-        default=None,
+        default_factory=list,
         description="The content is created with the inlined value."
     )
     external: None | bool = core.Field(
@@ -921,7 +915,7 @@ class Secret(kit.cli.NoEmpty):
         description="The secret is created with the contents of the file at the specified path."
     )
     environment: dict[str, Any] = core.Field(
-        default=None,
+        default_factory=dict,
         description="The secret is created with the value of an environment variable."
     )
 
@@ -968,11 +962,14 @@ class File(kit.cli.NoEmpty):
             raise ValueError("Composefile: output path is None")
         return self.path / self.name
 
+    def __repr__(self):
+        return f"composefile://{str(self.file)}"
+
     def __str__(self):
         return self.text()
 
     def text(self) -> str:
-        data = core.model.dict(self)
+        data = self.model_dump()
         keys = []
         for k, v in data.items():
             if not v:

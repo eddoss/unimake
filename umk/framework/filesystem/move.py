@@ -1,10 +1,11 @@
+from pathlib import Path
+
 from fs.base import FS
 from fs.osfs import OSFS
 from fs.walk import Walker
 from fs import move as _mv
 
-from umk import core, globals
-from umk.framework.filesystem.path import Path
+from umk import core
 
 
 @core.overload

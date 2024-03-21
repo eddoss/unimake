@@ -1,6 +1,6 @@
 from git import Repo as Repository
 
-from umk import globals, core
+from umk import core
 from umk.framework.filesystem import Path
 
 
@@ -13,5 +13,5 @@ def tag(repo: Repository, on_error: str) -> str:
 
 
 @core.typeguard
-def repository(root: Path = globals.paths.work):
+def repository(root: Path = core.globals.paths.work):
     return Repository(root)

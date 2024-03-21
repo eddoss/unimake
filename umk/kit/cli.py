@@ -1,7 +1,7 @@
 import copy
-from umk.typing import Any
+from umk.core.typings import Any
 
-from umk import core, globals
+from umk import core
 from umk.kit.code import caller
 from umk.framework.filesystem import Path
 
@@ -155,7 +155,6 @@ class Arg(Opt):
 
 class Args(Opt):
     value: list[Any] = core.Field(default=None, description="Argument values")
-    # required: bool = core.Field(default=False, description="Whether arguments are required or not")
 
     def list(self) -> list[str]:
         result = []
@@ -212,5 +211,5 @@ class Options(NoEmpty):
         return a.list()
 
     def _other(self, cli: Any, field: str) -> list[str]:
-        globals.print(f"[bold yellow] {caller()}: invalid cli option type, name='{field}' type='{type(cli)}'")
+        core.globals.print(f"[bold yellow] {caller()}: invalid cli option type, name='{field}' type='{type(cli)}'")
         return []

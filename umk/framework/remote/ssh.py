@@ -4,7 +4,7 @@ import os
 import paramiko
 from paramiko import util as paramiko_util
 
-from umk import globals, core
+from umk import core
 from umk.framework.filesystem import Path
 from umk.framework.remote.interface import Interface
 from umk.framework.system import Environs
@@ -68,7 +68,7 @@ class SecureShell(Interface):
         client = self.client()
         with client.open_sftp() as transport:
             for src, dst in paths.items():
-                globals.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
+                core.globals.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
                 transport.put(
                     localpath=str(Path(src).expanduser().resolve().absolute()),
                     remotepath=str(dst)
@@ -82,7 +82,7 @@ class SecureShell(Interface):
         client = self.client()
         with client.open_sftp() as transport:
             for src, dst in items.items():
-                globals.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
+                core.globals.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
                 dst = Path(dst).expanduser().resolve().absolute()
                 if not dst.parent.exists():
                     os.makedirs(dst.parent)

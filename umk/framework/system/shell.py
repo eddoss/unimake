@@ -4,9 +4,9 @@ import subprocess
 import sys
 from asyncio import subprocess as async_subprocess
 from pathlib import Path
-from umk.typing import Callable
+from umk.core.typings import Callable
 
-from umk import globals, core
+from umk import core
 from umk.framework.system.environs import Environs
 
 Command = str | list[str]
@@ -39,15 +39,15 @@ class Colorful(Handler, core.Model):
     def on_error(self, text: str):
         for line in text.split('\n'):
             if line.strip():
-                globals.console.print(self.out.replace("${msg}", line))
+                core.globals.console.print(self.out.replace("${msg}", line))
 
     def on_output(self, text: str):
         for line in text.split('\n'):
             if line.strip():
-                globals.console.print(self.err.replace("${msg}", line))
+                core.globals.console.print(self.err.replace("${msg}", line))
 
     def on_exception(self, exc: Exception):
-        globals.console.print(self.err.replace("${exc}", str(exc)))
+        core.globals.console.print(self.err.replace("${exc}", str(exc)))
 
 
 class Fetch(Handler, core.Model):
@@ -80,7 +80,7 @@ class Std(Handler):
     def on_output(self, text: str): ...
 
     def on_exception(self, exc: Exception):
-        globals.log.error(msg=str(exc))
+        core.globals.log.error(msg=str(exc))
 
 
 devnull = subprocess.DEVNULL
@@ -218,6 +218,6 @@ class Shell(core.Model):
         need_log = need if need is not None else self.log
         if need_log:
             if self.name:
-                globals.console.print(f"[bold]shell\['{self.name}']: {cmd}")
+                core.globals.console.print(f"[bold]shell\['{self.name}']: {cmd}")
             else:
-                globals.console.print(f"[bold]shell: {cmd}")
+                core.globals.console.print(f"[bold]shell: {cmd}")

@@ -8,7 +8,6 @@ from pydantic import Field
 
 beartype.BeartypeConf.is_color = False
 
-TypeValidationError = pd.ValidationError
 SerializationInfo = pd.SerializationInfo
 overload = base_overload
 
@@ -17,9 +16,11 @@ class model:
     serializer = pd.model_serializer
 
     @staticmethod
-    def dict(obj: pd.BaseModel) -> dict[str, Any]:
-        if model is not None:
-            return obj.model_dump()
+    @typeguard
+    def dict(obj: pd.BaseModel, auxiliary=None) -> dict[str, Any]:
+        if obj is None:
+            return auxiliary
+        return obj.model_dump()
 
 class field:
     serializer = pd.field_serializer
@@ -38,15 +39,14 @@ class Model(pd.BaseModel):
         arbitrary_types_allowed = True
         validate_assignment = True
 
-    @model.serializer
-    def _serialize_model(self):
-        result = {}
-        for name, f in self.model_fields.items():
-            value = getattr(self, name)
-            excluder = self.model_config.get("excluder")
-            if not excluder:
-                excluder = (f.json_schema_extra or {}).get("excluder")
-            if excluder and excluder(value):
-                continue
-            result[name] = value
+    @model.serializer(mode="wrap")
+    def serialize_model(self, wrap: Callable[[Self], dict[str, Any]], info: pd.SerializationInfo) -> Any:
+        result = wrap(self)
+        for n, f in self.model_fields.items():
+            if f.exclude:
+                result.pop(n, None)
+            v = getattr(self, n)
+            e = self.model_config.get("excluder") or (f.json_schema_extra or {}).get("excluder")
+            if e and e(v):
+                result.pop(n, None)
         return result

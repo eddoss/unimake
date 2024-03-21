@@ -1,6 +1,6 @@
 import zipfile
 
-from umk.typing import Any, BinaryIO
+from umk.core.typings import Any, BinaryIO
 from fs import open_fs
 from fs.base import FS
 from fs.ftpfs import FTPFS

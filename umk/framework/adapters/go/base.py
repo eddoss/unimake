@@ -1,4 +1,4 @@
-from umk import core, globals, kit
+from umk import core, kit
 from umk.framework.filesystem import Path, AnyPath
 from umk.framework.system import Shell, Environs
 
@@ -9,7 +9,7 @@ class RootCommand(core.Model):
         description="Golang tool command."
     )
     workdir: Path = core.Field(
-        default=globals.paths.work,
+        default=core.globals.paths.work,
         description="Working directory."
     )
     environs: None | Environs = core.Field(

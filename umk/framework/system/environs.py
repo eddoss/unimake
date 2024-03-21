@@ -1,6 +1,6 @@
 import os
-from umk import core, globals
-from umk.typing import Optional as Opt
+
+from umk import core
 
 
 class EnvironmentNotExistsError(Exception):
@@ -45,7 +45,7 @@ class Environs(dict):
     def require(self, name: str, message: str = ""):
         if name in self:
             return
-        globals.close(EnvironmentNotExistsError(name=name, message=message))
+        raise EnvironmentNotExistsError(name=name, message=message)
 
 
 OptEnv = None | Environs

@@ -3,8 +3,8 @@ import pathlib
 
 import yaml as yamllib
 
-from umk.core.typing import Any
-from umk.core.typing import Model
+from umk.core.typings import Any
+from umk.core.typings import Model
 
 
 # ////////////////////////////////////////////////////////////////////////////////////

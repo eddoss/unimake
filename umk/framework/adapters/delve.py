@@ -1,6 +1,6 @@
+from umk import core, kit
 from umk.framework.filesystem import Path, AnyPath
 from umk.framework.system import Shell, Environs
-from umk import globals, core, kit
 
 
 class Options(kit.cli.Options):
@@ -96,7 +96,7 @@ class Delve(core.Model):
         description="Delve main options."
     )
     workdir: Path = core.Field(
-        default_factory=lambda: globals.paths.work,
+        default_factory=lambda: core.globals.paths.work,
         description="Working directory."
     )
     environs: None | Environs = core.Field(

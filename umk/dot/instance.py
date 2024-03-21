@@ -9,9 +9,7 @@ import dotenv
 from rich.syntax import Syntax
 from rich.table import Table
 
-from umk import framework, globals
-from umk.core.errors import PrintableError, InternalError
-from umk.dot import states
+from umk import framework, core
 from umk.framework.project import Project as BaseProject
 from umk.framework.project.base import Registerer as ProjectRegisterer
 from umk.framework.remote.registerer import Registerer as RemoteRegisterer
@@ -37,65 +35,62 @@ def _table_init():
     return result
 
 
-class RootNotExistsError(PrintableError):
+class RootNotExistsError(core.Error):
     def __init__(self, root: Path):
         super().__init__(name=type(self).__name__)
         self.messages = ["Failed to load .unimake ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
-        self.elements += self.messages
-        self.elements += [
+
+    def print(self, printer):
+        printer(
             "[bold red]"
             "Current directory is not a Unimake project. "
             "Unimake project must contain '.unimake' directory with 'project.py' script. "
             "If you need to create a project get initialization help at first and after "
-            "setup a '.unimake'",
-            _table_init()
-        ]
+            "setup a '.unimake'"
+        )
+        printer(_table_init())
 
 
-class RootIsNotDirectory(PrintableError):
+class RootIsNotDirectory(core.Error):
     def __init__(self, root: Path):
         super().__init__(name=type(self).__name__)
         self.messages = ["Failed to load .unimake ! It is not a directory."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
-        self.elements += [
+
+    def print(self, printer):
+        printer(
             "[bold red]"
             "Found [underline]'.unimake'[/underline] but it's not a folder. "
-            "Try to remove '.unimake' at first and init a project.",
-            _table_init()
-        ]
+            "Try to remove '.unimake' at first and init a project."
+        )
+        printer(_table_init())
 
 
-class ProjectScriptNotExistsError(PrintableError):
+class ProjectScriptNotExistsError(core.Error):
     def __init__(self, root: Path):
         super().__init__(name=type(self).__name__)
         self.messages = ["Failed to load .unimake/project.py ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="project.py", desc="Script name.")
-        self.elements += [
-            "[red bold]"
-            "File [underline].unimake/project.py[/underline] does not exists"
-        ]
 
 
-class ProjectScriptLoadingError(PrintableError):
+class ProjectScriptLoadingError(core.Error):
     def __init__(self, root: Path, error: Exception):
         super().__init__(name=type(self).__name__)
         self.messages = [f"Failed to load .unimake/project.py ! {error}"]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="project.py", desc="Script name.")
-        self.elements += [
-            "[red bold]"
-            f"Failed to load [underline].unimake/project.py[/underline] ! {error}"
-        ]
 
 
-class ProjectNotRegisteredError(PrintableError):
+class ProjectNotRegisteredError(core.Error):
     def __init__(self, root: Path):
         super().__init__(name=type(self).__name__)
         self.messages = ["Failed to load project instance ! It did not registered."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="project.py", desc="Script name.")
+
+    def print(self, printer):
         by_function = dedent("""
         from umk.framework import project
 
@@ -119,62 +114,58 @@ class ProjectNotRegisteredError(PrintableError):
                 self.info.name = "Super Project"
                 self.info.description = "Super mega project description"
         """)
-        self.elements += [
-            "[bold red]"
-            "[underline].unimake/project.py[/underline] must register project\n"
-            "Example with function:",
-            Syntax(by_function, "python", theme='monokai', line_numbers=False),
-            "Example with class:",
-            Syntax(by_class, "python", theme='monokai', line_numbers=False),
-        ]
+        self.print_messages(printer)
+        printer("[bold red]Example with function:")
+        printer(Syntax(by_function, "python", theme='monokai', line_numbers=False))
+        printer("[bold red]Example with class:")
+        printer(Syntax(by_class, "python", theme='monokai', line_numbers=False))
 
 
-class RemotesScriptNotExistsError(PrintableError):
+class RemotesScriptNotExistsError(core.Error):
     def __init__(self, root: Path):
         super().__init__(name=type(self).__name__)
         self.messages = ["Failed to load .unimake/remotes.py ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="remotes.py", desc="Script name.")
-        self.elements += [
-            "[red bold]"
-            "File [underline].unimake/remotes.py[/underline] does not exists"
-        ]
 
 
-class RemotesScriptLoadingError(PrintableError):
+class RemotesScriptLoadingError(core.Error):
     def __init__(self, root: Path, error: Exception):
         super().__init__(name=type(self).__name__)
         self.messages = [f"Failed to load .unimake/remotes.py ! {error}"]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="remotes.py", desc="Script name.")
-        self.elements += [
-            "[red bold]"
-            f"Failed to load [underline].unimake/remotes.py[/underline] ! {error}"
-        ]
 
 
-class CliScriptNotExistsError(PrintableError):
+class CliScriptNotExistsError(core.Error):
     def __init__(self, root: Path):
         super().__init__(name=type(self).__name__)
         self.messages = ["Failed to load .unimake/cli.py ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="cli.py", desc="Script name.")
-        self.elements += [
-            "[red bold]"
-            "File [underline].unimake/cli.py[/underline] does not exists"
-        ]
 
 
-class CliScriptLoadingError(PrintableError):
+class CliScriptLoadingError(core.Error):
     def __init__(self, root: Path, error: Exception):
         super().__init__(name=type(self).__name__)
         self.messages = [f"Failed to load .unimake/cli.py ! {error}"]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="cli.py", desc="Script name.")
-        self.elements += [
-            "[red bold]"
-            f"Failed to load [underline].unimake/cli.py[/underline] ! {error}"
-        ]
+
+
+class DotInstanceAlreadyExistsError(core.Error):
+    def __init__(self):
+        super().__init__(name=type(self).__name__)
+        self.messages = [f"Failed to load '.unimake' ! It is already exists."]
+
+
+class DotInstanceScriptLoadingError(core.Error):
+    def __init__(self, path: Path, script: str, reason: str):
+        super().__init__(name=type(self).__name__)
+        self.messages = [f"Failed to load '.unimake/{script}' ! {reason}"]
+        self.details.new(name="script", value=script, desc="Script name.")
+        self.details.new(name="path", value=path, desc=".unimake directory")
+        self.details.new(name="reason", value=reason, desc="Reason.")
 
 
 class Containers:
@@ -253,7 +244,7 @@ class Dot:
 
     def _load_remotes(self, require: Require):
         if require == Require.NO:
-            return states.Ok()
+            return
         try:
             self._script('remotes')
         except FileNotFoundError:
@@ -274,7 +265,7 @@ class Dot:
                     if not default and impl.default:
                         default = impl
                     elif default and impl.default:
-                        globals.console.print(
+                        core.globals.console.print(
                             f"[bold yellow]WARNING! Default remote environment is already "
                             f"exists! Force '{impl.name}.default=False'[/]\n"
                             f"[bold underline]Given[/] \n"
@@ -290,7 +281,7 @@ class Dot:
                     self._containers.remotes[impl.name] = impl
                 else:
                     exist = self._containers.remotes.get(impl.name)
-                    globals.print(
+                    core.globals.print(
                         f"[bold yellow]WARNING! Skip '{impl.name}' remote environment, it is "
                         f"already exists![/]\n"
                         f"[bold underline]Given[/] \n"
@@ -305,17 +296,13 @@ class Dot:
 
     def _script(self, name: str):
         if name in self._modules:
-            raise InternalError(
-                "DotModuleExistsError",
-                f"Module is already exists: {name}",
-                name=name
-            )
+            raise DotInstanceAlreadyExistsError()
         file = self._root / f'{name}.py'
         if not file.exists():
-            raise InternalError(
-                "DotScriptLoadingError",
-                f"Script does not exists: {file}",
-                file=file
+            raise DotInstanceScriptLoadingError(
+                script=name,
+                path=self._root,
+                reason="Script file does not exists."
             )
         spec = importer.spec_from_file_location(name, file)
         module = importer.module_from_spec(spec)
