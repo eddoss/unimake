@@ -10,6 +10,9 @@ from umk.core.typings import Model
 # ////////////////////////////////////////////////////////////////////////////////////
 # YAML
 # ////////////////////////////////////////////////////////////////////////////////////
+class YamlNoAliasDumper(yamllib.SafeDumper):
+    def ignore_aliases(self, data):
+        return True
 
 class yaml:
     @staticmethod
@@ -29,8 +32,8 @@ class yaml:
     def text(data: Model | dict[str, Any]) -> str:
         if issubclass(type(data), Model):
             d = data.model_dump()
-            return yamllib.safe_dump(d)
-        return yamllib.safe_dump(data)
+            return yamllib.dump(d, Dumper=YamlNoAliasDumper)
+        return yamllib.dump(data, Dumper=YamlNoAliasDumper)
 
 
 @yaml.representer(str)

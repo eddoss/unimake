@@ -3,11 +3,12 @@ import string
 from umk import core
 from umk.core.typings import Callable, Type
 from umk.framework.filesystem import Path
+from umk.framework.project.dependencies import Dependency
 
 
 class BadProjectIdError(core.Error):
     def __init__(self, project_id: str, allowed: str, message: str):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [message]
         self.details.new(name="id", value=project_id, desc="Project ID value")
         self.details.new(name="allowed", value=allowed, desc="Allowed symbols")
@@ -95,6 +96,11 @@ class Layout(core.Model):
 class Project:
     def __init__(self):
         self.info: Info = Info()
+        self.dependencies: dict[str, list[Dependency]] = {}
+
+
+class Scratch(Project):
+    pass
 
 
 class Registerer:
@@ -115,75 +121,4 @@ def get() -> Project | None:
     raise NotImplemented()
 
 
-class Scratch(Project):
-    pass
 
-
-class GolangLayout(Layout):
-    root: Path = core.Field(
-        default_factory=lambda: core.globals.paths.work,
-        description="Layout root directory (golang project root)."
-    )
-
-    @property
-    def assets(self): return self.root / "assets"
-
-    @property
-    def build(self): return self.root / "build"
-
-    @property
-    def cmd(self): return self.root / "cmd"
-
-    @property
-    def configs(self): return self.root / "configs"
-
-    @property
-    def deployment(self): return self.root / "deployment"
-
-    @property
-    def docs(self): return self.root / "docs"
-
-    @property
-    def examples(self): return self.root / "examples"
-
-    @property
-    def githooks(self): return self.root / "githooks"
-
-    @property
-    def init(self): return self.root / "init"
-
-    @property
-    def internal(self): return self.root / "internal"
-
-    @property
-    def pkg(self): return self.root / "pkg"
-
-    @property
-    def scripts(self): return self.root / "scripts"
-
-    @property
-    def test(self): return self.root / "test"
-
-    @property
-    def third_party(self): return self.root / "third_party"
-
-    @property
-    def tools(self): return self.root / "tools"
-
-    @property
-    def vendor(self): return self.root / "vendor"
-
-    @property
-    def web(self): return self.root / "web"
-
-    @property
-    def website(self): return self.root / "website"
-
-    @property
-    def output(self): return self.root / "output"
-
-
-class Golang(Scratch):
-    def __init__(self):
-        super().__init__()
-        self.layout: GolangLayout = GolangLayout()

@@ -37,7 +37,7 @@ def _table_init():
 
 class RootNotExistsError(core.Error):
     def __init__(self, root: Path):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = ["Failed to load .unimake ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
 
@@ -54,7 +54,7 @@ class RootNotExistsError(core.Error):
 
 class RootIsNotDirectory(core.Error):
     def __init__(self, root: Path):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = ["Failed to load .unimake ! It is not a directory."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
 
@@ -69,7 +69,7 @@ class RootIsNotDirectory(core.Error):
 
 class ProjectScriptNotExistsError(core.Error):
     def __init__(self, root: Path):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = ["Failed to load .unimake/project.py ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="project.py", desc="Script name.")
@@ -77,7 +77,7 @@ class ProjectScriptNotExistsError(core.Error):
 
 class ProjectScriptLoadingError(core.Error):
     def __init__(self, root: Path, error: Exception):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [f"Failed to load .unimake/project.py ! {error}"]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="project.py", desc="Script name.")
@@ -85,7 +85,7 @@ class ProjectScriptLoadingError(core.Error):
 
 class ProjectNotRegisteredError(core.Error):
     def __init__(self, root: Path):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = ["Failed to load project instance ! It did not registered."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="project.py", desc="Script name.")
@@ -123,7 +123,7 @@ class ProjectNotRegisteredError(core.Error):
 
 class RemotesScriptNotExistsError(core.Error):
     def __init__(self, root: Path):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = ["Failed to load .unimake/remotes.py ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="remotes.py", desc="Script name.")
@@ -131,7 +131,7 @@ class RemotesScriptNotExistsError(core.Error):
 
 class RemotesScriptLoadingError(core.Error):
     def __init__(self, root: Path, error: Exception):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [f"Failed to load .unimake/remotes.py ! {error}"]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="remotes.py", desc="Script name.")
@@ -139,7 +139,7 @@ class RemotesScriptLoadingError(core.Error):
 
 class CliScriptNotExistsError(core.Error):
     def __init__(self, root: Path):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = ["Failed to load .unimake/cli.py ! It does not exists."]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="cli.py", desc="Script name.")
@@ -147,7 +147,7 @@ class CliScriptNotExistsError(core.Error):
 
 class CliScriptLoadingError(core.Error):
     def __init__(self, root: Path, error: Exception):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [f"Failed to load .unimake/cli.py ! {error}"]
         self.details.new(name="root", value=root, desc="Path to .unimake")
         self.details.new(name="script", value="cli.py", desc="Script name.")
@@ -155,13 +155,13 @@ class CliScriptLoadingError(core.Error):
 
 class DotInstanceAlreadyExistsError(core.Error):
     def __init__(self):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [f"Failed to load '.unimake' ! It is already exists."]
 
 
 class DotInstanceScriptLoadingError(core.Error):
     def __init__(self, path: Path, script: str, reason: str):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [f"Failed to load '.unimake/{script}' ! {reason}"]
         self.details.new(name="script", value=script, desc="Script name.")
         self.details.new(name="path", value=path, desc=".unimake directory")
@@ -205,7 +205,7 @@ class Dot:
 
         self._load_project(project)
         self._load_remotes(remotes)
-        self._load_cli(cli)
+        # self._load_cli(cli)
 
     def _load_project(self, require: Require):
         if require == NO:

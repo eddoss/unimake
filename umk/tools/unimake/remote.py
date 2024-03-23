@@ -1,8 +1,13 @@
+import os
+
 import asyncclick as click
 from asyncclick import Context
-from rich.table import Table
+
 from umk.tools.unimake import application
-from umk import dot, framework, core
+
+if not os.environ.get('_UNIMAKE_COMPLETE', None):
+    from rich.table import Table
+    from umk import dot, framework, core
 
 
 @application.group(
@@ -37,37 +42,38 @@ async def remote(ctx: click.Context, name: str):
                 f"[bold yellow]Failed to find remote '{name}'! "
                 f"Please specify it in the '.unimake/remotes.py'"
             )
+        core.globals.close(-1)
 
 
-@remote.command(name='build', help=framework.remote.Interface.build.__doc__)
+@remote.command(name='build', help="Build remote environment")
 @click.pass_context
 def build(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.build()
 
 
-@remote.command(name='destroy', help=framework.remote.Interface.destroy.__doc__)
+@remote.command(name='destroy', help="Destroy remote environment")
 @click.pass_context
 def destroy(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.destroy()
 
 
-@remote.command(name='up', help=framework.remote.Interface.up.__doc__)
+@remote.command(name='up', help="Start remote environment")
 @click.pass_context
 def up(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.up()
 
 
-@remote.command(name='down', help=framework.remote.Interface.down.__doc__)
+@remote.command(name='down', help="Stop remote environment")
 @click.pass_context
 def down(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.down()
 
 
-@remote.command(name='shell', help=framework.remote.Interface.shell.__doc__)
+@remote.command(name='shell', help="Open remote environment shell")
 @click.pass_context
 def shell(ctx: click.Context):
     instance = ctx.obj.get("instance")
@@ -91,7 +97,7 @@ def ls():
     core.globals.close()
 
 
-@remote.command(name='exec', help=framework.remote.Interface.execute.__doc__)
+@remote.command(name='exec', help="Execute command in remote environment")
 @click.argument('program', required=True, nargs=1)
 @click.argument('arguments', required=False, nargs=-1)
 @click.pass_context
@@ -103,19 +109,27 @@ def execute(ctx: Context, program: str, arguments: tuple[str]):
 
 
 @remote.command(name='inspect', help='Show remote environment details')
+@click.option('--format', '-f', default="table", type=click.Choice(["table", "json", "yaml"], case_sensitive=False), help="Output format")
 @click.pass_context
-def inspect(ctx: Context):
+def inspect(ctx: Context, format: str):
     rem: framework.remote.Interface = ctx.obj.get("instance")
-    table = Table(show_header=True, show_edge=True, show_lines=True)
-    table.add_column("Name", justify="left", style="", no_wrap=True)
-    table.add_column("Description", justify="left", style="", no_wrap=True)
-    table.add_column("Value", justify="left", style="", no_wrap=True)
-    for prop in rem.properties():
-        table.add_row(prop.name, prop.description, str(prop.value))
-    core.globals.console.print(table)
+    if format == "table" or format == "":
+        table = Table(show_header=True, show_edge=True, show_lines=True)
+        table.add_column("Name", justify="left", style="", no_wrap=True)
+        table.add_column("Description", justify="left", style="", no_wrap=True)
+        table.add_column("Value", justify="left", style="", no_wrap=True)
+        for prop in rem.properties():
+            table.add_row(prop.name, prop.description, str(prop.value))
+        core.globals.console.print(table)
+
+    data = [prop.model_dump() for prop in rem.properties()]
+    if format == "json":
+        core.globals.console.print_json(core.json.text(data))
+    elif format in ("yml", "yaml"):
+        core.globals.console.print(core.yaml.text({"properties": data}))
 
 
-@remote.command(name='upload', help=framework.remote.Interface.upload.__doc__)
+@remote.command(name='upload', help="Upload files to remote environment")
 @click.argument('items', required=False, nargs=-1)
 @click.pass_context
 def upload(ctx: Context, items: tuple[str]):
@@ -126,7 +140,7 @@ def upload(ctx: Context, items: tuple[str]):
     rem.upload(paths)
 
 
-@remote.command(name='download', help=framework.remote.Interface.download.__doc__)
+@remote.command(name='download', help="Download files from remote environment")
 @click.argument('items', required=False, nargs=-1)
 @click.pass_context
 def download(ctx: Context, items: tuple[str]):

@@ -7,7 +7,7 @@ from umk.framework.remote import Interface
 
 class RemoteInstanceRegisterError(core.Error):
     def __init__(self, factory_type: str, factory_name: str, position: str):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [
             "The decorator 'umk.remote.register' must be used with functions "
             "(or classes) that returns 'umk.remote.Interface' implementation."

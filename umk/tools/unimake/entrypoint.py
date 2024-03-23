@@ -1,9 +1,15 @@
 import asyncio
+import os
 
-from umk import core
+if not os.environ.get('_UNIMAKE_COMPLETE', None):
+    from umk import core
 from umk.tools.unimake import application
 
-try:
+
+if not os.environ.get('_UNIMAKE_COMPLETE', None):
     asyncio.run(application())
-except Exception as err:
-    core.print_error(err)
+else:
+    try:
+        asyncio.run(application())
+    except Exception as err:
+        core.print_error(err)

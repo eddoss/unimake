@@ -9,3 +9,7 @@ from .shell import Std as ShellStd
 from .shell import Devnull as ShellDevnull
 from .user import User
 from .user import user
+from shutil import chown
+from shutil import which
+from .platform import Platform
+from .platform import create as platform

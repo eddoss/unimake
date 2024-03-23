@@ -12,6 +12,11 @@ class Instruction(core.Model):
     def write(self, buffer: TextIO):
         pass
 
+    def __str__(self):
+        buf = io.StringIO()
+        self.write(buf)
+        return buf.getvalue()
+
 
 class Commentable(Instruction):
     comment: list[str] = core.Field(
@@ -21,6 +26,7 @@ class Commentable(Instruction):
     space: int = core.Field(
         description="Instruction pre-space count",
         default=0,
+        exclude=True
     )
 
     def write(self, buffer: TextIO):
@@ -358,12 +364,12 @@ class Space(Instruction):
 
 
 class File(core.Model):
-    instructions: list[Instruction] = core.Field(
+    instructions: core.typings.Adapter[list[Instruction]] = core.Field(
         default_factory=list,
         description="Dockerfile instruction list",
     )
-    path: None | Path = core.Field(
-        default=None,
+    path: Path = core.Field(
+        default_factory=Path,
         description="Dockerfile output directory",
     )
     name: str = core.Field(
@@ -438,8 +444,7 @@ class File(core.Model):
         self.instructions.append(instruction)
 
     @core.typeguard
-    def froms(self, image: str, platform: None | str = None, alias: None | str = None, *, space: int = 1,
-              comment: list[str] = None):
+    def froms(self, image: str, platform: None | str = None, alias: None | str = None, *, space: int = 0, comment: list[str] = None):
         instruction = From(comment=comment or [], space=space, image=image, platform=platform, alias=alias)
         self.instructions.append(instruction)
 
@@ -528,6 +533,8 @@ class File(core.Model):
         return self
 
     def __str__(self) -> str:
-        buf = io.StringIO()
-        self.write(buf)
-        return buf.getvalue()
+        return self.text()
+
+    @core.field.serializer("instructions")
+    def _serialize_instructions(self, v: list[Instruction]):
+        return [str(i).strip() for i in v]

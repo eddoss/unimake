@@ -1,6 +1,10 @@
+import os
+
 import asyncclick as click
-from rich.table import Table
-from umk import core
+
+if not os.environ.get('_UNIMAKE_COMPLETE', None):
+    from rich.table import Table
+    from umk import core
 
 
 @click.group(add_help_option=False, invoke_without_command=True)

@@ -8,6 +8,7 @@ from pydantic import Field
 
 beartype.BeartypeConf.is_color = False
 
+Adapter = pd.TypeAdapter
 SerializationInfo = pd.SerializationInfo
 overload = base_overload
 

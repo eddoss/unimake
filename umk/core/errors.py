@@ -96,7 +96,7 @@ class UnknownError(Error):
         self._messages = [str(err) for err in self._errors]
 
     def __init__(self, *errors: Exception):
-        super().__init__(name=type(self).__name__)
+        super().__init__(name=type(self).__name__.rstrip("Error"))
         self._errors = []
         self.errors = list(errors)
 
