@@ -7,7 +7,7 @@ from umk.tools.unimake import application
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
-    from umk import dot, framework, core
+    from umk import runtime, framework, core
 
 
 @application.group(
@@ -23,7 +23,7 @@ async def remote(ctx: click.Context, name: str):
     ctx.obj["instance"] = None  # remote environment instance
 
     # Load .unimake/remotes.py
-    dot.Instance.load(root=core.globals.paths.unimake, remotes=dot.YES, project=dot.OPT)
+    runtime.load(root=core.globals.paths.unimake, remotes=runtime.YES, project=runtime.OPT)
 
     # We don't need to find remote environment if 'ls' is requested.
     # If no subcommand was passed we assume it is 'ls'

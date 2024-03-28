@@ -101,46 +101,4 @@ class UnknownError(Error):
         self.errors = list(errors)
 
 
-# ////////////////////////////////////////////////////////////////////////////////////
-# Printer
-# ////////////////////////////////////////////////////////////////////////////////////
-
-class Printer(Model):
-    printers: dict[Type, Callable[[Exception], None]] = Field(
-        default_factory=dict,
-        description="Per type printers."
-    )
-
-    def __call__(self, error: Exception):
-        t = type(error)
-        if issubclass(t, SystemExit):
-            return
-        if t in self.printers:
-            self.printers[t](error)
-            self.stack(error)
-            return
-
-        # process unregistered exception type
-        globals.error_console.print(error.__class__.__name__)
-        globals.error_console.print(str(error))
-        self.stack(error)
-
-    def stack(self, error: Exception):
-        table = Table(show_header=True, show_edge=True, show_lines=False)
-        table.add_column("CALL STACK", justify="left", no_wrap=True)
-        stack = traceback.TracebackException.from_exception(error).stack
-        for frame in stack:
-            if 'umk/dot' in frame.filename or \
-                    'umk/framework' in frame.filename or \
-                    'umk/kit' in frame.filename or \
-                    'umk/tools' in frame.filename:
-                link = f"{frame.filename}:{frame.lineno}"
-                table.add_row(f"[link={link}]{link}[/link]")
-        if len(table.rows):
-            globals.error_console.print(table)
-
-
 def register(*types): ...
-
-
-def print_error(err: Exception): ...

@@ -7,7 +7,7 @@ from umk.tools.unimake import application
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
-    from umk import dot, framework, core
+    from umk import runtime, framework, core
 
 
 def find_remote_environment(default: bool, specific: str):
@@ -38,10 +38,10 @@ def find_remote_environment(default: bool, specific: str):
 @click.pass_context
 def project(ctx: click.Context, remote: str, r: bool):
     locally = not bool(remote or r)
-    dot.Instance.load(
+    runtime.load(
         root=core.globals.paths.unimake,
-        project=dot.YES,
-        remotes=[dot.YES, dot.NO][int(locally)]
+        project=runtime.YES,
+        remotes=[runtime.YES, runtime.NO][int(locally)]
     )
     if r or remote:  # Remote execution
         rem = find_remote_environment(r, remote)
@@ -82,6 +82,11 @@ def generate():
     framework.project.run('generate')
 
 
+@project.command(name='documentation', help="Run project documentation generation")
+def documentation():
+    framework.project.run('documentation')
+
+
 @project.command(name='bundle', help="Run project bundling")
 def bundle():
     framework.project.run('bundle')
@@ -100,7 +105,7 @@ def run_testing():
 @project.command(name='inspect', help="Print project details")
 @click.option('--format', '-f', default="style", type=click.Choice(["style", "json", "yaml"], case_sensitive=False), help="Output format")
 def inspect(format: str):
-    pro = dot.Instance.container.project
+    pro = runtime.container.project.object
     if format in ("style", ""):
         table_info = Table(
             title="INFO",

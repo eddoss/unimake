@@ -4,7 +4,7 @@ from umk import core
 from umk.core.typings import Callable, TypeVar
 from umk.framework import utils
 from umk.framework.filesystem import Path
-from umk.framework.project.dependencies import Dependency
+from umk.framework.dependencies import Interface as Dependency
 
 
 class BadProjectIdError(core.Error):
@@ -153,6 +153,12 @@ class Project:
     def generate(self):
         """
         Run project code generation.
+        """
+        self.__not_implemented()
+
+    def documentation(self):
+        """
+        Run project documentation generation.
         """
         self.__not_implemented()
 

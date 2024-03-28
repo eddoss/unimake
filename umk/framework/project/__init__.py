@@ -10,7 +10,3 @@ from .base import entry, get, action, run
 # golang
 from .golang import Golang
 from .golang import GolangLayout
-
-# dependencies
-from .dependencies import Packages
-from .dependencies import GoMod

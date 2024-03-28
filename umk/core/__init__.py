@@ -10,9 +10,7 @@ from .errors import Error
 from .errors import InternalError
 from .errors import UnknownError
 from .errors import ValidationError
-from .errors import Printer as ErrorPrinter
 from .errors import register as error_register
-from .errors import print_error
 
 from .properties import Property
 from .properties import Properties
