@@ -1,4 +1,3 @@
-import copy
 import sys
 from enum import Enum
 from importlib import util as importer
@@ -11,8 +10,6 @@ from rich.table import Table
 
 from umk import framework, core
 from umk.framework.project import Project as BaseProject
-from umk.framework.project.base import Registerer as ProjectRegisterer
-from umk.framework.remote.registerer import Registerer as RemoteRegisterer
 
 
 class Require(Enum):
@@ -168,25 +165,19 @@ class DotInstanceScriptLoadingError(core.Error):
         self.details.new(name="reason", value=reason, desc="Reason.")
 
 
-class Containers:
+class Container:
     def __init__(self):
         self.project: BaseProject | None = None
         self.remotes: dict[str, framework.remote.Interface] = {}
+        self.default_remote: str = ""
+        self.actions: dict[str, framework.project.Action] = {}
 
 
 class Dot:
-    @property
-    def project(self) -> BaseProject | None:
-        return self._containers.project
-
-    @property
-    def remotes(self) -> dict[str, framework.remote.Interface]:
-        return self._containers.remotes
-
     def __init__(self):
         self._root = Path()
         self._modules = {}
-        self._containers = Containers()
+        self.container = Container()
 
     def load(self, root: Path, *, project=NO, remotes=NO, cli=NO):
         self._root = root.expanduser().resolve().absolute()
@@ -219,15 +210,7 @@ class Dot:
         except Exception as error:
             raise ProjectScriptLoadingError(self._root, error)
 
-        module = self._modules.get('project')
-
-        # Find project registered project creator
-        for _, value in module.__dict__.items():
-            if issubclass(type(value), ProjectRegisterer):
-                self._containers.project = copy.deepcopy(value.instance)
-                break
-
-        if self._containers.project is None:
+        if self.container.project is None:
             raise ProjectNotRegisteredError(self._root)
 
     def _load_cli(self, require: Require):
@@ -253,46 +236,6 @@ class Dot:
             raise RemotesScriptNotExistsError(self._root)
         except Exception as error:
             raise RemotesScriptLoadingError(self._root, error)
-
-        module = self._modules.get('remotes')
-
-        # Find all and collect all creators
-        default: framework.remote.Interface | None = None
-        for _, value in module.__dict__.items():
-            if issubclass(type(value), RemoteRegisterer):
-                impl: framework.remote.Interface = copy.deepcopy(value.instance)
-                if impl.name not in self._containers.remotes:
-                    if not default and impl.default:
-                        default = impl
-                    elif default and impl.default:
-                        core.globals.console.print(
-                            f"[bold yellow]WARNING! Default remote environment is already "
-                            f"exists! Force '{impl.name}.default=False'[/]\n"
-                            f"[bold underline]Given[/] \n"
-                            f" - name '{impl.name}'\n"
-                            f" - type '{impl.__class__.__module__}.{impl.__class__.__qualname__}'\n"
-                            f" - desc '{impl.description}'\n"
-                            f"[bold underline]Exist[/] \n"
-                            f" - name '{default.name}'\n"
-                            f" - type '{default.__class__.__module__}.{default.__class__.__qualname__}'\n"
-                            f" - desc '{default.description}'\n"
-                        )
-                        impl.default = False
-                    self._containers.remotes[impl.name] = impl
-                else:
-                    exist = self._containers.remotes.get(impl.name)
-                    core.globals.print(
-                        f"[bold yellow]WARNING! Skip '{impl.name}' remote environment, it is "
-                        f"already exists![/]\n"
-                        f"[bold underline]Given[/] \n"
-                        f" - name '{impl.name}'\n"
-                        f" - type '{impl.__class__.__module__}.{impl.__class__.__qualname__}'\n"
-                        f" - desc '{impl.description}'\n"
-                        f"[bold underline]Exist[/] \n"
-                        f" - name '{exist.name}'\n"
-                        f" - type '{exist.__class__.__module__}.{exist.__class__.__qualname__}'\n"
-                        f" - desc '{exist.description}'\n"
-                    )
 
     def _script(self, name: str):
         if name in self._modules:

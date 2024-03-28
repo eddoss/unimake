@@ -1,15 +1,8 @@
-from umk import core
-from umk.framework.filesystem import Path
 from umk.framework.project.base import Layout
 from umk.framework.project.base import Scratch
 
 
 class GolangLayout(Layout):
-    root: Path = core.Field(
-        default_factory=lambda: core.globals.paths.work,
-        description="Layout root directory (golang project root)."
-    )
-
     @property
     def assets(self): return self.root / "assets"
 

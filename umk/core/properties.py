@@ -24,8 +24,10 @@ class Property(Model):
 
 
 class Properties:
-    def __init__(self):
+    def __init__(self, *properties: Property):
         self._items: OrderedDict[str, Property] = OrderedDict()
+        for prop in properties:
+            self._items[prop.name] = prop
 
     @typeguard
     def __contains__(self, prop: str | Property) -> bool:

@@ -1,49 +1,8 @@
+import copy
+
 from umk import core, kit
 from umk.framework.filesystem import Path, AnyPath
-from umk.framework.system import Shell, Environs
-
-
-class RootCommand(core.Model):
-    cmd: list[AnyPath] = core.Field(
-        default_factory=lambda: ["go"],
-        description="Golang tool command."
-    )
-    workdir: Path = core.Field(
-        default=core.globals.paths.work,
-        description="Working directory."
-    )
-    environs: None | Environs = core.Field(
-        default_factory=Environs,
-        description="Shell environment variables."
-    )
-
-    @property
-    def shell(self) -> Shell:
-        result = Shell()
-        result.name = "go"
-        result.cmd = self.cmd
-        result.environs = self.environs
-        result.workdir = self.workdir
-        return result
-
-
-class ModCommands(RootCommand):
-    @core.typeguard
-    def tidy(self, compat: str = "") -> Shell:
-        shell = self.shell
-        shell.cmd += ["mod", "tidy"]
-        if compat.strip():
-            shell.cmd.append(f"compat={compat.strip()}")
-        return shell
-
-    @core.typeguard
-    def vendor(self, outdir: None | Path = None):
-        shell = self.shell
-        shell.cmd += ["mod", "vendor"]
-        if outdir:
-            out = Path(outdir).expanduser().resolve().absolute()
-            shell.cmd.append(f"-o={out}")
-        return shell
+from umk.framework.system import Shell
 
 
 class BuildOptions(kit.cli.Options):
@@ -269,16 +228,54 @@ class BuildOptions(kit.cli.Options):
     )
 
 
-class Go(RootCommand):
-    mod: ModCommands = core.Field(
-        default_factory=ModCommands,
-        description="List of the 'go mod' commands."
+class Command(core.Model):
+    shell: Shell = core.Field(
+        default_factory=lambda: Shell(name="go", cmd=["go"]),
+        description="Golang tool command."
     )
 
+
+class Mod(Command):
     @core.typeguard
-    def build(self, options: BuildOptions) -> Shell:
-        opt = options.serialize()
+    def tidy(self, compat: str = "") -> Shell:
         shell = self.shell
+        shell.cmd += ["mod", "tidy"]
+        if compat.strip():
+            shell.cmd.append(f"compat={compat.strip()}")
+        return shell
+
+    @core.typeguard
+    def vendor(self, outdir: None | Path = None):
+        shell = self.shell
+        shell.cmd += ["mod", "vendor"]
+        if outdir:
+            out = Path(outdir).expanduser().resolve().absolute()
+            shell.cmd.append(f"-o={out}")
+        return shell
+
+
+class Go:
+    @property
+    def shell(self) -> Shell:
+        return self._shell
+
+    @shell.setter
+    def shell(self, value: Shell):
+        self._shell = value
+
+    def __init__(self):
+        self._shell = Shell(name="go", cmd=["go"])
+        self._mod = Mod()
+
+    @property
+    def mod(self) -> Mod:
+        result = copy.deepcopy(self._mod)
+        result.shell = copy.deepcopy(self._shell)
+        return result
+
+    def build(self, options: BuildOptions):
+        opt = options.serialize()
+        shell = copy.deepcopy(self._shell)
         shell.cmd.append("build")
         shell.cmd += opt
-        return shell
+        shell.sync()

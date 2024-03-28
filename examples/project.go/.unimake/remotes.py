@@ -2,12 +2,11 @@ from umk.framework import project
 from umk.framework import remote
 from umk.framework import system
 from umk.framework.adapters import docker
-from project import Project
 
 
 @remote.register
 def development():
-    pro: Project = project.get()
+    pro: project.Golang = project.get()
     usr = system.user()
 
     dockerfile = docker.File(path=pro.layout.unimake)
@@ -47,14 +46,4 @@ def development():
     result.service = result.name
     result.dockerfiles.append(dockerfile)
 
-    return result
-
-
-@remote.register
-def container():
-    result = remote.DockerContainer()
-    result.container = "unimake"
-    result.user = system.user()
-    result.privileged = False
-    result.workdir = f"/home/{result.user.name}/workdir"
     return result

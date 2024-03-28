@@ -1,3 +1,6 @@
+import os
+import sys
+
 from umk import core
 from umk.framework.adapters import docker
 from umk.framework.filesystem import AnyPath, OptPath
@@ -13,6 +16,10 @@ class Compose(Interface):
     sh: list[str] = core.Field(
         default_factory=lambda: ["bash"],
         description="Shell command (sh, bash, zsh, ...)"
+    )
+    tty: bool = core.Field(
+        default_factory=lambda: sys.stdout.isatty(),
+        description="Instantiate tty when call 'execute'"
     )
     composefile: None | docker.ComposeFile = core.Field(
         default_factory=docker.ComposeFile,
@@ -78,8 +85,8 @@ class Compose(Interface):
         self.client.compose.execute(
             service=self.service,
             command=cmd,
-            envs=env,
-            tty=False,
+            envs=env or {},
+            tty=self.tty,
             workdir=cwd,
             detach=detach
         )

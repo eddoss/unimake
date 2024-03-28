@@ -1,6 +1,9 @@
 import copy
 
 from umk import core
+from umk.core.typings import Callable, Any
+from umk.framework.adapters.go import Go
+from umk.framework.filesystem import Path
 from umk.framework.system import Shell, which, platform
 
 
@@ -22,7 +25,7 @@ class Dependency(core.Model):
         description="Dependency description"
     )
 
-    def install(self, **kwargs):
+    def resolve(self, **kwargs):
         raise NotImplemented()
 
 
@@ -126,7 +129,7 @@ class Packages(Dependency):
         description="Run commands by super user",
     )
 
-    def install(self, **kwargs):
+    def resolve(self, **kwargs):
         manager: None | Packages.Managers.Manager = None
         packages = []
 
@@ -160,3 +163,79 @@ class Packages(Dependency):
         # run package manager 'clean'
         if manager.clean.cmd:
             manager.clean.sync()
+
+
+class GoMod(Dependency):
+    tool: Go = core.Field(
+        default_factory=Go,
+        description="Go tool object"
+    )
+    path: None | Path = core.Field(
+        default=None,
+        description="Path to directory with go.mod"
+    )
+    compat: str = core.Field(
+        default="",
+        description="Preserves any additional checksums (see 'go help mod tidy')"
+    )
+    vendor: bool = core.Field(
+        default=False,
+        description="Vendor downloaded packages"
+    )
+
+    def resolve(self, **kwargs):
+        self.go.shell.workdir = self.path
+        self.go.mod.tidy(compat=self.compat)
+        if self.vendor:
+            self.go.mod.vendor()
+
+
+class ShellCommand(Dependency):
+    shell: Shell = core.Field(
+        default_factory=Shell,
+        description="Shell to run"
+    )
+
+    def resolve(self, **kwargs):
+        if self.shell.cmd:
+            self.shell.sync()
+
+
+class Function(Dependency):
+    function: Callable[[], Any] = core.Field(
+        default=None,
+        description="Function to run"
+    )
+
+    def resolve(self, **kwargs):
+        if self.function:
+            self.function()
+
+
+# class Builder:
+#     class Go:
+#         def __init__(self):
+#             self.mod = GoMod(name="go", description="Golang 'go.mod' file")
+#
+#     def __init__(self):
+#         self.go = Builder.Go()
+#         self.os = Packages(name="os", description="Operating system packages")
+#
+#     def build(self) -> list[Dependency]:
+#         result = []
+#         if self.go.mod.path:
+#             result.append(self.go.mod)
+#         os = any((
+#             self.os.packages.apt,
+#             self.os.packages.apt_get,
+#             self.os.packages.apk,
+#             self.os.packages.dnf,
+#             self.os.packages.yum,
+#             self.os.packages.pacman
+#         ))
+#         if os:
+#             result.append(self.os)
+#         return result
+#
+#
+# b = Builder()

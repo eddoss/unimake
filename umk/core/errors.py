@@ -121,7 +121,8 @@ class Printer(Model):
             return
 
         # process unregistered exception type
-        globals.error_console.print(error)
+        globals.error_console.print(error.__class__.__name__)
+        globals.error_console.print(str(error))
         self.stack(error)
 
     def stack(self, error: Exception):

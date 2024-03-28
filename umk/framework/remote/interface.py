@@ -1,6 +1,7 @@
 from umk.core.typings import Generator
 
 from umk import core
+from umk.core.typings import TypeVar
 from umk.framework import utils
 from umk.framework.filesystem import AnyPath, OptPath
 from umk.framework.system import OptEnv
@@ -103,3 +104,21 @@ class Interface(core.Model):
 
     def __str__(self):
         return f"umk.remote.Interface(name='{self.name}', description='{self.description}')"
+
+
+InterfaceType = TypeVar("InterfaceType", bound=Interface)
+
+
+def register(factory):
+    # See implementation in dot/implementation.py
+    raise NotImplemented()
+
+
+def find(name: str = "") -> InterfaceType:
+    # See implementation in dot/implementation.py
+    raise NotImplemented()
+
+
+def iterate():
+    # See implementation in dot/implementation.py
+    raise NotImplemented()

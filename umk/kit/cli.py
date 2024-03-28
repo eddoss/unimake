@@ -173,9 +173,10 @@ class Options(NoEmpty):
     def serialize(self) -> list[str]:
         result = []
         for name in self.model_fields:
-            cli: None | Opt | Arg | Args = self.model_fields[name].json_schema_extra.get("cli")
+            f = self.model_fields[name]
+            cli: None | Opt | Arg | Args = f.json_schema_extra.get("cli") if f.json_schema_extra else None
             if not cli:
-                continue
+                return getattr(self, name).serialize()
             if issubclass(type(cli), Opt):
                 result.extend(self._opt(cli, name))
             elif issubclass(type(cli), Arg):

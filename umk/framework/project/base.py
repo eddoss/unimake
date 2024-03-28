@@ -1,7 +1,8 @@
 import string
 
 from umk import core
-from umk.core.typings import Callable, Type
+from umk.core.typings import Callable, TypeVar
+from umk.framework import utils
 from umk.framework.filesystem import Path
 from umk.framework.project.dependencies import Dependency
 
@@ -14,7 +15,7 @@ class BadProjectIdError(core.Error):
         self.details.new(name="allowed", value=allowed, desc="Allowed symbols")
 
 
-class Author(core.Model):
+class Contributor(core.Model):
     name: str = core.Field(
         default="",
         description="Author name."
@@ -46,9 +47,9 @@ class Info(core.Model):
         default="",
         description="Project description."
     )
-    authors: list[Author] = core.Field(
+    contributors: list[Contributor] = core.Field(
         default_factory=list,
-        description="Project authors."
+        description="Project contributors."
     )
 
     @core.field.validator("id")
@@ -81,6 +82,17 @@ class Info(core.Model):
 
         return value
 
+    @core.typeguard
+    def contrib(self, name: str, email: str | list[str], socials: None | dict[str, str] = None):
+        item = Contributor()
+        item.name = name
+        item.socials = socials or {}
+        if issubclass(type(email), str):
+            item.email.append(email)
+        else:
+            item.email = email
+        self.contributors.append(item)
+
 
 class Layout(core.Model):
     root: Path = core.Field(
@@ -93,32 +105,93 @@ class Layout(core.Model):
     )
 
 
+Action = Callable[[...], ...] | Callable[['Project'], ...]
+
+
 class Project:
     def __init__(self):
         self.info: Info = Info()
         self.dependencies: dict[str, list[Dependency]] = {}
+        self.layout: Layout = Layout()
+
+    def clean(self):
+        """
+        Run project clean.
+        """
+        self.__not_implemented()
+
+    def build(self):
+        """
+        Run project building.
+        """
+        self.__not_implemented()
+
+    def lint(self):
+        """
+        Run project linting.
+        """
+        self.__not_implemented()
+
+    def format(self):
+        """
+        Run project formatting.
+        """
+        self.__not_implemented()
+
+    def test(self):
+        """
+        Run project tests.
+        """
+        self.__not_implemented()
+
+    def bundle(self):
+        """
+        Run project bundling.
+        """
+        self.__not_implemented()
+
+    def generate(self):
+        """
+        Run project code generation.
+        """
+        self.__not_implemented()
+
+    def release(self):
+        """
+        Run project releasing
+        """
+        self.__not_implemented()
+
+    def __not_implemented(self):
+        core.globals.console.print(
+            f"[bold]The '{self.info.name or self.info.id}' has no '{utils.caller(2)}' action."
+        )
 
 
 class Scratch(Project):
     pass
 
 
-class Registerer:
-    @property
-    def instance(self) -> Project:
-        return self._creator()
-
-    def __init__(self, value: Type | Callable[[], Project] | None = None):
-        self._creator = value
+ProjectType = TypeVar("ProjectType", bound=Project)
 
 
-def register(creator):
-    return Registerer(creator)
-
-
-def get() -> Project | None:
+def entry(func):
     # See implementation in dot/implementation.py
     raise NotImplemented()
 
+
+def action(*, name=""):
+    # See implementation in dot/implementation.py
+    raise NotImplemented()
+
+
+def run(name: str):
+    # See implementation in dot/implementation.py
+    raise NotImplemented()
+
+
+def get() -> ProjectType:
+    # See implementation in dot/implementation.py
+    raise NotImplemented()
 
 
