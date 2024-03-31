@@ -41,7 +41,7 @@ class Model(pd.BaseModel):
         validate_assignment = True
 
     @model.serializer(mode="wrap")
-    def serialize_model(self, wrap: Callable[[Self], dict[str, Any]], info: pd.SerializationInfo) -> Any:
+    def serialize_model(self, wrap: Callable[[...], dict[str, Any]], info: pd.SerializationInfo) -> Any:
         result = wrap(self)
         for n, f in self.model_fields.items():
             if f.exclude:

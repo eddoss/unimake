@@ -73,6 +73,14 @@ class ProjectScriptNotExistsError(core.Error):
         self.details.new(name="script", value="project.py", desc="Script name.")
 
 
+class ConfigScriptNotExistsError(core.Error):
+    def __init__(self, root: Path):
+        super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = ["Failed to load .unimake/config.py ! It does not exists."]
+        self.details.new(name="root", value=root, desc="Path to .unimake")
+        self.details.new(name="script", value="config.py", desc="Script name.")
+
+
 class ProjectScriptLoadingError(core.Error):
     def __init__(self, root: Path, error: Exception):
         super().__init__(name=type(self).__name__.rstrip("Error"))
@@ -171,7 +179,7 @@ class Loader:
         self._root = Path()
         self._modules = {}
 
-    def load(self, root: Path, *, project=NO, remotes=NO, cli=NO) -> Instance:
+    def load(self, root: Path, *, project=NO, remotes=NO, config=NO, cli=NO) -> Instance:
         self._root = root.expanduser().resolve().absolute()
         if not self._root.exists():
             raise RootNotExistsError(self._root)
@@ -188,12 +196,18 @@ class Loader:
 
         result = Instance()
         result.implement()
-        self.project(project, result)
+
+        self.config(config)
+
+        self.project(project)
+        if project == YES and result.project.object is None:
+            raise ProjectNotRegisteredError(self._root)
+
         self.remotes(remotes)
 
         return result
 
-    def project(self, require: Require, instance: Instance) -> None | BaseProject:
+    def project(self, require: Require):
         if require == NO:
             return
         try:
@@ -202,11 +216,6 @@ class Loader:
             if require == OPT:
                 return
             raise ProjectScriptNotExistsError(self._root)
-        # except Exception as error:
-        #     raise ProjectScriptLoadingError(self._root, error)
-
-        if instance.project.object is None:
-            raise ProjectNotRegisteredError(self._root)
 
     def remotes(self, require: Require):
         if require == Require.NO:
@@ -219,6 +228,16 @@ class Loader:
             raise RemotesScriptNotExistsError(self._root)
         except Exception as error:
             raise RemotesScriptLoadingError(self._root, error)
+
+    def config(self, require: Require):
+        if require == NO:
+            return
+        try:
+            self._script('config')
+        except FileNotFoundError:
+            if require == OPT:
+                return
+            raise ConfigScriptNotExistsError(self._root)
 
     def cli(self, require: Require):
         if require == NO:

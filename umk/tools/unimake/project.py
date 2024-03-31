@@ -8,23 +8,7 @@ from umk.tools.unimake import application
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
     from umk import runtime, framework, core
-
-
-def find_remote_environment(default: bool, specific: str):
-    result = framework.remote.find("" if default else specific)
-    if default and not result:
-        core.globals.error_console.print(
-            'Failed to find default remote environment! '
-            'Please specify it in the .unimake/remotes.py'
-        )
-        core.globals.close(-1)
-    elif not result and specific:
-        core.globals.console.print(
-            f"Failed to find remote environment '{specific}'! "
-            f"Please create it in the .unimake/remotes.py"
-        )
-        core.globals.close(-1)
-    return result
+    from umk.tools import utils
 
 
 @application.group(
@@ -33,27 +17,20 @@ def find_remote_environment(default: bool, specific: str):
     no_args_is_help=True,
     add_help_option=True,
 )
-@click.option('--remote', default='', help="Execute command in specific remote environment")
-@click.option("-r", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
+@click.option("--remote", default=None, help="Execute command in specific remote environment")
+@click.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
 @click.pass_context
 def project(ctx: click.Context, remote: str, r: bool):
     locally = not bool(remote or r)
     runtime.load(
         root=core.globals.paths.unimake,
         project=runtime.YES,
+        config=runtime.OPT,
         remotes=[runtime.YES, runtime.NO][int(locally)]
     )
-    if r or remote:  # Remote execution
-        rem = find_remote_environment(r, remote)
-
-        # Parse subcommand and its arguments
-        subcmd = sys.argv[sys.argv.index(ctx.invoked_subcommand) + 1:]
-        subcmd.insert(0, ctx.invoked_subcommand)
-        subcmd.insert(0, 'unimake')
-
-        # We skip rem.build() and rem.up() because remote environment must be built
-        # and started by 'unimake remote ...'. We need just run the command.
-        rem.execute(cmd=subcmd)
+    if not locally:
+        rem = utils.find_remote(r, remote)
+        rem.execute(cmd=["unimake", "project"] + utils.subcmd(ctx.invoked_subcommand))
         ctx.exit()
 
 

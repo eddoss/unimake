@@ -1,20 +1,12 @@
 from .base import Interface
-from .base import AptPackages
-from .base import AptGetPackages
-from .base import ApkPackages
-from .base import DnfPackages
-from .base import PacmanPackages
-from .base import YumPackages
-from .base import GoMod
-from .base import Function
-from .base import Command
-
-from .base import apt
-from .base import apt_get
-from .base import apk
-from .base import dnf
-from .base import pacman
-from .base import yum
-from .base import gomod
-from .base import function
-from .base import command
+from .packages import Apt, apt
+from .packages import AptGet, apt_get
+from .packages import Apk, apk
+from .packages import Dnf, dnf
+from .packages import Pacman, pacman
+from .packages import Yum, yum
+from .base import GoMod, gomod
+from .base import Function, function
+from .base import Command, command
+from .builder import Builder
+from .builder import Group

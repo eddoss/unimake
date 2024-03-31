@@ -4,7 +4,7 @@ from umk import core
 from umk.core.typings import Callable, TypeVar
 from umk.framework import utils
 from umk.framework.filesystem import Path
-from umk.framework.dependencies import Interface as Dependency
+from umk.framework.dependencies import Builder as DependenciesBuilder
 
 
 class BadProjectIdError(core.Error):
@@ -111,7 +111,7 @@ Action = Callable[[...], ...] | Callable[['Project'], ...]
 class Project:
     def __init__(self):
         self.info: Info = Info()
-        self.dependencies: dict[str, list[Dependency]] = {}
+        self.dependencies: DependenciesBuilder = DependenciesBuilder()
         self.layout: Layout = Layout()
 
     def clean(self):
@@ -182,22 +182,20 @@ ProjectType = TypeVar("ProjectType", bound=Project)
 
 
 def entry(func):
-    # See implementation in dot/implementation.py
+    # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
 def action(*, name=""):
-    # See implementation in dot/implementation.py
+    # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
 def run(name: str):
-    # See implementation in dot/implementation.py
+    # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
 def get() -> ProjectType:
-    # See implementation in dot/implementation.py
+    # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
-
-

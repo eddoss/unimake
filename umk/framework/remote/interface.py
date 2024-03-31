@@ -106,19 +106,19 @@ class Interface(core.Model):
         return f"umk.remote.Interface(name='{self.name}', description='{self.description}')"
 
 
-InterfaceType = TypeVar("InterfaceType", bound=Interface)
+Implementation = TypeVar("Implementation", bound=Interface)
 
 
 def register(factory):
-    # See implementation in dot/implementation.py
+    # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
-def find(name: str = "") -> InterfaceType:
-    # See implementation in dot/implementation.py
+def find(name: str = "") -> Implementation:
+    # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
 def iterate():
-    # See implementation in dot/implementation.py
+    # See implementation in runtime.Instance.implementation()
     raise NotImplemented()

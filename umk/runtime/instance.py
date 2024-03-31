@@ -1,6 +1,7 @@
 import inspect
 
 from umk import framework, core
+from umk.core.typings import Type
 from umk.framework.project import Project as BaseProject
 
 
@@ -115,7 +116,7 @@ class Remotes:
                 raise RemoteDefaultNotExistsError()
             return self._list[self._default]
         else:
-            return self._list[self._default]
+            return self._list[name]
 
     def implement(self):
         framework.remote.find = lambda name="": self.find(name)
@@ -182,12 +183,81 @@ class Project:
         framework.project.entry = lambda factory: self.entry(factory)
 
 
+class Config:
+    def __init__(self):
+        self.object: None | framework.config.Interface = None
+        self.preset: dict[str, dict[str, framework.config.Value]] = {}
+
+    def register_preset(self, func=None, *, name: str = ""):
+        # Without 'name'
+        if func is not None:
+            self.preset[func.__name__] = func()
+            return func
+
+        def decorator(fu):
+            # With 'name'
+            # TODO Validate name
+            self.preset[name] = fu()
+            return fu
+
+        return decorator
+
+    def register(self, factory):
+        # TODO Raise error if config is already registered
+        # TODO Validate factory result
+        self.object = factory()
+        self.object.setup()
+        return factory
+
+    def entry(self, name: str) -> framework.config.Entry:
+        # TODO Raise error if config is not exists
+        return self.object.entry(name)
+
+    def string(self, name: str) -> str:
+        # TODO Raise error if config is not exists
+        return self.object.get(name)
+
+    def integer(self, name: str) -> int:
+        # TODO Raise error if config is not exists
+        return self.object.get(name)
+
+    def boolean(self, name: str) -> bool:
+        # TODO Raise error if config is not exists
+        return self.object.get(name)
+
+    def floating(self, name: str) -> float:
+        # TODO Raise error if config is not exists
+        return self.object.get(name)
+
+    def array(self, name: str, t: Type = str) -> list:
+        # TODO Raise error if config is not exists
+        return self.object.get(name)
+
+    def implement(self):
+        @core.overload
+        def rp(func): ...
+        @core.overload
+        def rp(*, name: str = ""): ...
+        def rp(func=None, *, name: str = ""): return self.register_preset(func, name=name)
+
+        framework.config.register = lambda factory: self.register(factory)
+        framework.config.get = lambda: self.object
+        framework.config.entry = lambda name: self.entry(name)
+        framework.config.string = lambda name: self.string(name)
+        framework.config.integer = lambda name: self.integer(name)
+        framework.config.boolean = lambda name: self.boolean(name)
+        framework.config.floating = lambda name: self.floating(name)
+        framework.config.array = lambda name: self.array(name)
+        framework.config.preset = rp
+
+
 class Instance:
     def __init__(self):
         self.project: Project = Project()
         self.remotes: Remotes = Remotes()
+        self.config: Config = Config()
 
     def implement(self):
         self.remotes.implement()
         self.project.implement()
-
+        self.config.implement()

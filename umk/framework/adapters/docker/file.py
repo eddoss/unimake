@@ -263,10 +263,14 @@ class Run(Commentable):
     Execute build commands.
     """
     commands: list[str] = core.Field(default_factory=list)
+    separate: bool = core.Field(default=False)
 
     def write(self, buffer: TextIO):
         super().write(buffer)
-        text = "RUN " + " && \\\n    ".join(self.commands) + "\n"
+        if self.separate:
+            text = "\n".join([f"RUN {cmd}" for cmd in self.commands])
+        else:
+            text = "RUN " + " && \\\n    ".join(self.commands) + "\n"
         buffer.write(text)
 
 
@@ -489,8 +493,8 @@ class File(core.Model):
         self.instructions.append(inst)
 
     @core.typeguard
-    def run(self, commands: list[str], *, space: int = 1, comment: list[str] = None):
-        instruction = Run(comment=comment or [], space=space, commands=commands)
+    def run(self, commands: list[str], separate: bool = False, *, space: int = 1, comment: list[str] = None):
+        instruction = Run(comment=comment or [], separate=separate, space=space, commands=commands)
         self.instructions.append(instruction)
 
     @core.typeguard

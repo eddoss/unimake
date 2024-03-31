@@ -1,3 +1,4 @@
+import sys
 import traceback
 
 from beartype.roar import BeartypeCallHintParamViolation

@@ -7,7 +7,7 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from umk import core
 
 
-@click.group(add_help_option=False, invoke_without_command=True)
+@click.group(add_help_option=True, invoke_without_command=False)
 async def application():
     pass
 
