@@ -2,18 +2,13 @@ from pathlib import Path
 
 from .instance import Instance
 from .loader import OPT, YES, NO, Loader
+from .loader import Options as LoadingOptions
 from .errors import errors
 
 
 container: None | Instance = None
 
 
-def load(root: Path, *, project=YES, remotes=YES, config=OPT, cli=YES):
+def load(options: LoadingOptions):
     global container
-    container = Loader().load(
-        root,
-        project=project,
-        remotes=remotes,
-        config=config,
-        cli=cli
-    )
+    container = Loader().load(options)

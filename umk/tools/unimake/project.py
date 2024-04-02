@@ -11,23 +11,21 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from umk.tools import utils
 
 
-@application.group(
-    help="Project management commands",
-    invoke_without_command=False,
-    no_args_is_help=True,
-    add_help_option=True,
-)
-@click.option("--remote", default=None, help="Execute command in specific remote environment")
+@application.group(cls=utils.ConfigableGroup, help="Project management commands")
+@click.option("--remote", help="Execute command in specific remote environment")
 @click.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
 @click.pass_context
-def project(ctx: click.Context, remote: str, r: bool):
+def project(ctx: click.Context, remote: str, r: bool, c: list[str], p: str):
     locally = not bool(remote or r)
-    runtime.load(
-        root=core.globals.paths.unimake,
-        project=runtime.YES,
-        config=runtime.OPT,
-        remotes=[runtime.YES, runtime.NO][int(locally)]
-    )
+
+    lo = runtime.LoadingOptions(root=core.globals.paths.unimake)
+    lo.config.overrides = utils.parse_config_overrides(c)
+    lo.config.presets = [p] if p else []
+    lo.modules.project = runtime.YES
+    lo.modules.config = runtime.OPT
+    lo.modules.remotes = [runtime.YES, runtime.NO][int(locally)]
+    runtime.load(lo)
+
     if not locally:
         rem = utils.find_remote(r, remote)
         rem.execute(cmd=["unimake", "project"] + utils.subcmd(ctx.invoked_subcommand))

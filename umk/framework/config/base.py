@@ -1,63 +1,60 @@
-import copy
-
-from umk.core.typings import Any, TypeVar, Type
+from umk import core
+from umk.core.typings import Any, TypeVar
 
 Value = str | int | bool | float
-ValidValueTypes = [str, int, bool, float]
+ValueTypes = {str, int, bool, float}
 
 
-class Entry:
-    def __init__(self, description: str, name: str = "", default: Value = None):
-        self.name = name
-        self.default = default
-        self.description = description
-        self.property = property(fget=lambda inst: self.default, doc=description)
+Config = core.Model
 
 
-class Interface:
+class Instance:
     def __init__(self):
-        self._entries: dict[str, Entry] = {}
+        self.entries: set[str] = set()
+        # self.struct = None
+        self.object = None
 
-    def set(self, name: str, value: Value):
-        field = self._entries.get(name)
-        if not field:
-            # TODO Raise error for this case
-            raise NameError(f"Config: field '{name}' does not exists")
-        field.value = value
+    def set(self, entry: str, value: Value):
+        if entry not in self.entries:
+            # TODO Raise entry access error
+            pass
+        tokens = entry.replace("-", "_").split(".")
+        if len(tokens) == 1:
+            setattr(self.object, tokens[0], value)
+        else:
+            attr = tokens[-1]
+            curr = self.object
+            for token in tokens[:-1]:
+                curr = getattr(curr, token)
+            setattr(curr, attr, value)
 
-    def get(self, name: str, err: Any = None) -> None | Value:
-        field = self._entries.get(name)
-        if field:
-            return field.default
-        return err
+    def get(self, entry: str, on_err: Any = None) -> None | Value:
+        if entry not in self.entries:
+            return on_err
+        result = self.object
+        tokens = entry.replace("-", "_").split(".")
+        for token in tokens:
+            result = getattr(result, token)
+        return result
 
-    def entry(self, name: str) -> None | Entry:
-        return self._entries.get(name)
-
-    def apply(self, preset: dict[str, Value]):
-        for k, v in preset.items():
-            self.set(k, v)
+    def apply(self, *presets: dict[str, Value]):
+        for preset in presets:
+            for k, v in preset.items():
+                self.set(k, v)
 
     def setup(self):
-        cls = type(self)
-        for k in list(cls.__dict__.keys()):
-            v = copy.deepcopy(cls.__dict__[k])
-            if not isinstance(v, Entry):
-                continue
-            self._entries[v.name or k.replace("_", "-")] = v
-            delattr(cls, k)
-            setattr(cls, k, v.property)
-
-    def __validate_name(self, name: str) -> str:
-        # TODO Raise error for this case
-        raise NameError(f"Config: invalid variable name '{name}'")
-
-    def __validate_variable(self, name: str):
-        # TODO Raise error for this case
-        raise NameError(f"Config: invalid variable name '{name}'")
+        def recursive(root: core.Model, parent: str, tokens: set[str]):
+            for f in root.model_fields.keys():
+                v = getattr(root, f)
+                t = type(v)
+                if t in (str, int, bool, float):
+                    tokens.add(f"{parent}.{f}".lstrip(".").replace("_", "-"))
+                elif issubclass(t, core.Model):
+                    recursive(v, f"{parent}.{f}", tokens)
+        recursive(self.object, "", self.entries)
 
 
-Implementation = TypeVar("Implementation", bound=Interface)
+Struct = TypeVar("Struct", bound=core.Model)
 
 
 def register(factory):
@@ -65,41 +62,59 @@ def register(factory):
     raise NotImplemented()
 
 
-def get() -> Implementation:
+def preset(name: str = ""):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
-def entry(name: str) -> Entry:
+def get() -> Struct:
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
-def string(name: str) -> str:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def integer(name: str) -> int:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def boolean(name: str) -> bool:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def floating(name: str) -> float:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def array(name: str, t: Type = str) -> list:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def preset(name: str = "") -> float:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
+# if __name__ == '__main__':
+#     class Conf(core.Model):
+#         class B(core.Model):
+#             q: int = core.Field(default=2, description="Some value Q")
+#             w: str = core.Field(default="www", description="Some value W")
+#
+#             class Z(core.Model):
+#                 g: int = core.Field(default=2, description="Some value g")
+#
+#             z: Z = core.Field(default_factory=Z, description="Some value Z")
+#
+#         a: int = core.Field(default=4, description="Some value A")
+#         b: B = core.Field(default_factory=B, description="Some value A")
+#
+#         def entries(self):
+#             result = []
+#
+#             def recursive(root: core.Model, parent: str, tokens: list[str]):
+#                 for f in root.model_fields.keys():
+#                     v = getattr(root, f)
+#                     t = type(v)
+#                     if t in (str, int, bool, float):
+#                         tokens.append(f"{parent}.{f}".lstrip("."))
+#                     elif issubclass(t, core.Model):
+#                         recursive(v, f"{parent}.{f}", tokens)
+#
+#             recursive(self, "", result)
+#             return result
+#
+#
+#     c = Conf()
+#     print(c.entries())
+#
+#     # t = c
+#     # v = ["world"]
+#     # p = "environ.files"
+#     #
+#     # a = getattr(c, "environ")
+#     # setattr(a, "files", v)
+#     #
+#     # print(c.environ.files)
+#     #
+#     # o = c
+#     # for name in "environ.files".split("."):
+#     #     o = getattr(o, name)
+#     # print(o)

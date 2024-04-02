@@ -4,83 +4,65 @@ import asyncclick as click
 from asyncclick import Context
 
 from umk.tools.unimake import application
+from umk.tools import utils
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
     from umk import runtime, framework, core
 
 
-@application.group(
-    help="Remote environments management commands",
-    invoke_without_command=True,
-    no_args_is_help=True,
-    add_help_option=True,
-)
+@application.group(cls=utils.ConfigableGroup, help="Remote environments management commands",)
 @click.option('--name', '-n', default="", help="Remote environment name")
 @click.pass_context
-async def remote(ctx: click.Context, name: str):
+async def remote(ctx: click.Context, name: str, c: list[str], p: str):
+    lo = runtime.LoadingOptions(root=core.globals.paths.unimake)
+    lo.config.overrides = utils.parse_config_overrides(c)
+    lo.config.presets = [p] if p else []
+    lo.modules.project = runtime.OPT
+    lo.modules.config = runtime.OPT
+    lo.modules.remotes = runtime.YES
+    runtime.load(lo)
+
     ctx.ensure_object(dict)
-    ctx.obj["instance"] = None  # remote environment instance
-
-    # Load .unimake/remotes.py
-    runtime.load(root=core.globals.paths.unimake, remotes=runtime.YES, project=runtime.OPT)
-
-    # We don't need to find remote environment if 'ls' is requested.
-    # If no subcommand was passed we assume it is 'ls'
-    if ctx.invoked_subcommand in ('ls', ''):
-        await ctx.invoke(ls)
-
-    ctx.obj["instance"] = framework.remote.find(name)
-    if not ctx.obj["instance"]:
-        if not name:
-            core.globals.console.print(
-                "[bold yellow]Could not find default remote! "
-                "Please specify default remote in the '.unimake/remotes.py'"
-            )
-        else:
-            core.globals.console.print(
-                f"[bold yellow]Failed to find remote '{name}'! "
-                f"Please specify it in the '.unimake/remotes.py'"
-            )
-        core.globals.close(-1)
+    ctx.obj["instance"] = utils.find_remote(name == "", name)
 
 
-@remote.command(name='build', help="Build remote environment")
+@remote.command(help="Build remote environment")
 @click.pass_context
 def build(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.build()
 
 
-@remote.command(name='destroy', help="Destroy remote environment")
+@remote.command(help="Destroy remote environment")
 @click.pass_context
 def destroy(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.destroy()
 
 
-@remote.command(name='up', help="Start remote environment")
+@remote.command(help="Start remote environment")
 @click.pass_context
 def up(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.up()
 
 
-@remote.command(name='down', help="Stop remote environment")
+@remote.command(help="Stop remote environment")
 @click.pass_context
 def down(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.down()
 
 
-@remote.command(name='shell', help="Open remote environment shell")
+@remote.command(help="Open remote environment shell")
 @click.pass_context
 def shell(ctx: click.Context):
     instance = ctx.obj.get("instance")
     instance.shell()
 
 
-@remote.command(name='ls', help='List project remote environments')
+@remote.command(help='List project remote environments')
 def ls():
     table = Table(show_header=True, show_edge=True, show_lines=False)
     table.add_column("Name", justify="left", style="", no_wrap=True)
@@ -101,14 +83,14 @@ def ls():
 @click.argument('program', required=True, nargs=1)
 @click.argument('arguments', required=False, nargs=-1)
 @click.pass_context
-def execute(ctx: Context, program: str, arguments: tuple[str]):
+def execute(ctx: click.Context, program: str, arguments: tuple[str]):
     cmd = list(arguments)
     cmd.insert(0, program)
     rem: framework.remote.Interface = ctx.obj.get("instance")
     rem.execute(cmd=cmd)
 
 
-@remote.command(name='inspect', help='Show remote environment details')
+@remote.command(help='Show remote environment details')
 @click.option('--format', '-f', default="table", type=click.Choice(["table", "json", "yaml"], case_sensitive=False), help="Output format")
 @click.pass_context
 def inspect(ctx: Context, format: str):
@@ -129,10 +111,10 @@ def inspect(ctx: Context, format: str):
         core.globals.console.print(core.yaml.text({"properties": data}))
 
 
-@remote.command(name='upload', help="Upload files to remote environment")
+@remote.command(help="Upload files to remote environment")
 @click.argument('items', required=False, nargs=-1)
 @click.pass_context
-def upload(ctx: Context, items: tuple[str]):
+def upload(ctx: click.Context, items: tuple[str]):
     rem: framework.remote.Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:
@@ -140,10 +122,10 @@ def upload(ctx: Context, items: tuple[str]):
     rem.upload(paths)
 
 
-@remote.command(name='download', help="Download files from remote environment")
+@remote.command(help="Download files from remote environment")
 @click.argument('items', required=False, nargs=-1)
 @click.pass_context
-def download(ctx: Context, items: tuple[str]):
+def download(ctx: click.Context, items: tuple[str]):
     rem: framework.remote.Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:

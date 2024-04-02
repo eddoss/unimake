@@ -1,21 +1,25 @@
 from umk.framework import config
+from umk import core
 
 
 @config.register
-class Config(config.Interface):
-    with_docs = config.Entry(
-        default=False,
-        description="Build with docs or not"
-    )
-    debug = config.Entry(
-        default=False,
-        description="Build in debug mode"
-    )
+class Config(config.Config):
+    class Build(core.Model):
+        debug: bool = True
+        all: bool = False
+
+    class Docs(core.Model):
+        enabled: bool = False
+        type: str = "pdf"
+
+    build: Build = Build()
+    docs: Docs = Docs()
 
 
 @config.preset
-def dev():
+def release():
     return {
-        "with-docs": False,
-        "debug": True
+        "build.debug": False,
+        "build.all": True,
+        "docs.enabled": True,
     }

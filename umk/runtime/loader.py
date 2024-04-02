@@ -174,19 +174,61 @@ class DotInstanceScriptLoadingError(core.Error):
         self.details.new(name="reason", value=reason, desc="Reason.")
 
 
+class Options(core.Model):
+    class Modules(core.Model):
+        project: Require = core.Field(
+            default=NO,
+            description="Whether load the project module or not"
+        )
+        remotes: Require = core.Field(
+            default=NO,
+            description="Whether load the remotes module or not"
+        )
+        config: Require = core.Field(
+            default=NO,
+            description="Whether load the config module or not"
+        )
+        cli: Require = core.Field(
+            default=NO,
+            description="Whether load the cli module or not"
+        )
+
+    class Config(core.Model):
+        overrides: dict[str, framework.config.Value] = core.Field(
+            default_factory=dict,
+            description="Config entry overrides (passed by unimake CLI)"
+        )
+        presets: list[str] = core.Field(
+            default_factory=list,
+            description="Config presets to apply (passed by unimake CLI)"
+        )
+
+    root: Path = core.Field(
+        description="Path to '.unimake' directory"
+    )
+    modules: Modules = core.Field(
+        default_factory=Modules,
+        description="Modules loading options"
+    )
+    config: Config = core.Field(
+        default_factory=Config,
+        description="Config options"
+    )
+
+
 class Loader:
     def __init__(self):
         self._root = Path()
         self._modules = {}
 
-    def load(self, root: Path, *, project=NO, remotes=NO, config=NO, cli=NO) -> Instance:
-        self._root = root.expanduser().resolve().absolute()
+    def load(self, options: Options) -> Instance:
+        self._root = options.root.expanduser().resolve().absolute()
         if not self._root.exists():
             raise RootNotExistsError(self._root)
         if not self._root.is_dir():
             raise RootIsNotDirectory(self._root)
 
-        sys.path.insert(0, root.as_posix())
+        sys.path.insert(0, self._root.as_posix())
 
         try:
             file = self._root / '.env'
@@ -197,13 +239,24 @@ class Loader:
         result = Instance()
         result.implement()
 
-        self.config(config)
+        self.config(options.modules.config)
 
-        self.project(project)
-        if project == YES and result.project.object is None:
+        # Apply config.
+        # We should apply presets at first (it has a lower priority)
+        # and after we apply overrides (it has a higher priority)
+        if result.config.instance.object:
+            for preset in options.config.presets:
+                # TODO Warning if preset does not exists
+                entries = result.config.presets.get(preset, {})
+                result.config.instance.apply(entries)
+            if options.config.overrides:
+                result.config.instance.apply(options.config.overrides)
+
+        self.project(options.modules.project)
+        if options.modules.project == YES and result.project.object is None:
             raise ProjectNotRegisteredError(self._root)
 
-        self.remotes(remotes)
+        self.remotes(options.modules.remotes)
 
         return result
 

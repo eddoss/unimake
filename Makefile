@@ -55,6 +55,7 @@ export PROJECT_DEVELOPMENT    := $(PROJECT_ROOT)/development
 export PROJECT_EXAMPLES       := $(PROJECT_ROOT)/examples
 export PROJECT_VERSION        := $(shell git describe --abbrev=0 --tags)
 export PROJECT_VERSION_RAW    := $(subst v,,$(PROJECT_VERSION))
+export PY                     ?= python
 
 # Development docker images
 # ................................................................................................ #
@@ -136,7 +137,7 @@ package/uninstall:
 
 .PHONY: project/env/up
 project/env/up:
-	@poetry env use -n -- $(shell which python3)
+	@poetry env use -n -- $(shell which $(PY))
 
 .PHONY: project/env/down
 project/env/down:

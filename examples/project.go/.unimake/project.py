@@ -22,4 +22,5 @@ def entry():
 
 @kit.project.action
 def build():
-    print(kit.config.boolean("with-docs"))
+    conf = kit.config.get()
+    print(conf)

@@ -1,7 +1,7 @@
 import inspect
 
 from umk import framework, core
-from umk.core.typings import Type
+from umk.core.typings import Type, TypeVar
 from umk.framework.project import Project as BaseProject
 
 
@@ -173,8 +173,10 @@ class Project:
     def implement(self):
         @core.overload
         def act(func): ...
+
         @core.overload
         def act(*, name: str = ""): ...
+
         def act(func=None, *, name: str = ""): return self.action(func, name=name)
 
         framework.project.action = act
@@ -185,70 +187,46 @@ class Project:
 
 class Config:
     def __init__(self):
-        self.object: None | framework.config.Interface = None
-        self.preset: dict[str, dict[str, framework.config.Value]] = {}
+        self.instance = framework.config.Instance()
+        self.presets: dict[str, dict[str, framework.config.Value]] = {}
+
+    def register(self, factory):
+        # TODO Raise error if 'self.instance.struct' is already exists
+        # TODO Validate factory type (expect class but not a function)
+        # TODO Validate factory result type (must be a subclass of 'config.Config')
+        self.instance.object = factory()
+        self.instance.setup()
+        return factory
 
     def register_preset(self, func=None, *, name: str = ""):
         # Without 'name'
         if func is not None:
-            self.preset[func.__name__] = func()
+            self.presets[func.__name__.replace("_", "-")] = func()
             return func
 
         def decorator(fu):
             # With 'name'
             # TODO Validate name
-            self.preset[name] = fu()
+            self.presets[name] = fu()
             return fu
 
         return decorator
 
-    def register(self, factory):
-        # TODO Raise error if config is already registered
-        # TODO Validate factory result
-        self.object = factory()
-        self.object.setup()
-        return factory
-
-    def entry(self, name: str) -> framework.config.Entry:
-        # TODO Raise error if config is not exists
-        return self.object.entry(name)
-
-    def string(self, name: str) -> str:
-        # TODO Raise error if config is not exists
-        return self.object.get(name)
-
-    def integer(self, name: str) -> int:
-        # TODO Raise error if config is not exists
-        return self.object.get(name)
-
-    def boolean(self, name: str) -> bool:
-        # TODO Raise error if config is not exists
-        return self.object.get(name)
-
-    def floating(self, name: str) -> float:
-        # TODO Raise error if config is not exists
-        return self.object.get(name)
-
-    def array(self, name: str, t: Type = str) -> list:
-        # TODO Raise error if config is not exists
-        return self.object.get(name)
+    def get(self):
+        return self.instance.object
 
     def implement(self):
         @core.overload
         def rp(func): ...
+
         @core.overload
         def rp(*, name: str = ""): ...
+
         def rp(func=None, *, name: str = ""): return self.register_preset(func, name=name)
 
         framework.config.register = lambda factory: self.register(factory)
-        framework.config.get = lambda: self.object
-        framework.config.entry = lambda name: self.entry(name)
-        framework.config.string = lambda name: self.string(name)
-        framework.config.integer = lambda name: self.integer(name)
-        framework.config.boolean = lambda name: self.boolean(name)
-        framework.config.floating = lambda name: self.floating(name)
-        framework.config.array = lambda name: self.array(name)
         framework.config.preset = rp
+        framework.config.get = lambda: self.get()
 
 
 class Instance:
