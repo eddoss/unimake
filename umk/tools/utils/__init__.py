@@ -1,16 +1,17 @@
-import sys
-import typing as t
+import os
 
 import asyncclick
 from asyncclick import Command
 
-from umk import core
-from umk import framework
-from umk import runtime
-from umk.core.typings import Any, Callable, Sequence
+if not os.environ.get('_UNIMAKE_COMPLETE', None):
+    import sys
+
+    from umk import core
+    from umk import framework
+    from umk.tools.utils.printers import PropertiesPrinter
 
 
-def find_remote(default: bool, specific: str) -> framework.remote.Interface:
+def find_remote(default: bool, specific: str) -> 'framework.remote.Interface':
     result = framework.remote.find("" if default else specific)
     if default and not result:
         core.globals.error_console.print(
@@ -33,40 +34,40 @@ def subcmd(name: str) -> list[str]:
             return sys.argv[i:]
 
 
-# class ConfigableCommand(asyncclick.Command):
-#     def __init__(
-#         self,
-#         name: None | str,
-#         context_settings: None | dict[str, Any] = None,
-#         callback: Callable[[...], Any] = None,
-#         params: None | list[asyncclick.Parameter] = None,
-#         help: None | str = None,
-#         epilog: None | str = None,
-#         short_help: None | str = None,
-#         options_metavar: None | str = "[OPTIONS]",
-#         add_help_option: bool = True,
-#         no_args_is_help: bool = False,
-#         hidden: bool = False,
-#         deprecated: bool = False
-#     ) -> None:
-#         super().__init__(name, context_settings, callback, params, help, epilog, short_help, options_metavar, add_help_option, no_args_is_help, hidden, deprecated)
-#         self.params += [
-#             asyncclick.Option(param_decls=["-c"], required=False, type=str, multiple=True, help="Set config entry value"),
-#             asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Apply config preset")
-#         ]
+class ConfigableCommand(asyncclick.Command):
+    def __init__(
+        self,
+        name: None | str,
+        context_settings=None,
+        callback=None,
+        params: None | list[asyncclick.Parameter] = None,
+        help: None | str = None,
+        epilog: None | str = None,
+        short_help: None | str = None,
+        options_metavar: None | str = "[OPTIONS]",
+        add_help_option: bool = True,
+        no_args_is_help: bool = False,
+        hidden: bool = False,
+        deprecated: bool = False
+    ) -> None:
+        super().__init__(name, context_settings, callback, params, help, epilog, short_help, options_metavar, add_help_option, no_args_is_help, hidden, deprecated)
+        self.params += [
+            asyncclick.Option(param_decls=["-c"], required=False, type=str, multiple=True, help="Config entry override"),
+            asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Config preset to apply")
+        ]
 
 
 class ConfigableGroup(asyncclick.Group):
     def __init__(
         self,
         name: None | str = None,
-        commands: None | dict[str, Command] | Sequence[Command] = None,
+        commands: None | dict[str, Command] | list[Command] = None,
         **attrs
     ) -> None:
         super().__init__(name, commands, **attrs)
         self.params += [
-            asyncclick.Option(param_decls=["-c"], required=False, type=str, multiple=True, help="Set config entry value"),
-            asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Apply config preset")
+            asyncclick.Option(param_decls=["-c"], required=False, type=str, multiple=True, help="Config entry override"),
+            asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Config preset to apply")
         ]
 
 

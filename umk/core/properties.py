@@ -1,7 +1,9 @@
+import abc
 from collections import OrderedDict
 
+from umk.core.serialization import json
 from umk.core.typings import Any
-from umk.core.typings import Model
+from umk.core.typings import Model, Field
 from umk.core.typings import typeguard
 
 
@@ -46,6 +48,10 @@ class Properties:
         return self._items[name]
 
     @typeguard
+    def __setitem__(self, name: str, value: Property):
+        self._items[name] = value
+
+    @typeguard
     def get(self, name: str, value: Any = None) -> Property:
         return self._items.get(name, value)
 
@@ -56,3 +62,23 @@ class Properties:
     @typeguard
     def new(self, name: str, value: Any, desc: str = ""):
         self._items[name] = Property(name=name, value=value, description=desc)
+
+
+class Object(Model):
+    type: str = Field(
+        default="",
+        description="Object type name"
+    )
+    properties: Properties = Field(
+        default_factory=Properties,
+        description="Object properties"
+    )
+
+
+@json.representer(Properties)
+def serializing(properties: Properties):
+    result = []
+    for prop in properties:
+        result.append(prop.model_dump())
+
+    return result

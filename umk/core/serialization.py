@@ -1,10 +1,12 @@
 import json as jsonlib
+import os
 import pathlib
 
 import yaml as yamllib
 
 from umk.core.typings import Any
 from umk.core.typings import Model
+from umk.core.typings import typeguard
 
 
 # ////////////////////////////////////////////////////////////////////////////////////
@@ -80,11 +82,36 @@ class json:
         return inner
 
     @staticmethod
+    @typeguard
     def text(data: Model | dict | list, indent=None) -> str:
         if issubclass(type(data), Model):
             d = data.model_dump()
             return jsonlib.dumps(d, indent=indent, cls=_JsonEncoder)
         return jsonlib.dumps(data, indent=indent, cls=_JsonEncoder)
+
+    @staticmethod
+    @typeguard
+    def parse(text: str) -> dict | list:
+        return jsonlib.loads(text)
+
+    @staticmethod
+    @typeguard
+    def load(file: str | pathlib.Path) -> dict | list:
+        with open(file, "r") as stream:
+            return jsonlib.load(stream)
+
+    @staticmethod
+    @typeguard
+    def save(data: dict | list | Model, file: str | pathlib.Path, indent=None):
+        t = type(data)
+        if not file.parent.exists():
+            os.makedirs(file.parent)
+        with open(file, "w") as stream:
+            if issubclass(t, (dict, list)):
+                jsonlib.dump(data, stream)
+            elif issubclass(t, Model):
+                text = json.text(data, indent=indent)
+                stream.write(text)
 
 
 @json.representer(pathlib.PosixPath, pathlib.WindowsPath)

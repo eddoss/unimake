@@ -198,12 +198,13 @@ class Options(core.Model):
             default_factory=dict,
             description="Config entry overrides (passed by unimake CLI)"
         )
-        presets: list[str] = core.Field(
-            default_factory=list,
+        preset: str = core.Field(
+            default="",
             description="Config presets to apply (passed by unimake CLI)"
         )
 
     root: Path = core.Field(
+        default=core.globals.paths.unimake,
         description="Path to '.unimake' directory"
     )
     modules: Modules = core.Field(
@@ -244,13 +245,15 @@ class Loader:
         # Apply config.
         # We should apply presets at first (it has a lower priority)
         # and after we apply overrides (it has a higher priority)
-        if result.config.instance.object:
-            for preset in options.config.presets:
-                # TODO Warning if preset does not exists
-                entries = result.config.presets.get(preset, {})
-                result.config.instance.apply(entries)
+        if result.config.instance.struct:
+            if options.config.preset:
+                updater = result.config.presets.get(options.config.preset)
+                if not updater:
+                    core.globals.console.print(f"[bold yellow]Invalid config preset: {options.config.preset}")
+                updater(result.config.instance.struct)
+
             if options.config.overrides:
-                result.config.instance.apply(options.config.overrides)
+                result.config.instance.override(options.config.overrides)
 
         self.project(options.modules.project)
         if options.modules.project == YES and result.project.object is None:

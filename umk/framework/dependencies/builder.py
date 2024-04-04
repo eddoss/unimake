@@ -7,7 +7,11 @@ from umk.framework.dependencies.packages import Apt, AptGet, Apk, Yum, Dnf, Pacm
 from umk.framework.system import Environs, Shell
 
 
-class Group(Interface):
+class Group(core.Model):
+    name: str = core.Field(
+        default="",
+        description="Group name"
+    )
     items: list[Interface] = core.Field(
         default_factory=list,
         description="Dependency list"

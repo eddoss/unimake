@@ -5,21 +5,31 @@ from umk import core
 @config.register
 class Config(config.Config):
     class Build(core.Model):
-        debug: bool = True
-        all: bool = False
+        debug: bool = core.Field(
+            default=True,
+            description="Build binaries in debug mode"
+        )
+        all: bool = core.Field(
+            default=False,
+            description="Build all binaries"
+        )
 
     class Docs(core.Model):
-        enabled: bool = False
-        type: str = "pdf"
+        enabled: bool = core.Field(
+            default=False,
+            description="Prepare documentation when build"
+        )
+        type: str = core.Field(
+            default="pdf",
+            description="Documentation type (pdf, html, xml)"
+        )
 
     build: Build = Build()
     docs: Docs = Docs()
 
 
 @config.preset
-def release():
-    return {
-        "build.debug": False,
-        "build.all": True,
-        "docs.enabled": True,
-    }
+def release(c: Config):
+    c.build.debug = False
+    c.build.all = True
+    c.docs.enabled = True

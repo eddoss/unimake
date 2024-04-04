@@ -1,9 +1,9 @@
 import os
-import sys
 
-import asyncclick as click
+import asyncclick
 
-from umk.tools.unimake import application
+from umk.tools.unimake.application import application
+from umk.tools.utils import ConfigableGroup
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
@@ -11,19 +11,19 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from umk.tools import utils
 
 
-@application.group(cls=utils.ConfigableGroup, help="Project management commands")
-@click.option("--remote", help="Execute command in specific remote environment")
-@click.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
-@click.pass_context
-def project(ctx: click.Context, remote: str, r: bool, c: list[str], p: str):
+@application.group(cls=ConfigableGroup, help="Project management commands")
+@asyncclick.option("--remote", help="Execute command in specific remote environment")
+@asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
+@asyncclick.pass_context
+def project(ctx: asyncclick.Context, remote: str, r: bool, c: list[str], p: str):
     locally = not bool(remote or r)
 
-    lo = runtime.LoadingOptions(root=core.globals.paths.unimake)
+    lo = runtime.LoadingOptions()
     lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = [p] if p else []
+    lo.config.preset = p or ""
     lo.modules.project = runtime.YES
     lo.modules.config = runtime.OPT
-    lo.modules.remotes = [runtime.YES, runtime.NO][int(locally)]
+    lo.modules.remotes = runtime.NO if locally else runtime.NO
     runtime.load(lo)
 
     if not locally:
@@ -72,13 +72,18 @@ def release():
     framework.project.run('release')
 
 
+@project.command(name='deploy', help="Run project deploying")
+def deploy():
+    framework.project.run('deploy')
+
+
 @project.command(name='test', help="Run project testing")
 def run_testing():
     framework.project.run('test')
 
 
 @project.command(name='inspect', help="Print project details")
-@click.option('--format', '-f', default="style", type=click.Choice(["style", "json", "yaml"], case_sensitive=False), help="Output format")
+@asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def inspect(format: str):
     pro = runtime.container.project.object
     if format in ("style", ""):
@@ -118,12 +123,3 @@ def inspect(format: str):
         core.globals.console.print(table_authors)
     elif format == "json":
         core.globals.console.print_json(core.json.text(pro.info))
-    elif format == "yaml":
-        core.globals.console.print(core.yaml.text(pro.info))
-
-
-    # data = [prop.model_dump() for prop in rem.properties()]
-    # if format == "json":
-    #     core.globals.console.print_json(core.json.text(data))
-    # elif format in ("yml", "yaml"):
-    #     core.globals.console.print(core.yaml.text({"properties": data}))

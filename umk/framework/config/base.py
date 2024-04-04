@@ -10,9 +10,8 @@ Config = core.Model
 
 class Instance:
     def __init__(self):
-        self.entries: set[str] = set()
-        # self.struct = None
-        self.object = None
+        self.entries: dict[str, str] = {}
+        self.struct = None
 
     def set(self, entry: str, value: Value):
         if entry not in self.entries:
@@ -20,10 +19,10 @@ class Instance:
             pass
         tokens = entry.replace("-", "_").split(".")
         if len(tokens) == 1:
-            setattr(self.object, tokens[0], value)
+            setattr(self.struct, tokens[0], value)
         else:
             attr = tokens[-1]
-            curr = self.object
+            curr = self.struct
             for token in tokens[:-1]:
                 curr = getattr(curr, token)
             setattr(curr, attr, value)
@@ -31,27 +30,39 @@ class Instance:
     def get(self, entry: str, on_err: Any = None) -> None | Value:
         if entry not in self.entries:
             return on_err
-        result = self.object
+        result = self.struct
         tokens = entry.replace("-", "_").split(".")
         for token in tokens:
             result = getattr(result, token)
         return result
 
-    def apply(self, *presets: dict[str, Value]):
-        for preset in presets:
-            for k, v in preset.items():
+    def override(self, *overrides: dict[str, Value]):
+        for override in overrides:
+            for k, v in override.items():
                 self.set(k, v)
 
     def setup(self):
-        def recursive(root: core.Model, parent: str, tokens: set[str]):
-            for f in root.model_fields.keys():
-                v = getattr(root, f)
+        def recursive(root: core.Model, parent: str, tokens: dict[str, str]):
+            for n, f in root.model_fields.items():
+                v = getattr(root, n)
                 t = type(v)
                 if t in (str, int, bool, float):
-                    tokens.add(f"{parent}.{f}".lstrip(".").replace("_", "-"))
+                    token = f"{parent}.{n}".lstrip(".").replace("_", "-")
+                    tokens[token] = f.description or ""
                 elif issubclass(t, core.Model):
-                    recursive(v, f"{parent}.{f}", tokens)
-        recursive(self.object, "", self.entries)
+                    recursive(v, f"{parent}.{n}", tokens)
+        recursive(self.struct, "", self.entries)
+
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "UserConfig"
+        for name, description in self.entries.items():
+            prop = core.Property()
+            prop.name = name
+            prop.description = description
+            prop.value = self.get(name)
+            result.properties.add(prop)
+        return result
 
 
 Struct = TypeVar("Struct", bound=core.Model)
@@ -70,51 +81,3 @@ def preset(name: str = ""):
 def get() -> Struct:
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
-
-
-# if __name__ == '__main__':
-#     class Conf(core.Model):
-#         class B(core.Model):
-#             q: int = core.Field(default=2, description="Some value Q")
-#             w: str = core.Field(default="www", description="Some value W")
-#
-#             class Z(core.Model):
-#                 g: int = core.Field(default=2, description="Some value g")
-#
-#             z: Z = core.Field(default_factory=Z, description="Some value Z")
-#
-#         a: int = core.Field(default=4, description="Some value A")
-#         b: B = core.Field(default_factory=B, description="Some value A")
-#
-#         def entries(self):
-#             result = []
-#
-#             def recursive(root: core.Model, parent: str, tokens: list[str]):
-#                 for f in root.model_fields.keys():
-#                     v = getattr(root, f)
-#                     t = type(v)
-#                     if t in (str, int, bool, float):
-#                         tokens.append(f"{parent}.{f}".lstrip("."))
-#                     elif issubclass(t, core.Model):
-#                         recursive(v, f"{parent}.{f}", tokens)
-#
-#             recursive(self, "", result)
-#             return result
-#
-#
-#     c = Conf()
-#     print(c.entries())
-#
-#     # t = c
-#     # v = ["world"]
-#     # p = "environ.files"
-#     #
-#     # a = getattr(c, "environ")
-#     # setattr(a, "files", v)
-#     #
-#     # print(c.environ.files)
-#     #
-#     # o = c
-#     # for name in "environ.files".split("."):
-#     #     o = getattr(o, name)
-#     # print(o)

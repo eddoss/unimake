@@ -11,6 +11,9 @@ class Paths:
     def __init__(self, root: Path):
         self.work = root.expanduser().resolve().absolute()
         self.unimake = self.work / '.unimake'
+        self.cache = self.unimake / ".cache"
+        self.config = self.cache / "config.json"
+
 
 console = Console()
 error_console = Console(stderr=True, style="bold red")

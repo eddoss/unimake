@@ -1,3 +1,5 @@
+import inspect
+
 from umk import core
 from umk.core.typings import Callable, Any
 from umk.framework.adapters.go import Go
@@ -16,6 +18,9 @@ class Interface(core.Model):
     )
 
     def resolve(self, **kwargs):
+        raise NotImplemented()
+
+    def details(self) -> core.Properties:
         raise NotImplemented()
 
 
@@ -43,6 +48,14 @@ class GoMod(Interface):
         if self.vendor:
             self.tool.mod.vendor()
 
+    def details(self) -> core.Properties:
+        result = core.Properties()
+        result.new("type", "GoMod", "Dependency type")
+        result.new("Go", self.tool.shell.cmd, "Golang tool path")
+        result.new("Path", self.path, "Directory with go.mod")
+        result.new("Vendor", self.vendor, "Whether vendor packages or not")
+        return result
+
 
 class Command(Interface):
     shell: Shell = core.Field(
@@ -54,6 +67,14 @@ class Command(Interface):
         if self.shell.cmd:
             self.shell.sync()
 
+    def details(self) -> core.Properties:
+        result = core.Properties()
+        result.new("type", "Command", "Dependency type")
+        result.new("Command", self.shell.cmd, "Shell command")
+        result.new("Workdir", self.shell.workdir or "", "Working directory")
+        result.new("Environs", self.shell.environs or "", "Environment variables")
+        return result
+
 
 class Function(Interface):
     function: Callable[[], Any] = core.Field(
@@ -64,6 +85,18 @@ class Function(Interface):
     def resolve(self, **kwargs):
         if self.function:
             self.function()
+
+    def details(self) -> core.Properties:
+        result = core.Properties()
+        result.new("type", "Function", "Dependency type")
+        if self.function:
+            sig = inspect.signature(self.function).parameters
+            result.new("Name", self.function.__name__, "Function name")
+            result.new("Signature", sig, "Function signature")
+        else:
+            result.new("Name", "", "Function name")
+            result.new("Signature", "", "Function signature")
+        return result
 
 
 @core.typeguard

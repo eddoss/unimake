@@ -21,14 +21,14 @@ class Interface(core.Model):
         description="Whether this remote environment are default or not",
     )
 
-    def properties(self) -> Generator[core.Property, None, None]:
-        """
-        Remote environment properties
-        """
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "Remote." + type(self).__name__.split(".")[-1]
         for name in self.model_fields:
-            result = self.property(name)
-            for prop in result:
-                yield prop
+            props = self.property(name)
+            for prop in props:
+                result.properties.add(prop)
+        return result
 
     def property(self, name: str) -> list[core.Property]:
         field = self.model_fields[name]
@@ -92,6 +92,7 @@ class Interface(core.Model):
         Download given paths from remote environment.
         """
         self.__not_implemented()
+
 
     def __not_implemented(self):
         core.globals.console.print(

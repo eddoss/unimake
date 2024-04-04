@@ -79,6 +79,17 @@ class Abstract(base.Interface):
         if manager.after.cmd:
             manager.after.sync()
 
+    def details(self) -> core.Properties:
+        result = core.Properties()
+        result.new("type", f"SystemPackages ({type(self).__name__.lower()})")
+        result.new("Before", self.manager.before.cmd, "Package manager 'before' command")
+        result.new("After", self.manager.after.cmd, "Package manager 'after' command")
+        result.new("Install", self.manager.install.cmd, "Package manager 'install' command")
+        result.new("Super user", self.sudo, "Run manager commands by super user")
+        result.new("Items", self.items, "Package list")
+
+        return result
+
 
 class Apt(Abstract):
     manager: PackageManager = core.Field(
@@ -86,8 +97,8 @@ class Apt(Abstract):
         default_factory=lambda: PackageManager(
             binary="apt",
             before=Shell(name="apt", cmd=["apt", "-y", "update"]),
-            after=Shell(name="apt", cmd=["apt", "-y", "install"]),
-            install=Shell(name="apt:clean", cmd=["rm", "-r", "-f", "/var/lib/apt/lists/*"]),
+            install=Shell(name="apt", cmd=["apt", "-y", "install"]),
+            after=Shell(name="apt:clean", cmd=["rm", "-r", "-f", "/var/lib/apt/lists/*"]),
         )
     )
 
@@ -98,8 +109,8 @@ class AptGet(Abstract):
         default_factory=lambda: PackageManager(
             binary="apt-get",
             before=Shell(name="apt-get", cmd=["apt-get", "-y", "update"]),
-            after=Shell(name="apt-get", cmd=["apt-get", "-y", "install"]),
-            install=Shell(name="apt-get:clean", cmd=["rm", "-r", "-f", "/var/lib/apt/lists/*"]),
+            install=Shell(name="apt-get", cmd=["apt-get", "-y", "install"]),
+            after=Shell(name="apt-get:clean", cmd=["rm", "-r", "-f", "/var/lib/apt/lists/*"]),
         )
     )
 
@@ -110,7 +121,7 @@ class Apk(Abstract):
         default_factory=lambda: PackageManager(
             binary="apk",
             before=Shell(name="apk", cmd=["apk", "update"]),
-            after=Shell(name="apk", cmd=["apk", "add"]),
+            install=Shell(name="apk", cmd=["apk", "add"]),
         )
     )
 
@@ -121,7 +132,7 @@ class Yum(Abstract):
         default_factory=lambda: PackageManager(
             binary="yum",
             before=Shell(name="yum", cmd=["yum", "-y", "update"]),
-            after=Shell(name="yum", cmd=["yum", "-y", "install"]),
+            install=Shell(name="yum", cmd=["yum", "-y", "install"]),
         )
     )
 
@@ -132,7 +143,7 @@ class Dnf(Abstract):
         default_factory=lambda: PackageManager(
             binary="dnf",
             before=Shell(name="dnf", cmd=["dnf", "-y", "update"]),
-            after=Shell(name="dnf", cmd=["dnf", "-y", "install"]),
+            install=Shell(name="dnf", cmd=["dnf", "-y", "install"]),
         )
     )
 
@@ -142,7 +153,7 @@ class Pacman(Abstract):
         description="Pacman package manager",
         default_factory=lambda: PackageManager(
             binary="pacman",
-            after=Shell(name="pacman", cmd=["pacman", "-S", "--noconfirm", "--disable-download-timeout"]),
+            install=Shell(name="pacman", cmd=["pacman", "-S", "--noconfirm", "--disable-download-timeout"]),
         )
     )
 

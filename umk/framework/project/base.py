@@ -168,6 +168,12 @@ class Project:
         """
         self.__not_implemented()
 
+    def deploy(self):
+        """
+        Run project deploying
+        """
+        self.__not_implemented()
+
     def __not_implemented(self):
         core.globals.console.print(
             f"[bold]The '{self.info.name or self.info.id}' has no '{utils.caller(2)}' action."

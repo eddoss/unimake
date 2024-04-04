@@ -14,6 +14,8 @@ from .errors import register as error_register
 
 from .properties import Property
 from .properties import Properties
+from .properties import Object
+
 
 from .serialization import json
 from .serialization import yaml

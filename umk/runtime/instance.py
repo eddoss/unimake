@@ -1,7 +1,9 @@
 import inspect
 
 from umk import framework, core
-from umk.core.typings import Type, TypeVar
+from umk.core.errors import ValidationError
+from umk.core.typings import Callable
+from umk.framework.filesystem import Path
 from umk.framework.project import Project as BaseProject
 
 
@@ -167,6 +169,7 @@ class Project:
         self.actions["generate"] = lambda: self.object.generate()
         self.actions["documentation"] = lambda: self.object.documentation()
         self.actions["release"] = lambda: self.object.release()
+        self.actions["deploy"] = lambda: self.object.deploy()
 
         return factory
 
@@ -188,32 +191,61 @@ class Project:
 class Config:
     def __init__(self):
         self.instance = framework.config.Instance()
-        self.presets: dict[str, dict[str, framework.config.Value]] = {}
+        self.presets: dict[str, Callable[core.Model], ...] = {}
 
     def register(self, factory):
         # TODO Raise error if 'self.instance.struct' is already exists
         # TODO Validate factory type (expect class but not a function)
         # TODO Validate factory result type (must be a subclass of 'config.Config')
-        self.instance.object = factory()
+        self.instance.struct = factory()
         self.instance.setup()
         return factory
 
-    def register_preset(self, func=None, *, name: str = ""):
+    def preset(self, func=None, *, name: str = ""):
+        sig = inspect.signature(func).parameters
+        if len(sig) != 1:
+            # TODO Raise error instead this message
+            core.globals.console.print(
+                "[bold red]Config: failed to register preset.\n"
+                f"Invalid function ({func.__name__}) signature, it must accept just config.\n\n"
+            )
+            core.globals.close(-1)
+
         # Without 'name'
         if func is not None:
-            self.presets[func.__name__.replace("_", "-")] = func()
+            self.presets[func.__name__.replace("_", "-")] = func
             return func
 
         def decorator(fu):
             # With 'name'
             # TODO Validate name
-            self.presets[name] = fu()
+            self.presets[name] = fu
             return fu
 
         return decorator
 
     def get(self):
-        return self.instance.object
+        return self.instance.struct
+
+    def save(self, path: Path = core.globals.paths.config):
+        if self.instance.struct:
+            core.json.save(self.instance.struct, path, 2)
+        else:
+            core.globals.console.print("[bold]Config: failed to save config. It is not registered !")
+
+    def load(self, path: Path = core.globals.paths.config):
+        if not self.instance.struct:
+            core.globals.console.print("[bold]Config: failed to load config. It is not registered !")
+            return
+        if not path.exists():
+            core.globals.console.print("[bold]Config: failed to load config. File does not exists !")
+            return
+
+        data = core.json.load(path)
+        try:
+            self.instance.struct = core.Model.model_validate(data)
+        except ValidationError:
+            core.globals.console.print("[red bold]Config: failed to load config. Json file does not compatible to python model")
 
     def implement(self):
         @core.overload
@@ -222,7 +254,7 @@ class Config:
         @core.overload
         def rp(*, name: str = ""): ...
 
-        def rp(func=None, *, name: str = ""): return self.register_preset(func, name=name)
+        def rp(func=None, *, name: str = ""): return self.preset(func, name=name)
 
         framework.config.register = lambda factory: self.register(factory)
         framework.config.preset = rp

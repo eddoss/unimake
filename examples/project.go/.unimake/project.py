@@ -22,5 +22,13 @@ def entry():
 
 @kit.project.action
 def build():
-    conf = kit.config.get()
-    print(conf)
+    print(kit.config.get())
+
+
+@kit.project.action
+def release():
+    kit.project.run('clean')
+    kit.project.run('generate')
+    kit.project.run('build')
+    kit.project.run('bundle')
+    kit.project.run('deploy')
