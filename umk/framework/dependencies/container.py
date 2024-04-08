@@ -141,7 +141,7 @@ class Group(core.Model):
         )
 
 
-class Builder:
+class Container:
     def __init__(self):
         self._groups: dict[str, Group] = {}
     

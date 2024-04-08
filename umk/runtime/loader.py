@@ -4,12 +4,10 @@ from importlib import util as importer
 from pathlib import Path
 from textwrap import dedent
 
-import dotenv
 from rich.syntax import Syntax
 from rich.table import Table
 
 from umk import framework, core
-from umk.framework.project import Project as BaseProject
 from umk.runtime.instance import Instance
 
 
@@ -202,6 +200,10 @@ class Options(core.Model):
             default="",
             description="Config presets to apply (passed by unimake CLI)"
         )
+        file: bool = core.Field(
+            default=False,
+            description="Load config from file and modify it by preset and overrides"
+        )
 
     root: Path = core.Field(
         default=core.globals.paths.unimake,
@@ -231,11 +233,11 @@ class Loader:
 
         sys.path.insert(0, self._root.as_posix())
 
-        try:
-            file = self._root / '.env'
-            dotenv.load_dotenv(file)
-        finally:
-            pass
+        # try:
+        #     file = self._root / '.env'
+        #     dotenv.load_dotenv(file)
+        # finally:
+        #     pass
 
         result = Instance()
         result.implement()
@@ -246,12 +248,15 @@ class Loader:
         # We should apply presets at first (it has a lower priority)
         # and after we apply overrides (it has a higher priority)
         if result.config.instance.struct:
+            if options.config.file:
+                result.config.load()
+                if not result.config.instance.struct:
+                    core.globals.console.print(f"[bold yellow]Config file does not exists")
             if options.config.preset:
                 updater = result.config.presets.get(options.config.preset)
                 if not updater:
                     core.globals.console.print(f"[bold yellow]Invalid config preset: {options.config.preset}")
                 updater(result.config.instance.struct)
-
             if options.config.overrides:
                 result.config.instance.override(options.config.overrides)
 
@@ -311,12 +316,12 @@ class Loader:
         if name in self._modules:
             raise DotInstanceAlreadyExistsError()
         file = self._root / f'{name}.py'
-        if not file.exists():
-            raise DotInstanceScriptLoadingError(
-                script=name,
-                path=self._root,
-                reason="Script file does not exists."
-            )
+        # if not file.exists():
+        #     raise DotInstanceScriptLoadingError(
+        #         script=name,
+        #         path=self._root,
+        #         reason="Script file does not exists."
+        #     )
         spec = importer.spec_from_file_location(name, file)
         module = importer.module_from_spec(spec)
         sys.modules[f'umk:{name}'] = module

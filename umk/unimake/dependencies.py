@@ -2,12 +2,12 @@ import os
 
 import asyncclick
 
-from umk.tools.unimake.application import application
-from umk.tools.utils import ConfigableGroup
+from umk.unimake.application import application
+from umk.unimake.utils import ConfigableGroup
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
-    from umk.tools import utils
+    from umk.unimake import utils
     from umk import runtime, framework, core
 
 
@@ -15,12 +15,13 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
 @asyncclick.option("--remote", default=None, help="Execute command in specific remote environment")
 @asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
 @asyncclick.pass_context
-def depends(ctx: asyncclick.Context, remote: str, r: bool, c: list[str], p: str):
+def depends(ctx: asyncclick.Context, remote: str, r: bool, c: list[str], p: str, f: bool):
     locally = not bool(remote or r)
 
     lo = runtime.LoadingOptions()
     lo.config.overrides = utils.parse_config_overrides(c)
     lo.config.preset = p or ""
+    lo.config.file = f
     lo.modules.project = runtime.YES
     lo.modules.config = runtime.OPT
     lo.modules.remotes = runtime.NO if locally else runtime.NO
@@ -35,7 +36,7 @@ def depends(ctx: asyncclick.Context, remote: str, r: bool, c: list[str], p: str)
 @depends.command(help="List dependency groups")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json", "yaml"], case_sensitive=False), help="Output format")
 def groups(format: str):
-    deps = framework.project.get().dependencies
+    deps = framework.project.get().deps
 
     if format == "style":
         table = Table(show_header=True, show_edge=True, show_lines=True)
@@ -56,7 +57,7 @@ def groups(format: str):
 @depends.command(help="Resolve dependencies (or specific group)")
 @asyncclick.option('--groups', '-g', multiple=True, help="Groups to deal with")
 def resolve(groups: list[str]):
-    deps = framework.project.get().dependencies
+    deps = framework.project.get().deps
     if not groups:
         deps.resolve()
     else:
@@ -74,7 +75,7 @@ def resolve(groups: list[str]):
 @depends.command(help="Inspect dependency groups/group/item")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def inspect(format: str):
-    deps = framework.project.get().dependencies
+    deps = framework.project.get().deps
     if format == "style":
         printer = utils.PropertiesPrinter()
         for group in deps.groups():

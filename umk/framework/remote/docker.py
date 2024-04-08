@@ -1,4 +1,3 @@
-import os
 import sys
 
 from umk import core
@@ -6,6 +5,12 @@ from umk.framework.adapters import docker
 from umk.framework.filesystem import AnyPath, OptPath
 from umk.framework.remote.interface import Interface
 from umk.framework.system import Shell, User, OptEnv
+
+
+class Login(core.Model):
+    server: str = core.Field(default="", description="Server URL")
+    user: str = core.Field(default="", description="Docker repository user")
+    password: str = core.Field(default="", description="Docker repository password")
 
 
 class Compose(Interface):
@@ -28,6 +33,10 @@ class Compose(Interface):
     dockerfiles: list[docker.File] = core.Field(
         default_factory=list,
         description="Dockerfile objects."
+    )
+    logins: list[Login] = core.Field(
+        default_factory=list,
+        description="Private repositories login info"
     )
 
     @property
@@ -61,6 +70,16 @@ class Compose(Interface):
         services = list(self.composefile.services.keys())
         self.client.compose.down(remove_orphans=True, remove_images="all", volumes=True, quiet=False)
         self.client.compose.rm(services=services, stop=True, volumes=True)
+
+    def login(self, **kwargs):
+        if not self.logins:
+            core.globals.console.print(
+                "[bold]No private repositories to login to !"
+            )
+            return
+        for info in self.logins:
+            core.globals.console.print(f"Docker login: '{info.server}'")
+            self.client.login(info.server, info.user, info.password)
 
     @core.typeguard
     def up(self, *args, **kwargs):

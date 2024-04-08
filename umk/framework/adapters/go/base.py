@@ -23,7 +23,7 @@ class BuildOptions(kit.cli.Options):
         result.flags.ld.append('-s')
         result.flags.ld.append('-w')
         if sources:
-            result.sources = sources
+            result.source = sources
         return result
 
     @staticmethod
@@ -33,7 +33,7 @@ class BuildOptions(kit.cli.Options):
         result.flags.gc.append('all=-N')
         result.flags.gc.append('-l')
         if sources:
-            result.sources = sources
+            result.source = sources
         return result
 
     class Print(kit.cli.Options):
@@ -221,7 +221,7 @@ class BuildOptions(kit.cli.Options):
         cli=kit.cli.List(name="-toolexec"),
         description="A program to use to invoke toolchain programs like vet and asm.For example, instead of running asm, the go command will run'cmd args /path/to/asm <arguments for asm>'.The TOOLEXEC_IMPORTPATH environment variable will be set,matching 'go list -f {{.ImportPath}}' for the package being built."
     )
-    sources: list[str | Path] = core.Field(
+    source: list[str | Path] = core.Field(
         default_factory=list,
         cli=kit.cli.Args(name="sources"),
         description="Source files / directories / packages."

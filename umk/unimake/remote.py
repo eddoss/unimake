@@ -2,8 +2,8 @@ import os
 
 import asyncclick
 
-from umk.tools.unimake.application import application
-from umk.tools import utils
+from umk.unimake.application import application
+from umk.unimake import utils
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
@@ -15,10 +15,11 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
 @application.group(cls=utils.ConfigableGroup, help="Remote environments management commands",)
 @asyncclick.option('--name', '-n', default="", help="Remote environment name")
 @asyncclick.pass_context
-async def remote(ctx: asyncclick.Context, name: str, c: list[str], p: str):
+async def remote(ctx: asyncclick.Context, name: str, c: list[str], p: str, f: bool):
     lo = runtime.LoadingOptions()
     lo.config.overrides = utils.parse_config_overrides(c)
     lo.config.preset = p or ""
+    lo.config.file = f
     lo.modules.project = runtime.OPT
     lo.modules.config = runtime.OPT
     lo.modules.remotes = runtime.YES
@@ -54,6 +55,13 @@ def up(ctx: asyncclick.Context):
 def down(ctx: asyncclick.Context):
     instance = ctx.obj.get("instance")
     instance.down()
+
+
+@remote.command(help="Login remote environment")
+@asyncclick.pass_context
+def login(ctx: asyncclick.Context):
+    instance = ctx.obj.get("instance")
+    instance.login()
 
 
 @remote.command(help="Open remote environment shell")

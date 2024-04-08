@@ -2,9 +2,10 @@ import string
 
 from umk import core
 from umk.core.typings import Callable, TypeVar
+from umk.framework import dependencies
+from umk.framework import targets
 from umk.framework import utils
 from umk.framework.filesystem import Path
-from umk.framework.dependencies import Builder as DependenciesBuilder
 
 
 class BadProjectIdError(core.Error):
@@ -111,8 +112,9 @@ Action = Callable[[...], ...] | Callable[['Project'], ...]
 class Project:
     def __init__(self):
         self.info: Info = Info()
-        self.dependencies: DependenciesBuilder = DependenciesBuilder()
+        self.deps: dependencies.Container = dependencies.Container()
         self.layout: Layout = Layout()
+        self.targets: targets.Container = targets.Container()
 
     def clean(self):
         """

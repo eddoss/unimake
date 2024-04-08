@@ -72,6 +72,18 @@ class Interface(core.Model):
         """
         self.__not_implemented()
 
+    def login(self, **kwargs):
+        """
+        Login remote environment.
+        """
+        self.__not_implemented()
+
+    def logout(self, **kwargs):
+        """
+        Logout remote environment.
+        """
+        self.__not_implemented()
+
     @core.typeguard
     def execute(self, cmd: list[AnyPath], cwd: OptPath = None, env: OptEnv = None, **kwargs):
         """
@@ -92,7 +104,6 @@ class Interface(core.Model):
         Download given paths from remote environment.
         """
         self.__not_implemented()
-
 
     def __not_implemented(self):
         core.globals.console.print(

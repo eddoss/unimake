@@ -8,7 +8,7 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
 
     from umk import core
     from umk import framework
-    from umk.tools.utils.printers import PropertiesPrinter
+    from umk.unimake.utils.printers import PropertiesPrinter
 
 
 def find_remote(default: bool, specific: str) -> 'framework.remote.Interface':
@@ -67,7 +67,8 @@ class ConfigableGroup(asyncclick.Group):
         super().__init__(name, commands, **attrs)
         self.params += [
             asyncclick.Option(param_decls=["-c"], required=False, type=str, multiple=True, help="Config entry override"),
-            asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Config preset to apply")
+            asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Config preset to apply"),
+            asyncclick.Option(param_decls=["-f"], is_flag=True, help="Load config from file")
         ]
 
 

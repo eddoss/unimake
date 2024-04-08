@@ -1,5 +1,8 @@
+from umk import core
 from umk.framework.project.base import Layout
 from umk.framework.project.base import Scratch
+from umk.framework.adapters import go
+from umk.framework import targets
 
 
 class GolangLayout(Layout):
@@ -65,3 +68,21 @@ class Golang(Scratch):
     def __init__(self):
         super().__init__()
         self.layout: GolangLayout = GolangLayout()
+        self.tool: go.Go = go.Go()
+
+    def build(self):
+        required = (
+            targets.GolangBinary,
+        )
+        container: list[targets.Interface] = []
+        for target in self.targets:
+            if not issubclass(type(target), required):
+                continue
+            container.append(target)
+        if not targets:
+            core.globals.console.print(
+                "[bold]No targets to build !"
+            )
+            return
+        for target in container:
+            target.run()

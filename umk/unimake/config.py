@@ -2,13 +2,13 @@ import os
 
 import asyncclick
 
-from umk.tools.unimake.application import application
-from umk.tools.utils import ConfigableCommand
+from umk.unimake.application import application
+from umk.unimake.utils import ConfigableCommand
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from rich.table import Table
     from umk import runtime, framework, core
-    from umk.tools import utils
+    from umk.unimake import utils
 
 
 @application.group(help="Config management commands")

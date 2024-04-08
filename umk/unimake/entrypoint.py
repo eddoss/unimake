@@ -1,9 +1,7 @@
 import asyncio
 import os
 
-# if not os.environ.get('_UNIMAKE_COMPLETE', None):
-#     from umk import runtime
-from umk.tools.unimake.application import application
+from umk.unimake.application import application
 
 
 if os.environ.get('_UNIMAKE_COMPLETE', None):

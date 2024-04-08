@@ -13,9 +13,8 @@ def entry():
     pro.info.contrib("Edward Sarkisyan", "edw.sarkisyan@gmail.com")
     pro.info.contrib("Some User", "some.user@mail.net")
 
-    build = pro.dependencies["build"]
-    build.gomod(pro.layout.root, go.Go())
-    build.apt_get("make", "git", sudo=True)
+    pro.deps["build"].gomod(pro.layout.root, go.Go())
+    pro.deps["build"].apt_get("make", "git", sudo=True)
 
     return pro
 

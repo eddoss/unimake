@@ -39,8 +39,7 @@ line-length = 100
 
 
 [tool.poetry.scripts]
-umk = 'umk.tools.umk:entrypoint'
-unimake = 'umk.tools.unimake:entrypoint'
+unimake = 'umk.unimake:entrypoint'
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.10.1"
