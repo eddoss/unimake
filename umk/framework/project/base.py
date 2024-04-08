@@ -118,61 +118,61 @@ class Project:
 
     def clean(self):
         """
-        Run project clean.
+        Run all cleaning-based project targets.
         """
         self.__not_implemented()
 
-    def build(self):
+    def binary(self):
         """
-        Run project building.
+        Run all binary-based project targets.
         """
         self.__not_implemented()
 
     def lint(self):
         """
-        Run project linting.
+        Run all linting-based project targets.
         """
         self.__not_implemented()
 
     def format(self):
         """
-        Run project formatting.
+        Run all formatting-based project targets.
         """
         self.__not_implemented()
 
     def test(self):
         """
-        Run project tests.
+        Run all testing-based project targets.
         """
         self.__not_implemented()
 
     def bundle(self):
         """
-        Run project bundling.
+        Run all bundling-based project targets.
         """
         self.__not_implemented()
 
     def generate(self):
         """
-        Run project code generation.
+        Run all generation-based project targets.
         """
         self.__not_implemented()
 
     def documentation(self):
         """
-        Run project documentation generation.
+        Run all documentation-based project targets.
         """
         self.__not_implemented()
 
     def release(self):
         """
-        Run project releasing
+        Release project.
         """
         self.__not_implemented()
 
     def deploy(self):
         """
-        Run project deploying
+        Run all deployment-based project targets.
         """
         self.__not_implemented()
 

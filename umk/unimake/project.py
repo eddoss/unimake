@@ -33,54 +33,54 @@ def project(ctx: asyncclick.Context, remote: str, r: bool, c: list[str], p: str,
         ctx.exit()
 
 
-@project.command(name='clean', help="Run project clean")
+@project.command(help="Run all cleaning-based project targets")
 def clean():
     framework.project.run("clean")
 
 
-@project.command(name='build', help="Run project building")
-def build():
-    framework.project.run("build")
+@project.command(help="Run all binary-based project targets")
+def binary():
+    framework.project.run("")
 
 
-@project.command(name='lint', help="Run project linting")
+@project.command(help="Run all linting-based project targets")
 def lint():
     framework.project.run("lint")
 
 
-@project.command(name='format', help="Run project formatting")
+@project.command(name='format', help="Run all formatting-based project targets")
 def formatting():
     framework.project.run("format")
 
 
-@project.command(name='generate', help="Run project code generation")
+@project.command(help="Run all generation-based project targets")
 def generate():
     framework.project.run('generate')
 
 
-@project.command(name='documentation', help="Run project documentation generation")
+@project.command(help="Run all documentation-based project targets")
 def documentation():
     framework.project.run('documentation')
 
 
-@project.command(name='bundle', help="Run project bundling")
+@project.command(help="Run all bundling-based project targets")
 def bundle():
     framework.project.run('bundle')
 
 
-@project.command(name='release', help="Run project releasing")
-def release():
-    framework.project.run('release')
-
-
-@project.command(name='deploy', help="Run project deploying")
+@project.command(help="Run all deployment-based project targets")
 def deploy():
     framework.project.run('deploy')
 
 
-@project.command(name='test', help="Run project testing")
+@project.command(name='test', help="Run all testing-based project targets")
 def run_testing():
     framework.project.run('test')
+
+
+@project.command(help="Release project")
+def release():
+    framework.project.run('release')
 
 
 @project.command(name='inspect', help="Print project details")
@@ -127,3 +127,5 @@ def inspect(format: str):
             core.globals.console.print(table_contributors)
     elif format == "json":
         core.globals.console.print_json(core.json.text(pro.info))
+
+

@@ -161,7 +161,7 @@ class Project:
         # TODO Validate func result type and value
 
         self.actions["clean"] = lambda: self.object.clean()
-        self.actions["build"] = lambda: self.object.build()
+        self.actions["binary"] = lambda: self.object.binary()
         self.actions["lint"] = lambda: self.object.lint()
         self.actions["format"] = lambda: self.object.format()
         self.actions["test"] = lambda: self.object.test()
