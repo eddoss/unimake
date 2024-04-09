@@ -70,3 +70,13 @@ class Function(Interface):
             result.new("Signature", "", "Function signature")
         return result
 
+
+def register(func):
+    # See implementation in runtime.Instance.implementation()
+    raise NotImplemented()
+
+
+def function(name: str = "", label: str = "", description: str = ""):
+    # See implementation in runtime.Instance.implementation()
+    raise NotImplemented()
+

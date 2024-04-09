@@ -106,7 +106,9 @@ class Layout(core.Model):
     )
 
 
-Action = Callable[[...], ...] | Callable[['Project'], ...]
+Action = Callable[[...], ...] | \
+         Callable[['Project'], ...] | \
+         Callable[['Project', 'Config'], ...]
 
 
 class Project:
@@ -114,65 +116,10 @@ class Project:
         self.info: Info = Info()
         self.deps: dependencies.Container = dependencies.Container()
         self.layout: Layout = Layout()
-        self.targets: targets.Container = targets.Container()
-
-    def clean(self):
-        """
-        Run all cleaning-based project targets.
-        """
-        self.__not_implemented()
-
-    def binary(self):
-        """
-        Run all binary-based project targets.
-        """
-        self.__not_implemented()
-
-    def lint(self):
-        """
-        Run all linting-based project targets.
-        """
-        self.__not_implemented()
-
-    def format(self):
-        """
-        Run all formatting-based project targets.
-        """
-        self.__not_implemented()
-
-    def test(self):
-        """
-        Run all testing-based project targets.
-        """
-        self.__not_implemented()
-
-    def bundle(self):
-        """
-        Run all bundling-based project targets.
-        """
-        self.__not_implemented()
-
-    def generate(self):
-        """
-        Run all generation-based project targets.
-        """
-        self.__not_implemented()
-
-    def documentation(self):
-        """
-        Run all documentation-based project targets.
-        """
-        self.__not_implemented()
 
     def release(self):
         """
         Release project.
-        """
-        self.__not_implemented()
-
-    def deploy(self):
-        """
-        Run all deployment-based project targets.
         """
         self.__not_implemented()
 

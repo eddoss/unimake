@@ -64,13 +64,13 @@ class GolangLayout(Layout):
     def output(self): return self.root / "output"
 
 
-class Golang(Scratch):
+class GolangBinary(Scratch):
     def __init__(self):
         super().__init__()
         self.layout: GolangLayout = GolangLayout()
         self.tool: go.Go = go.Go()
 
-    def build(self):
+    def binary(self):
         required = (
             targets.GolangBinary,
         )

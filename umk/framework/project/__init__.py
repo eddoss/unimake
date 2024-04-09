@@ -8,5 +8,5 @@ from .base import Action
 from .base import entry, get, action, run
 
 # golang
-from .golang import Golang
+from .golang import GolangBinary
 from .golang import GolangLayout

@@ -52,8 +52,9 @@ class ConfigableCommand(asyncclick.Command):
     ) -> None:
         super().__init__(name, context_settings, callback, params, help, epilog, short_help, options_metavar, add_help_option, no_args_is_help, hidden, deprecated)
         self.params += [
-            asyncclick.Option(param_decls=["-c"], required=False, type=str, multiple=True, help="Config entry override"),
-            asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Config preset to apply")
+            asyncclick.Option(param_decls=["-C"], required=False, type=str, multiple=True, help="Config entry override"),
+            asyncclick.Option(param_decls=["-P"], required=False, type=str, help="Config preset to apply"),
+            asyncclick.Option(param_decls=["-F"], is_flag=True, help="Load config from file")
         ]
 
 
@@ -66,9 +67,9 @@ class ConfigableGroup(asyncclick.Group):
     ) -> None:
         super().__init__(name, commands, **attrs)
         self.params += [
-            asyncclick.Option(param_decls=["-c"], required=False, type=str, multiple=True, help="Config entry override"),
-            asyncclick.Option(param_decls=["-p"], required=False, type=str, help="Config preset to apply"),
-            asyncclick.Option(param_decls=["-f"], is_flag=True, help="Load config from file")
+            asyncclick.Option(param_decls=["-C"], required=False, type=str, multiple=True, help="Config entry override"),
+            asyncclick.Option(param_decls=["-P"], required=False, type=str, help="Config preset to apply"),
+            asyncclick.Option(param_decls=["-F"], is_flag=True, help="Load config from file")
         ]
 
 

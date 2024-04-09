@@ -8,7 +8,7 @@ from rich.syntax import Syntax
 from rich.table import Table
 
 from umk import framework, core
-from umk.runtime.instance import Instance
+from umk.runtime import Container
 
 
 class Require(Enum):
@@ -224,7 +224,7 @@ class Loader:
         self._root = Path()
         self._modules = {}
 
-    def load(self, options: Options) -> Instance:
+    def load(self, options: Options) -> Container:
         self._root = options.root.expanduser().resolve().absolute()
         if not self._root.exists():
             raise RootNotExistsError(self._root)
@@ -239,7 +239,7 @@ class Loader:
         # finally:
         #     pass
 
-        result = Instance()
+        result = Container()
         result.implement()
 
         self.config(options.modules.config)
@@ -247,23 +247,28 @@ class Loader:
         # Apply config.
         # We should apply presets at first (it has a lower priority)
         # and after we apply overrides (it has a higher priority)
-        if result.config.instance.struct:
+        if result.config.struct:
             if options.config.file:
                 result.config.load()
-                if not result.config.instance.struct:
+                if not result.config.struct:
                     core.globals.console.print(f"[bold yellow]Config file does not exists")
             if options.config.preset:
                 updater = result.config.presets.get(options.config.preset)
                 if not updater:
                     core.globals.console.print(f"[bold yellow]Invalid config preset: {options.config.preset}")
-                updater(result.config.instance.struct)
+                updater(result.config.struct)
             if options.config.overrides:
-                result.config.instance.override(options.config.overrides)
+                result.config.override(options.config.overrides)
 
         self.project(options.modules.project)
+
         if options.modules.project == YES and result.project.object is None:
             raise ProjectNotRegisteredError(self._root)
+        result.project.config = result.config.struct
+        result.targets.config = result.config.struct
+        result.targets.project = result.project.object
 
+        self.targets(YES)
         self.remotes(options.modules.remotes)
 
         return result
@@ -289,6 +294,19 @@ class Loader:
             raise RemotesScriptNotExistsError(self._root)
         except Exception as error:
             raise RemotesScriptLoadingError(self._root, error)
+
+    def targets(self, require: Require):
+        if require == Require.NO:
+            return
+        self._script('targets')
+        # try:
+        #     self._script('targets')
+        # except FileNotFoundError:
+        #     if require == OPT:
+        #         return
+        #     raise RemotesScriptNotExistsError(self._root)
+        # except Exception as error:
+        #     raise RemotesScriptLoadingError(self._root, error)
 
     def config(self, require: Require):
         if require == NO:

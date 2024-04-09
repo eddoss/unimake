@@ -33,54 +33,23 @@ def project(ctx: asyncclick.Context, remote: str, r: bool, c: list[str], p: str,
         ctx.exit()
 
 
-@project.command(help="Run all cleaning-based project targets")
-def clean():
-    framework.project.run("clean")
-
-
-@project.command(help="Run all binary-based project targets")
-def binary():
-    framework.project.run("")
-
-
-@project.command(help="Run all linting-based project targets")
-def lint():
-    framework.project.run("lint")
-
-
-@project.command(name='format', help="Run all formatting-based project targets")
-def formatting():
-    framework.project.run("format")
-
-
-@project.command(help="Run all generation-based project targets")
-def generate():
-    framework.project.run('generate')
-
-
-@project.command(help="Run all documentation-based project targets")
-def documentation():
-    framework.project.run('documentation')
-
-
-@project.command(help="Run all bundling-based project targets")
-def bundle():
-    framework.project.run('bundle')
-
-
-@project.command(help="Run all deployment-based project targets")
-def deploy():
-    framework.project.run('deploy')
-
-
-@project.command(name='test', help="Run all testing-based project targets")
-def run_testing():
-    framework.project.run('test')
-
-
 @project.command(help="Release project")
 def release():
     framework.project.run('release')
+
+
+@project.command(help="List project actions")
+@asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
+def actions(format: str):
+    data = core.Object()
+    data.type = "Project.Actions"
+    for n, a in runtime.container.project.actions.items():
+        data.properties.new(name=n, value="", desc=(a.__doc__ or "").strip())
+    if format == "style":
+        printer = utils.PropertiesPrinter()
+        printer.print(data.properties, value=False)
+    elif format == "json":
+        core.globals.console.print_json(core.json.text(data))
 
 
 @project.command(name='inspect', help="Print project details")

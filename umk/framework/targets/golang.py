@@ -23,6 +23,35 @@ class GolangBinary(Interface):
         description="Debug options"
     )
 
+    @staticmethod
+    @core.typeguard
+    def new(*, name: str, tool: go.Go, build: go.Build, port: int = 2345, label: str = "", description: str = "") -> tuple['GolangBinary', 'GolangBinary']:
+        base = GolangBinary(
+            name=name.strip(),
+            label=label.strip(),
+            description=description.strip(),
+            tool=tool,
+            build=build,
+            debug=GolangBinary.Debug(port=port)
+        )
+        if not base.label:
+            base.label = f"Binary '{base.name}'"
+        if not base.description:
+            base.description = f"Golang binary ({base.name})"
+
+        debug = base.model_copy()
+        debug.name = name
+        debug.build.flags.gc.append('all=-N')
+        debug.build.flags.gc.append('-l')
+
+        release = base.model_copy()
+        release.name = name + ".release"
+        release.build.flags.gc.append('-dwarf=false')
+        release.build.flags.ld.append('-s')
+        release.build.flags.ld.append('-w')
+
+        return debug, release
+
     def object(self) -> core.Object:
         result = core.Object()
         result.type = "Target.GolangBinary"
