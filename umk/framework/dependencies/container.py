@@ -109,13 +109,13 @@ class Group(core.Model):
 
     @core.typeguard
     def command(
-            self,
-            cmd: list[str | Path],
-            workdir: None | Path = None,
-            environs: None | Environs = None,
-            shell_name: str = "dep:command",
-            name="command",
-            description="Shell command"
+        self,
+        cmd: list[str | Path],
+        workdir: None | Path = None,
+        environs: None | Environs = None,
+        shell_name: str = "dep:command",
+        name="command",
+        description="Shell command"
     ):
         self.items.append(
             Command(
