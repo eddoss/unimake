@@ -20,9 +20,13 @@ class Interface(core.Model):
         description="Target description"
     )
 
-    @abc.abstractmethod
     def object(self, **kwargs) -> core.Object:
-        raise NotImplemented()
+        result = core.Object()
+        result.type = "Target"
+        result.properties.new(name="Name", value=self.name, desc="Target name")
+        result.properties.new(name="Label", value=self.label, desc="Target label")
+        result.properties.new(name="Description", value=self.description, desc="Target description")
+        return result
 
     @abc.abstractmethod
     def run(self, **kwargs):
@@ -40,7 +44,7 @@ class Command(Interface):
             self.shell.sync()
 
     def object(self) -> core.Object:
-        result = core.Object()
+        result = super().object()
         result.type = "Target.Command"
         result.properties.new("Command", self.shell.cmd, "Shell command")
         result.properties.new("Workdir", self.shell.workdir or "", "Working directory")
@@ -59,15 +63,15 @@ class Function(Interface):
             self.function()
 
     def object(self) -> core.Object:
-        result = core.Object()
+        result = super().object()
         result.type = "Target.Function"
         if self.function:
             sig = inspect.signature(self.function).parameters
-            result.new("Name", self.function.__name__, "Function name")
-            result.new("Signature", sig, "Function signature")
+            result.properties.new("Name", self.function.__name__, "Function name")
+            result.properties.new("Signature", sig, "Function signature")
         else:
-            result.new("Name", "", "Function name")
-            result.new("Signature", "", "Function signature")
+            result.properties.new("Name", "", "Function name")
+            result.properties.new("Signature", "", "Function signature")
         return result
 
 

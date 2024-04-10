@@ -15,10 +15,10 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
 @application.group(cls=utils.ConfigableGroup, help="Remote environments management commands",)
 @asyncclick.option('--name', '-n', default="", help="Remote environment name")
 @asyncclick.pass_context
-async def remote(ctx: asyncclick.Context, name: str, c: list[str], p: str, f: bool):
+async def remote(ctx: asyncclick.Context, name: str, c: tuple[str], p: tuple[str], f: bool):
     lo = runtime.LoadingOptions()
     lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.preset = p or ""
+    lo.config.presets = list(p)
     lo.config.file = f
     lo.modules.project = runtime.OPT
     lo.modules.config = runtime.OPT

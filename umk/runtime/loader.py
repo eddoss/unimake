@@ -196,8 +196,8 @@ class Options(core.Model):
             default_factory=dict,
             description="Config entry overrides (passed by unimake CLI)"
         )
-        preset: str = core.Field(
-            default="",
+        presets: list[str] = core.Field(
+            default_factory=list,
             description="Config presets to apply (passed by unimake CLI)"
         )
         file: bool = core.Field(
@@ -233,43 +233,21 @@ class Loader:
 
         sys.path.insert(0, self._root.as_posix())
 
-        # try:
-        #     file = self._root / '.env'
-        #     dotenv.load_dotenv(file)
-        # finally:
-        #     pass
-
         result = Container()
         result.implement()
 
-        self.config(options.modules.config)
+        self.config(YES)
+        result.config.loaded = True
 
-        # Apply config.
-        # We should apply presets at first (it has a lower priority)
-        # and after we apply overrides (it has a higher priority)
-        if result.config.struct:
-            if options.config.file:
-                result.config.load()
-                if not result.config.struct:
-                    core.globals.console.print(f"[bold yellow]Config file does not exists")
-            if options.config.preset:
-                updater = result.config.presets.get(options.config.preset)
-                if not updater:
-                    core.globals.console.print(f"[bold yellow]Invalid config preset: {options.config.preset}")
-                updater(result.config.struct)
-            if options.config.overrides:
-                result.config.override(options.config.overrides)
+        self.project(YES)
+        result.config.loaded = True
 
-        self.project(options.modules.project)
+        result.config.run_defers()
+        result.config.update(options.config.file, options.config.presets, options.config.overrides)
+        result.project.run_defers()
+        result.targets.run_defers()
 
-        if options.modules.project == YES and result.project.object is None:
-            raise ProjectNotRegisteredError(self._root)
-        result.project.config = result.config.struct
-        result.targets.config = result.config.struct
-        result.targets.project = result.project.object
-
-        self.targets(YES)
-        self.remotes(options.modules.remotes)
+        # self.remotes(options.modules.remotes)
 
         return result
 

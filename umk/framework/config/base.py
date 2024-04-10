@@ -12,7 +12,7 @@ def register(factory):
     raise NotImplemented()
 
 
-def preset(name: str = ""):
+def preset(*, name: str = ""):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 

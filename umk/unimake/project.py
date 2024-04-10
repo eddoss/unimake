@@ -15,12 +15,12 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
 @asyncclick.option("--remote", help="Execute command in specific remote environment")
 @asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
 @asyncclick.pass_context
-def project(ctx: asyncclick.Context, remote: str, r: bool, c: list[str], p: str, f: bool):
+def project(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool):
     locally = not bool(remote or r)
 
     lo = runtime.LoadingOptions()
     lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.preset = p or ""
+    lo.config.presets = list(p)
     lo.config.file = f
     lo.modules.project = runtime.YES
     lo.modules.config = runtime.OPT
@@ -50,6 +50,18 @@ def actions(format: str):
         printer.print(data.properties, value=False)
     elif format == "json":
         core.globals.console.print_json(core.json.text(data))
+
+
+@project.command(help="List project targets")
+@asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
+def targets(format: str):
+    objects = runtime.container.targets.objects()
+    if format == "style":
+        printer = utils.PropertiesPrinter()
+        for data in objects:
+            printer.print(data.properties)
+    elif format == "json":
+        core.globals.console.print_json(core.json.text(objects))
 
 
 @project.command(name='inspect', help="Print project details")
