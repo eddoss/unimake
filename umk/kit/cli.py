@@ -176,15 +176,19 @@ class Options(NoEmpty):
             f = self.model_fields[name]
             cli: None | Opt | Arg | Args = f.json_schema_extra.get("cli") if f.json_schema_extra else None
             if not cli:
-                return getattr(self, name).serialize()
-            if issubclass(type(cli), Opt):
-                result.extend(self._opt(cli, name))
+                result.extend(getattr(self, name).serialize())
+            elif issubclass(type(cli), Opt):
+                items = self._opt(cli, name)
+                result.extend(items)
             elif issubclass(type(cli), Arg):
-                result.extend(self._arg(cli, name))
+                items = self._arg(cli, name)
+                result.extend(items)
             elif issubclass(type(cli), Args):
-                result.extend(self._args(cli, name))
+                items = self._args(cli, name)
+                result.extend(items)
             else:
-                result.extend(self._other(cli, name))
+                items = self._other(cli, name)
+                result.extend(items)
         return result
 
     def _opt(self, opt: Opt, field: str) -> list[str]:

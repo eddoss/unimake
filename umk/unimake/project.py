@@ -55,23 +55,29 @@ def actions(format: str):
 @project.command(help="List project targets")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def targets(format: str):
-    objects = runtime.container.targets.objects()
+    tars = runtime.container.targets
     if format == "style":
-        printer = utils.PropertiesPrinter()
-        for data in objects:
-            printer.print(data.properties)
+        table = Table(show_header=True, show_edge=True, show_lines=True)
+        table.add_column("Name", justify="left", style="", no_wrap=True)
+        table.add_column("Description", justify="left", style="", no_wrap=True)
+        for t in tars:
+            table.add_row(t.name, t.description)
+        core.globals.console.print(table)
     elif format == "json":
-        core.globals.console.print_json(core.json.text(objects))
+        data = [t.object().model_dump() for t in tars]
+        core.globals.console.print_json(core.json.text(data))
 
 
 @project.command(name='inspect', help="Print project details")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def inspect(format: str):
     pro = runtime.container.project.object
+    tar: list[framework.targets.Interface] = runtime.container.targets
+    act = runtime.container.project.actions
     if format in ("style", ""):
         table_info = Table(
             title="INFO",
-            title_style="bold",
+            title_style="bold cyan",
             title_justify="left",
             show_header=False,
             show_edge=False,
@@ -80,15 +86,15 @@ def inspect(format: str):
         )
         table_info.add_column("Name", justify="left", style="bold", no_wrap=True)
         table_info.add_column("Value", justify="left", style="", no_wrap=True)
-        table_info.add_row("Id", pro.info.id)
-        table_info.add_row("Version", pro.info.version)
-        table_info.add_row("Name", pro.info.name)
-        table_info.add_row("Description", pro.info.description)
+        table_info.add_row("• Id", pro.info.id)
+        table_info.add_row("• Version", pro.info.version)
+        table_info.add_row("• Name", pro.info.name)
+        table_info.add_row("• Description", pro.info.description)
 
         if pro.info.contributors:
             table_contributors = Table(
                 title="CONTRIBUTORS",
-                title_style="bold",
+                title_style="bold cyan",
                 title_justify="left",
                 show_header=False,
                 show_edge=False,
@@ -100,13 +106,56 @@ def inspect(format: str):
             for contrib in pro.info.contributors:
                 contacts = " ".join(contrib.email)
                 contacts += " " + " ".join([f'{k}:{v}' for k, v in contrib.socials.items()])
-                table_contributors.add_row(contrib.name, contacts)
+                table_contributors.add_row(f"• {contrib.name}", contacts)
 
+        if act:
+            table_actions = Table(
+                title="ACTIONS",
+                title_style="bold cyan",
+                title_justify="left",
+                show_header=False,
+                show_edge=False,
+                show_lines=False,
+                box=None,
+            )
+            table_actions.add_column("Name", justify="left", style="bold", no_wrap=True)
+            table_actions.add_column("Description", justify="left", style="", no_wrap=True)
+            for n, a in runtime.container.project.actions.items():
+                d = (a.__doc__ or "").strip()
+                table_actions.add_row(f"• {n}", d)
+
+        if tar:
+            table_targets = Table(
+                title="TARGETS",
+                title_style="bold cyan",
+                title_justify="left",
+                show_header=False,
+                show_edge=False,
+                show_lines=False,
+                box=None,
+            )
+            table_targets.add_column("Name", justify="left", style="bold", no_wrap=True)
+            table_targets.add_column("Description", justify="left", style="", no_wrap=True)
+            for t in tar:
+                table_targets.add_row(f"• {t.name}", t.description)
         core.globals.console.print(table_info)
-        core.globals.console.print()
+        if act:
+            core.globals.console.print()
+            core.globals.console.print(table_actions)
+        if tar:
+            core.globals.console.print()
+            core.globals.console.print(table_targets)
         if pro.info.contributors:
+            core.globals.console.print()
             core.globals.console.print(table_contributors)
     elif format == "json":
+        # TODO Append actions and targets
+        # data = {
+        #     "info": pro.info.object(),
+        #     "actions:"
+        # }
+        # if tar:
+        #     data.append()
         core.globals.console.print_json(core.json.text(pro.info))
 
 

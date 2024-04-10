@@ -30,6 +30,14 @@ class Contributor(core.Model):
         description="Author social networks.",
     )
 
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "Project.Info.Contributor"
+        result.properties.new(name="Name", value=self.name, desc="Contributor name")
+        result.properties.new(name="Email", value=self.email, desc="Contributor email")
+        result.properties.new(name="Socials", value=self.socials, desc="Contributor social networks")
+        return result
+
 
 class Info(core.Model):
     id: str = core.Field(
@@ -52,6 +60,16 @@ class Info(core.Model):
         default_factory=list,
         description="Project contributors."
     )
+
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "Project.Info"
+        result.properties.new(name="Id", value=self.id, desc="Project ID")
+        result.properties.new(name="Name", value=self.name, desc="Project label")
+        result.properties.new(name="Version", value=self.version, desc="Project version")
+        result.properties.new(name="Description", value=self.description, desc="Project description")
+        result.properties.new(name="Contributors", value=[c.object() for c in self.contributors], desc="Project contributors")
+        return result
 
     @core.field.validator("id")
     @classmethod

@@ -65,13 +65,6 @@ class Function(Interface):
     def object(self) -> core.Object:
         result = super().object()
         result.type = "Target.Function"
-        if self.function:
-            sig = inspect.signature(self.function).parameters
-            result.properties.new("Name", self.function.__name__, "Function name")
-            result.properties.new("Signature", sig, "Function signature")
-        else:
-            result.properties.new("Name", "", "Function name")
-            result.properties.new("Signature", "", "Function signature")
         return result
 
 

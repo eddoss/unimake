@@ -34,13 +34,12 @@ class Targets:
             self.objects: list[utils.Defer] = []
             self.functions: list[utils.Defer] = []
 
-
     def __init__(self):
         self._items: dict[str, framework.targets.Interface] = {}
         self.loaded = False
         self.defers = Targets.Defers()
 
-    def __iter__(self) -> framework.targets.Interface:
+    def __iter__(self) -> Generator[framework.targets.Interface, None, None]:
         for item in self._items.values():
             yield item
 
@@ -80,18 +79,28 @@ class Targets:
         # Without args
         if func is not None:
             if not self.loaded:
-                validate(func, func.__name__, 3)
+                n: str = func.__name__
+                n = n.replace("_", "-")
+                n = n.lower()
+                l = n.replace("-", " ").capitalize()
+                d = func.__doc__ or ""
+                d = d.strip()
+                validate(func, n, 3)
                 self.defers.functions.append(utils.Defer(
-                    func=func, name=func.__name__, label=label, description=description
+                    func=func, name=n, label=l, description=d
                 ))
             return func
 
         def decorator(fu):
             # With args
             if not self.loaded:
-                validate(fu, name, 2)
+                n: str = name or fu.__name__.lower().replace("_", "-")
+                l = label or n.replace("-", " ").capitalize()
+                d = description or fu.__doc__ or ""
+                d = d.strip()
+                validate(fu, n, 2)
                 self.defers.functions.append(utils.Defer(
-                    func=fu, name=name, label=label, description=description
+                    func=fu, name=n, label=l, description=d
                 ))
             return fu
 

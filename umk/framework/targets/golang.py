@@ -41,11 +41,13 @@ class GolangBinary(Interface):
 
         debug = base.model_copy()
         debug.name = name
+        debug.label += " (debug)"
         debug.build.flags.gc.append('all=-N')
         debug.build.flags.gc.append('-l')
 
         release = base.model_copy()
         release.name = name + ".release"
+        release.label += " (release)"
         release.build.flags.gc.append('-dwarf=false')
         release.build.flags.ld.append('-s')
         release.build.flags.ld.append('-w')
@@ -53,7 +55,7 @@ class GolangBinary(Interface):
         return debug, release
 
     def object(self) -> core.Object:
-        result = core.Object()
+        result = super().object()
         result.type = "Target.GolangBinary"
         result.properties.new("Tool", self.tool.shell.cmd, "Golang tool object")
         result.properties.new("Build", " ".join(self.build.serialize()), "Build options")
