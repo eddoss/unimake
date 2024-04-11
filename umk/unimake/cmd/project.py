@@ -2,7 +2,7 @@ import os
 
 import asyncclick
 
-from umk.unimake.application import application
+from umk.unimake import root
 from umk.unimake.utils import ConfigableGroup
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
@@ -11,7 +11,7 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from umk.unimake import utils
 
 
-@application.group(cls=ConfigableGroup, help="Project management commands")
+@root.group(cls=ConfigableGroup, help="Project management commands")
 @asyncclick.option("--remote", help="Execute command in specific remote environment")
 @asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
 @asyncclick.pass_context

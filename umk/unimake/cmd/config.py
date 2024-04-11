@@ -2,7 +2,7 @@ import os
 
 import asyncclick
 
-from umk.unimake.application import application
+from umk.unimake import root
 from umk.unimake.utils import ConfigableCommand
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
@@ -11,7 +11,7 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from umk.unimake import utils
 
 
-@application.group(help="Config management commands")
+@root.group(help="Config management commands")
 def config():
     pass
 

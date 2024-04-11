@@ -3,7 +3,6 @@ import string
 from umk import core
 from umk.core.typings import Callable, TypeVar
 from umk.framework import dependencies
-from umk.framework import targets
 from umk.framework import utils
 from umk.framework.filesystem import Path
 
@@ -124,11 +123,6 @@ class Layout(core.Model):
     )
 
 
-Action = Callable[[...], ...] | \
-         Callable[['Project'], ...] | \
-         Callable[['Project', 'Config'], ...]
-
-
 class Project:
     def __init__(self):
         self.info: Info = Info()
@@ -159,12 +153,12 @@ def entry(func):
     raise NotImplemented()
 
 
-def action(*, name=""):
+def releaser(func):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
-def run(name: str):
+def release():
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 

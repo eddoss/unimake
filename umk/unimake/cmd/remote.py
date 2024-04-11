@@ -2,7 +2,7 @@ import os
 
 import asyncclick
 
-from umk.unimake.application import application
+from umk.unimake import root
 from umk.unimake import utils
 
 if not os.environ.get('_UNIMAKE_COMPLETE', None):
@@ -12,7 +12,7 @@ if not os.environ.get('_UNIMAKE_COMPLETE', None):
     from umk import core
 
 
-@application.group(cls=utils.ConfigableGroup, help="Remote environments management commands",)
+@root.group(cls=utils.ConfigableGroup, help="Remote environments management commands",)
 @asyncclick.option('--name', '-n', default="", help="Remote environment name")
 @asyncclick.pass_context
 async def remote(ctx: asyncclick.Context, name: str, c: tuple[str], p: tuple[str], f: bool):

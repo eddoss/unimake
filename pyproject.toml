@@ -33,16 +33,16 @@ pydantic = "^2.5.3"
 python-on-whales = "^0.69.0"
 pyyaml = "^6.0.1"
 python-dotenv = "^1.0.1"
+black = "^24.3.0"
 
 [tool.black]
 line-length = 100
 
 
 [tool.poetry.scripts]
-unimake = 'umk.unimake:entrypoint'
+unimake = 'umk:unimake'
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.10.1"
 pytest = "^7.4.3"
 
 [build-system]

@@ -24,7 +24,7 @@ class TargetSourceError(core.Error):
 class TargetNotFunctionError(core.Error):
     def __init__(self, name: str):
         super().__init__(name=type(self).__name__.rstrip("Error"))
-        self.messages = [f"Could not register project target outside of .unimake/project.py. See preset '{name}'"]
+        self.messages = [f"Could not register project target, only functions are allowed. See '{name}'"]
         self.details.new(name="name", value=name, desc="Target name")
 
 
@@ -56,17 +56,16 @@ class Targets:
     def get(self, name: str, on_err=None) -> framework.targets.Interface:
         return self._items.get(name, on_err)
 
-    def run(self, name: str):
-        target = self.get(name)
-        if target is None:
-            core.globals.console.print(
-                f"[yellow bold]Targets: could not run '{name}', target not found"
-            )
-            return
-        target.run(
-            p=framework.project.get(),
-            c=framework.config.get()
-        )
+    def run(self, *names: str):
+        found = []
+        for name in names:
+            if name not in self._items:
+                core.globals.console.print(f"[yellow bold]Target '{name}' not found")
+            else:
+                found.append(name)
+        for name in found:
+            target = self.get(name)
+            target.run(p=framework.project.get(), c=framework.config.get())
 
     def function(self, func=None, *, name: str = "", label: str = "", description: str = ""):
         def validate(f, n, s):
