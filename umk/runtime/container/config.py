@@ -78,8 +78,8 @@ class Config:
 
     def set(self, entry: str, value: framework.config.Value):
         if entry not in self.entries:
-            # TODO Raise entry access error
-            pass
+            core.globals.console.print(f"[yellow bold]Config: '{entry}' entry not found")
+            return
         tokens = entry.replace("-", "_").split(".")
         if len(tokens) == 1:
             setattr(self.struct, tokens[0], value)

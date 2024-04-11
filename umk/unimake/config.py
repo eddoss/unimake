@@ -38,6 +38,24 @@ def save(c: tuple[str], p: tuple[str]):
     runtime.container.config.save()
 
 
+@config.command(name="set", help="Write entry in the config file")
+@asyncclick.argument('values', required=True, nargs=-1)
+def write(values: tuple[str]):
+    lo = runtime.LoadingOptions()
+    lo.config.file = True
+    runtime.load(lo)
+
+    if not runtime.container.config.struct:
+        core.globals.console.print("[yellow bold]Could not found config ! Register one at first.")
+        core.globals.close()
+
+    overrides = utils.parse_config_overrides(values)
+    for entry, value in overrides.items():
+        runtime.container.config.set(entry, value)
+    runtime.container.config.save()
+    core.globals.console.print("[green bold]Config successfully saved !")
+
+
 @config.command(cls=ConfigableCommand, name='inspect', help="Print default config details")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
