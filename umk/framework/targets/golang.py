@@ -1,3 +1,5 @@
+import copy
+
 from umk import core
 from umk.framework.adapters import go
 from umk.framework.targets.interface import Interface
@@ -39,13 +41,13 @@ class GolangBinary(Interface):
         if not base.description:
             base.description = f"Golang binary ({base.name})"
 
-        debug = base.model_copy()
+        debug = copy.deepcopy(base)
         debug.name = name
         debug.label += " (debug)"
         debug.build.flags.gc.append('all=-N')
         debug.build.flags.gc.append('-l')
 
-        release = base.model_copy()
+        release = copy.deepcopy(base)
         release.name = name + ".release"
         release.label += " (release)"
         release.build.flags.gc.append('-dwarf=false')
