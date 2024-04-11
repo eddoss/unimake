@@ -191,8 +191,8 @@ class Config:
                 raise ConfigPresetNotFunctionError()
 
             # Allow only signature with 1 argument
-            sig = inspect.signature(f).parameters
-            if len(sig) != 1:
+            sig = len(inspect.signature(f).parameters)
+            if sig != 1:
                 raise ConfigPresetSignatureError()
 
         # Without 'name'

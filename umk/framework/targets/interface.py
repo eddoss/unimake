@@ -53,14 +53,20 @@ class Command(Interface):
 
 
 class Function(Interface):
-    function: Callable[[], Any] = core.Field(
+    function: Callable[..., Any] = core.Field(
         default=None,
         description="Function to run"
     )
 
     def run(self, **kwargs):
         if self.function:
-            self.function()
+            sig = len(inspect.signature(self.function).parameters)
+            if sig == 0:
+                self.function()
+            elif sig == 1:
+                self.function(kwargs.get("c"))
+            else:
+                self.function(kwargs.get("c"), kwargs.get("p"))
 
     def object(self) -> core.Object:
         result = super().object()

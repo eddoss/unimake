@@ -70,8 +70,8 @@ def target(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tupl
 
     valid = []
     for name in names:
-        targ = runtime.container.targets.run(name)
-        if not targ:
+        tar = runtime.container.targets.get(name)
+        if not tar:
             core.globals.console.print(f"[yellow bold]Target '{name}' not found")
         else:
             valid.append(name)

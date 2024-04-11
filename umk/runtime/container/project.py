@@ -76,9 +76,9 @@ class Project:
         if sig == 0:
             action()
         elif sig == 1:
-            action(self.object)
+            action(framework.config.get())
         else:
-            action(self.object, framework.config.get())
+            action(framework.config.get(), self.object)
 
     def action(self, func=None, *, name: str = ""):
         def validate(f, n, s):

@@ -63,7 +63,10 @@ class Targets:
                 f"[yellow bold]Targets: could not run '{name}', target not found"
             )
             return
-        target.run()
+        target.run(
+            p=framework.project.get(),
+            c=framework.config.get()
+        )
 
     def function(self, func=None, *, name: str = "", label: str = "", description: str = ""):
         def validate(f, n, s):
@@ -136,7 +139,8 @@ class Targets:
             target = framework.targets.Function(
                 name=defer.args.get("name"),
                 description=defer.args.get("description"),
-                label=defer.args.get("label")
+                label=defer.args.get("label"),
+                function=defer.func
             )
             if target.name in self._items:
                 raise TargetAlreadyExistsError(target.name)
@@ -144,13 +148,13 @@ class Targets:
 
         for defer in self.defers.objects:
             targets: framework.targets.Interface | list[framework.targets.Interface] | None = None
-            sig = inspect.signature(defer.func)
+            sig = len(inspect.signature(defer.func).parameters)
             if sig == 0:
                 targets = defer.func()
             elif sig == 1:
-                targets = defer.func(framework.project.get())
+                targets = defer.func(framework.config.get())
             else:
-                targets = defer.func(framework.project.get(), framework.config.get())
+                targets = defer.func(framework.config.get(), framework.project.get())
             if not issubclass(type(targets), (tuple, list, set)):
                 targets = [targets]
             for target in targets:
