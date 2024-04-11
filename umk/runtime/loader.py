@@ -242,12 +242,14 @@ class Loader:
         self.project(YES)
         result.config.loaded = True
 
+        self.remotes(options.modules.remotes)
+        result.remotes.loaded = True
+
         result.config.run_defers()
         result.config.update(options.config.file, options.config.presets, options.config.overrides)
         result.project.run_defers()
         result.targets.run_defers()
-
-        # self.remotes(options.modules.remotes)
+        result.remotes.run_defers()
 
         return result
 

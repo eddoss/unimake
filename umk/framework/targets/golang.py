@@ -63,5 +63,5 @@ class GolangBinary(Interface):
         result.properties.new("Build", " ".join(self.build.serialize()), "Build options")
         return result
 
-    def run(self):
+    def run(self, **kwargs):
         self.tool.build(self.build)

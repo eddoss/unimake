@@ -1,10 +1,7 @@
 import inspect
 
 from umk import framework, core
-from umk.core.errors import ValidationError
-from umk.core.typings import Callable, Generator, Any
-from umk.framework.filesystem import Path
-from umk.framework.project import Project as BaseProject
+from umk.runtime.container import utils
 
 
 class RemoteTypeError(core.Error):
@@ -62,7 +59,20 @@ class RemoteDefaultAlreadyExistsError(core.Error):
         self.details.new(name="given", value=given, desc="The name of the current default remote")
 
 
+class RemoteSourceError(core.Error):
+    def __init__(self):
+        super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = [f"Could not register remote environment outside of .unimake/remotes.py"]
+
+
 class Remotes:
+    class Defers:
+        def __init__(self):
+            self.ssh: list[utils.Defer] = []
+            self.container: list[utils.Defer] = []
+            self.compose: list[utils.Defer] = []
+            self.custom: list[utils.Defer] = []
+
     @property
     def default(self) -> None | framework.remote.Interface:
         return self._list.get(self._default)
@@ -72,6 +82,8 @@ class Remotes:
         self._default = value
 
     def __init__(self):
+        self.loaded = False
+        self.defers = Remotes.Defers()
         self._default: str = ""
         self._list: dict[str, framework.remote.Interface] = {}
 
@@ -87,6 +99,66 @@ class Remotes:
 
     def __len__(self):
         return len(self._list)
+
+    def register_ssh(self, factory):
+        if self.loaded:
+            return factory
+        utils.validate_source_module(
+            script="remotes",
+            stack=3,
+            messages=["Failed to register 'ssh' remote outside of the @script"],
+        )
+        utils.validate_only_function(
+            factory=factory,
+            messages=["Use 'remote.ssh' decorator only with functions"]
+        )
+        self.defers.ssh.append(utils.Defer(func=factory))
+        return factory
+
+    def register_compose(self, factory):
+        if self.loaded:
+            return factory
+        utils.validate_source_module(
+            script="remotes",
+            stack=3,
+            messages=["Failed to register 'docker.compose' remote outside of the @script"],
+        )
+        utils.validate_only_function(
+            factory=factory,
+            messages=["Use 'remote.docker.compose' decorator only with functions"]
+        )
+        self.defers.compose.append(utils.Defer(func=factory))
+        return factory
+
+    def register_container(self, factory):
+        if self.loaded:
+            return factory
+        utils.validate_source_module(
+            script="remotes",
+            stack=3,
+            messages=["Failed to register 'docker.container' remote outside of the @script"],
+        )
+        utils.validate_only_function(
+            factory=factory,
+            messages=["Use 'remote.docker.container' decorator only with functions"]
+        )
+        self.defers.container.append(utils.Defer(func=factory))
+        return factory
+
+    def register_custom(self, factory):
+        if self.loaded:
+            return factory
+        utils.validate_source_module(
+            script="remotes",
+            stack=3,
+            messages=["Failed to register 'custom' remote outside of the @script"],
+        )
+        utils.validate_only_class(
+            factory=factory,
+            messages=["Use 'remote.custom' decorator only with class based on 'remote.Interface'"]
+        )
+        self.defers.custom.append(utils.Defer(func=factory))
+        return factory
 
     def register(self, factory):
         impl: framework.remote.Interface = factory()
@@ -123,4 +195,72 @@ class Remotes:
     def implement(self):
         framework.remote.find = lambda name="": self.find(name)
         framework.remote.iterate = lambda: self.__iter__()
-        framework.remote.register = lambda factory: self.register(factory)
+        framework.remote.ssh = lambda factory: self.register_ssh(factory)
+        framework.remote.docker.compose = lambda factory: self.register_compose(factory)
+        framework.remote.docker.container = lambda factory: self.register_container(factory)
+        framework.remote.custom = lambda factory: self.register_custom(factory)
+
+    def run_defers(self):
+        for defer in self.defers.custom:
+            imp: framework.remote.Interface = defer.func()
+            utils.validate_only_subclass(
+                obj=imp,
+                base=framework.remote.Interface,
+                messages=["Use 'remote.custom' decorator only with class based on 'remote.Interface'"]
+            )
+            if imp.name in self._list:
+                utils.raise_already_exists(messages=[f"Remote environment '{imp.name}' is already exists"])
+
+        for defer in self.defers.ssh:
+            imp = framework.remote.SecureShell()
+            defer(1, 3, imp, framework.config.get(), framework.project.get())
+            # TODO Validate imp.name
+            imp.name = imp.name or defer.func.__name__
+            if imp.name in self._list:
+                utils.raise_already_exists(messages=[f"Remote environment '{imp.name}' is already exists"])
+            if imp.default:
+                if self._default:
+                    raise RemoteDefaultAlreadyExistsError(
+                        current=self._default,
+                        given=imp.name,
+                        factory=defer.func,
+                        frame=inspect.stack()[2],
+                    )
+                self._default = imp.name
+            self._list[imp.name] = imp
+
+        for defer in self.defers.compose:
+            imp = framework.remote.DockerCompose()
+            defer(1, 3, imp, framework.config.get(), framework.project.get())
+            # TODO Validate imp.name
+            imp.name = imp.name or defer.func.__name__
+            if imp.name in self._list:
+                utils.raise_already_exists(messages=[f"Remote environment '{imp.name}' is already exists"])
+            if imp.default:
+                if self._default:
+                    raise RemoteDefaultAlreadyExistsError(
+                        current=self._default,
+                        given=imp.name,
+                        factory=defer.func,
+                        frame=inspect.stack()[2],
+                    )
+                self._default = imp.name
+            self._list[imp.name] = imp
+
+        for defer in self.defers.container:
+            imp = framework.remote.DockerContainer()
+            defer(1, 3, imp, framework.config.get(), framework.project.get())
+            # TODO Validate imp.name
+            imp.name = imp.name or defer.func.__name__
+            if imp.name in self._list:
+                utils.raise_already_exists(messages=[f"Remote environment '{imp.name}' is already exists"])
+            if imp.default:
+                if self._default:
+                    raise RemoteDefaultAlreadyExistsError(
+                        current=self._default,
+                        given=imp.name,
+                        factory=defer.func,
+                        frame=inspect.stack()[2],
+                    )
+                self._default = imp.name
+            self._list[imp.name] = imp

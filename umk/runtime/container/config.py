@@ -25,7 +25,7 @@ class ConfigBadTypeError(core.Error):
         self.messages = ["Config class must be based on umk.framework.config.Config"]
 
 
-class ConfigInvalidSourceError(core.Error):
+class ConfigSourceError(core.Error):
     def __init__(self):
         super().__init__(name=type(self).__name__.rstrip("Error"))
         self.messages = [f"Could not register config outside of .unimake/config.py"]
@@ -165,7 +165,7 @@ class Config:
         # Allow register just from .unimake/config.py
         frame = inspect.stack()[2]
         if not frame.filename.endswith(".unimake/config.py"):
-            raise ConfigInvalidSourceError()
+            raise ConfigSourceError()
 
         # Register struct just one time
         if self.defers.registerer:

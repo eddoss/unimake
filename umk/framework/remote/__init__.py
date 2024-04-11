@@ -1,7 +1,9 @@
 from .interface import Interface
-from .interface import register
+from .interface import docker
 from .interface import iterate
 from .interface import find
+from .interface import custom
+from .interface import ssh
 
 from .ssh import SecureShell
 
@@ -16,7 +18,7 @@ __all__ = [
     "DockerCompose",
     "DockerLogin",
     "SecureShell",
-    "register",
+    "docker",
     "iterate",
     "find"
 ]

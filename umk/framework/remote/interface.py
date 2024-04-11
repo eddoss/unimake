@@ -121,7 +121,24 @@ class Interface(core.Model):
 Implementation = TypeVar("Implementation", bound=Interface)
 
 
-def register(factory):
+class docker:
+    @staticmethod
+    def compose(factory):
+        # See implementation in runtime.Instance.implementation()
+        raise NotImplemented()
+
+    @staticmethod
+    def container(factory):
+        # See implementation in runtime.Instance.implementation()
+        raise NotImplemented()
+
+
+def ssh(factory):
+    # See implementation in runtime.Instance.implementation()
+    raise NotImplemented()
+
+
+def custom():
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 

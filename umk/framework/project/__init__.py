@@ -7,5 +7,5 @@ from .base import Scratch
 from .base import entry, get, releaser, release
 
 # golang
-from .golang import GolangBinary
+from .golang import Golang
 from .golang import GolangLayout
