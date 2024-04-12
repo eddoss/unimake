@@ -1,8 +1,6 @@
-from umk import core
+from umk.framework.adapters import go
 from umk.framework.project.base import Layout
 from umk.framework.project.base import Scratch
-from umk.framework.adapters import go
-from umk.framework import targets
 
 
 class GolangLayout(Layout):

@@ -123,7 +123,7 @@ class Layout(core.Model):
     )
 
 
-class Project:
+class Interface:
     def __init__(self):
         self.info: Info = Info()
         self.deps: dependencies.Container = dependencies.Container()
@@ -141,14 +141,24 @@ class Project:
         )
 
 
-class Scratch(Project):
+class Scratch(Interface):
     pass
 
 
-ProjectType = TypeVar("ProjectType", bound=Project)
+ProjectType = TypeVar("ProjectType", bound=Interface)
 
 
-def entry(func):
+def custom(func):
+    # See implementation in runtime.Instance.implementation()
+    raise NotImplemented()
+
+
+def empty(func):
+    # See implementation in runtime.Instance.implementation()
+    raise NotImplemented()
+
+
+def golang(func):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 

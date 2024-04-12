@@ -13,7 +13,7 @@ class Defer:
         return self.func is not None
 
     def __call__(self, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = None):
-        call(self.func, min, max, _0, _1, _2)
+        return call(self.func, min, max, _0, _1, _2)
 
 
 class SourceModuleError(core.Error):
@@ -95,11 +95,10 @@ def call(func, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = Non
         )
         core.globals.close(-1)
     if sig == 0:
-        func()
-        return
+        return func()
     if sig == 1:
-        func(_0)
+        return func(_0)
     elif sig == 2:
-        func(_0, _1)
+        return func(_0, _1)
     elif sig == 3:
-        func(_0, _1, _2)
+        return func(_0, _1, _2)

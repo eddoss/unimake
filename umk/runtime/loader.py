@@ -236,13 +236,13 @@ class Loader:
         result = Container()
         result.implement()
 
-        self.config(YES)
+        self.config(OPT)
         result.config.loaded = True
 
         self.project(YES)
         result.config.loaded = True
 
-        self.remotes(options.modules.remotes)
+        self.remotes(OPT)
         result.remotes.loaded = True
 
         result.config.run_defers()
