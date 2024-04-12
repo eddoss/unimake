@@ -2,7 +2,7 @@ import os
 
 import asyncclick
 
-from umk.application.root import root
+from umk.application.cmd import root
 from umk.application.utils import ConfigableCommand
 
 if not os.environ.get('_UMK_COMPLETE', None):
