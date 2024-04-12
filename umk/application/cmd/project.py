@@ -22,9 +22,6 @@ def project(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tup
     lo.config.overrides = utils.parse_config_overrides(c)
     lo.config.presets = list(p)
     lo.config.file = f
-    lo.modules.project = runtime.YES
-    lo.modules.config = runtime.OPT
-    lo.modules.remotes = runtime.NO if locally else runtime.NO
     runtime.load(lo)
 
     if not locally:

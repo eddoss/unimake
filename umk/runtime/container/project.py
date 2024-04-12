@@ -130,7 +130,7 @@ class Project:
 
     def implement(self):
         framework.project.releaser = lambda f: self.register_release(f)
-        framework.project.release = lambda f: self.release()
+        framework.project.release = lambda: self.call_release()
         framework.project.get = lambda: self.object
         framework.project.empty = lambda factory: self.register_func(factory, "empty", framework.project.Scratch)
         framework.project.golang = lambda factory: self.register_func(factory, "golang", framework.project.Golang)

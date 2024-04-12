@@ -102,22 +102,22 @@ class BuildOptions(kit.cli.Options):
     class Flags(kit.cli.Options):
         gc: list[str] = core.Field(
             default_factory=list,
-            cli=kit.cli.List(name="-gcflags", surr='"', equal="="),
+            cli=kit.cli.List(name="-gcflags", surr="", equal="="),
             description="Arguments to pass on each go tool compile invocation."
         )
         ld: list[str] = core.Field(
             default_factory=list,
-            cli=kit.cli.List(name="-ldflags", surr='"', equal="="),
+            cli=kit.cli.List(name="-ldflags", surr="", equal="="),
             description="Arguments to pass on each go tool link invocation."
         )
         gccgo: list[str] = core.Field(
             default_factory=list,
-            cli=kit.cli.List(name="-gccgoflags", surr='"', equal="="),
+            cli=kit.cli.List(name="-gccgoflags", surr="", equal="="),
             description="Arguments to pass on each gccgo compiler/linker invocation."
         )
         asm: list[str] = core.Field(
             default_factory=list,
-            cli=kit.cli.List(name="-asmflags", surr='"', equal="="),
+            cli=kit.cli.List(name="-asmflags", surr="", equal="="),
             description="Arguments to pass on each go tool asm invocation."
         )
 

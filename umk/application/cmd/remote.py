@@ -21,9 +21,6 @@ async def remote(ctx: asyncclick.Context, name: str, c: tuple[str], p: tuple[str
     lo.config.overrides = utils.parse_config_overrides(c)
     lo.config.presets = list(p)
     lo.config.file = f
-    lo.modules.project = runtime.OPT
-    lo.modules.config = runtime.OPT
-    lo.modules.remotes = runtime.YES
     runtime.load(lo)
 
     ctx.ensure_object(dict)

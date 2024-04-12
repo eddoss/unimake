@@ -26,14 +26,11 @@ def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[s
     lo.config.overrides = utils.parse_config_overrides(c)
     lo.config.presets = list(p)
     lo.config.file = f
-    lo.modules.project = runtime.YES
-    lo.modules.config = runtime.OPT
-    lo.modules.remotes = runtime.NO if locally else runtime.NO
     runtime.load(lo)
 
     if not locally:
         rem = utils.find_remote(r, remote)
-        rem.execute(cmd=["unimake", "target"] + list(names))
+        rem.execute(cmd=["unimake", "run"] + list(names))
         ctx.exit()
 
     runtime.container.targets.run(*names)
@@ -46,9 +43,6 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
     lo.config.overrides = utils.parse_config_overrides(c)
     lo.config.presets = list(p)
     lo.config.file = f
-    lo.modules.project = runtime.YES
-    lo.modules.config = runtime.OPT
-    lo.modules.remotes = runtime.NO
     runtime.load(lo)
 
     pro = runtime.container.project.object
@@ -117,6 +111,27 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
         # if tar:
         #     data.append()
         core.globals.console.print_json(core.json.text(pro.info))
+
+
+@root.group(cls=ConfigableCommand, help="Release project")
+@asyncclick.option("--remote", default=None, help="Execute command in specific remote environment")
+@asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
+@asyncclick.pass_context
+def release(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool):
+    locally = not bool(remote or r)
+
+    lo = runtime.LoadingOptions()
+    lo.config.overrides = utils.parse_config_overrides(c)
+    lo.config.presets = list(p)
+    lo.config.file = f
+    runtime.load(lo)
+
+    if not locally:
+        rem = utils.find_remote(r, remote)
+        rem.execute(cmd=["unimake", "release"])
+        ctx.exit()
+
+    framework.project.release()
 
 
 @root.command(name='format', help="Format .unimake/*.py files")

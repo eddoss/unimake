@@ -32,7 +32,6 @@ def save(c: tuple[str], p: tuple[str]):
     lo = runtime.LoadingOptions()
     lo.config.overrides = utils.parse_config_overrides(c)
     lo.config.presets = list(p)
-    lo.modules.config = runtime.YES
     runtime.load(lo)
 
     runtime.container.config.save()
@@ -60,7 +59,6 @@ def write(values: tuple[str]):
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
     lo = runtime.LoadingOptions()
-    lo.modules.config = runtime.YES
     lo.config.file = f
     lo.config.presets = list(p)
     lo.config.overrides = utils.parse_config_overrides(c)
