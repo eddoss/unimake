@@ -3,12 +3,12 @@ import os
 import asyncclick
 from asyncclick import Command
 
-if not os.environ.get('_UNIMAKE_COMPLETE', None):
+if not os.environ.get('_UMK_COMPLETE', None):
     import sys
 
     from umk import core
     from umk import framework
-    from umk.unimake.utils.printers import PropertiesPrinter
+    from umk.application.utils.printers import PropertiesPrinter
 
 
 def find_remote(default: bool, specific: str) -> 'framework.remote.Interface':

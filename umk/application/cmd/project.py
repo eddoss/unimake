@@ -2,23 +2,20 @@ import os
 
 import asyncclick
 
-if not os.environ.get('_UNIMAKE_COMPLETE'):
-    from umk import runtime, core, framework
+from umk.application.root import root
+from umk.application.utils import ConfigableGroup
+
+if not os.environ.get('_UMK_COMPLETE', None):
     from rich.table import Table
-from umk.unimake import utils
+    from umk import runtime, framework, core
+    from umk.application import utils
 
 
-@asyncclick.group()
-async def root():
-    pass
-
-
-@root.group(cls=utils.ConfigableCommand, help="Run project targets")
-@asyncclick.option("--remote", default=None, help="Execute command in specific remote environment")
+@root.group(cls=ConfigableGroup, help="Project management commands")
+@asyncclick.option("--remote", help="Execute command in specific remote environment")
 @asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
-@asyncclick.argument('names', required=True, nargs=-1)
 @asyncclick.pass_context
-def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
+def project(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool):
     locally = not bool(remote or r)
 
     lo = runtime.LoadingOptions()
@@ -32,26 +29,51 @@ def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[s
 
     if not locally:
         rem = utils.find_remote(r, remote)
-        rem.execute(cmd=["unimake", "target"] + list(names))
+        rem.execute(cmd=["unimake", "project"] + utils.subcmd(ctx.invoked_subcommand))
         ctx.exit()
 
-    runtime.container.targets.run(*names)
+
+@project.command(help="Release project")
+def release():
+    framework.project.release()
 
 
-@root.command(cls=utils.ConfigableCommand, name='inspect', help="Inspect project details")
+@project.command(help="List project actions")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
-def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
-    lo = runtime.LoadingOptions()
-    lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = list(p)
-    lo.config.file = f
-    lo.modules.project = runtime.YES
-    lo.modules.config = runtime.OPT
-    lo.modules.remotes = runtime.NO
-    runtime.load(lo)
+def actions(format: str):
+    data = core.Object()
+    data.type = "Project.Actions"
+    for n, a in runtime.container.project.actions.items():
+        data.properties.new(name=n, value="", desc=(a.__doc__ or "").strip())
+    if format == "style":
+        printer = utils.PropertiesPrinter()
+        printer.print(data.properties, value=False)
+    elif format == "json":
+        core.globals.console.print_json(core.json.text(data))
 
+
+@project.command(help="List project targets")
+@asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
+def targets(format: str):
+    tars = runtime.container.targets
+    if format == "style":
+        table = Table(show_header=True, show_edge=True, show_lines=True)
+        table.add_column("Name", justify="left", style="", no_wrap=True)
+        table.add_column("Description", justify="left", style="", no_wrap=True)
+        for t in tars:
+            table.add_row(t.name, t.description)
+        core.globals.console.print(table)
+    elif format == "json":
+        data = [t.object().model_dump() for t in tars]
+        core.globals.console.print_json(core.json.text(data))
+
+
+@project.command(name='inspect', help="Print project details")
+@asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
+def inspect(format: str):
     pro = runtime.container.project.object
-    tar = runtime.container.targets
+    tar: list[framework.targets.Interface] = runtime.container.targets
+    act = runtime.container.project.actions
     if format in ("style", ""):
         table_info = Table(
             title="INFO",
@@ -86,6 +108,22 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
                 contacts += " " + " ".join([f'{k}:{v}' for k, v in contrib.socials.items()])
                 table_contributors.add_row(f"• {contrib.name}", contacts)
 
+        if act:
+            table_actions = Table(
+                title="ACTIONS",
+                title_style="bold cyan",
+                title_justify="left",
+                show_header=False,
+                show_edge=False,
+                show_lines=False,
+                box=None,
+            )
+            table_actions.add_column("Name", justify="left", style="bold", no_wrap=True)
+            table_actions.add_column("Description", justify="left", style="", no_wrap=True)
+            for n, a in runtime.container.project.actions.items():
+                d = (a.__doc__ or "").strip()
+                table_actions.add_row(f"• {n}", d)
+
         if tar:
             table_targets = Table(
                 title="TARGETS",
@@ -101,6 +139,9 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
             for t in tar:
                 table_targets.add_row(f"• {t.name}", t.description)
         core.globals.console.print(table_info)
+        if act:
+            core.globals.console.print()
+            core.globals.console.print(table_actions)
         if tar:
             core.globals.console.print()
             core.globals.console.print(table_targets)
@@ -118,14 +159,3 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
         core.globals.console.print_json(core.json.text(pro.info))
 
 
-@root.command(name='format', help="Format .unimake/*.py files")
-def prettier():
-    if not core.globals.paths.unimake.exists():
-        core.globals.console.print("[bold]No '.unimake' folder was found")
-        return
-    framework.system.Shell(
-        name="format",
-        cmd=[
-            "black", "-l", "100", "-t", "py311", "-W", "4", core.globals.paths.unimake
-        ]
-    ).sync()

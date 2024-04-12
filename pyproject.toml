@@ -40,7 +40,7 @@ line-length = 100
 
 
 [tool.poetry.scripts]
-unimake = 'umk:unimake'
+umk = 'umk.application:entrypoint'
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

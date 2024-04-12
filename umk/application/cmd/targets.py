@@ -2,13 +2,13 @@ import os
 
 import asyncclick
 
-from umk.unimake import root
-from umk.unimake.utils import ConfigableGroup
+from umk.application.root import root
+from umk.application.utils import ConfigableGroup
 
-if not os.environ.get('_UNIMAKE_COMPLETE', None):
+if not os.environ.get('_UMK_COMPLETE', None):
     from rich.table import Table
     from umk import runtime, core
-    from umk.unimake import utils
+    from umk.application import utils
 
 
 @root.group(cls=ConfigableGroup, help="Project targets management commands")

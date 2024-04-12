@@ -2,17 +2,18 @@ import os
 
 import asyncclick
 
-from umk.unimake import root
-from umk.unimake import utils
+from umk.application.root import root
+from umk.application.utils import ConfigableGroup
 
-if not os.environ.get('_UNIMAKE_COMPLETE', None):
+if not os.environ.get('_UMK_COMPLETE', None):
     from rich.table import Table
     from umk import runtime
     from umk import framework
     from umk import core
+    from umk.application import utils
 
 
-@root.group(cls=utils.ConfigableGroup, help="Remote environments management commands",)
+@root.group(cls=ConfigableGroup, help="Remote environments management commands",)
 @asyncclick.option('--name', '-n', default="", help="Remote environment name")
 @asyncclick.pass_context
 async def remote(ctx: asyncclick.Context, name: str, c: tuple[str], p: tuple[str], f: bool):
