@@ -80,5 +80,9 @@ def serializing(properties: Properties):
     result = []
     for prop in properties:
         result.append(prop.model_dump())
-
     return result
+
+
+@json.representer(Object)
+def serializing(obj: Object):
+    return obj.model_dump()

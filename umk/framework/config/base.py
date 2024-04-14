@@ -1,22 +1,27 @@
 from umk import core
-from umk.core.typings import TypeVar
+from umk.core.typings import TypeVar, Callable, Any
+from umk.framework.project import Interface as Project
 
 Value = str | int | bool | float
 ValueTypes = {str, int, bool, float}
-Config = core.Model
-Struct = TypeVar("Struct", bound=core.Model)
+Interface = core.Model
+Implementation = TypeVar("Implementation", bound=Interface)
 
 
-def register(factory):
+def register(klass: Implementation):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
-def preset(*, name: str = ""):
+def preset(
+    func: Callable[[Implementation], Any],
+    *,
+    name: str = ""
+):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
 
-def get() -> Struct:
+def get() -> Implementation:
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()

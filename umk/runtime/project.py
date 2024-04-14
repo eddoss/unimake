@@ -2,7 +2,7 @@ from umk import core
 from umk import framework
 from umk.core.typings import Type, Callable, Any
 from umk.framework import config, project
-from umk.runtime.container import utils
+from umk.runtime import utils
 
 
 class EntryDecorator(utils.Decorator):
@@ -56,7 +56,9 @@ class Project(core.Model):
 
     def release(self):
         if self.releaser is None:
-            core.globals.console.print(f"[bold]Release action was not registered !")
+            core.globals.console.print(
+                f"[bold]Project '{self.instance.info.name or self.instance.info.id}' has no [/][cyan bold]release[/] action !"
+            )
         else:
             utils.call(self.releaser, 0, 2, framework.config.get(), self.object)
 
@@ -84,14 +86,14 @@ class Project(core.Model):
         return self.decorator.entry.register(factory)
 
     def init(self):
-        framework.project.get = lambda: self.object
-        framework.project.release = lambda: self.release()
+        framework.project.get = lambda: self.instance
+        framework.project.release = self.release
         framework.project.releaser = self.decorator.release.register
         framework.project.empty = lambda f: self.entry(f, "empty", framework.project.Scratch)
         framework.project.golang = lambda f: self.entry(f, "golang", framework.project.Golang)
         framework.project.custom = lambda f: self.entry(f)
 
-    def setup(self, c: config.Config):
+    def setup(self, c: config.Interface):
         if not self.decorator.entry.registered:
             raise utils.NotRegisteredError(
                 "No project registration was found. Put one in the .unimake/project.py'"

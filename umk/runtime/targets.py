@@ -1,6 +1,6 @@
 from umk import framework, core
 from umk.core.typings import Generator
-from umk.runtime.container import utils
+from umk.runtime import utils
 
 
 class Targets(core.Model):
@@ -76,12 +76,19 @@ class Targets(core.Model):
         description="Project targets"
     )
 
+    def __iter__(self):
+        for t in self.items.values():
+            yield t
+
+    def __contains__(self, name: str):
+        return name in self.items
+
     def objects(self) -> Generator[framework.targets.Interface, None, None]:
         for item in self.items.values():
             yield item.object()
 
     def get(self, name: str, on_err=None) -> framework.targets.Interface:
-        return self._items.get(name, on_err)
+        return self.items.get(name, on_err)
 
     def run(self, *names: str):
         found = []
@@ -101,14 +108,14 @@ class Targets(core.Model):
         framework.targets.command = self.decorator.command.register
         framework.targets.go.binary = self.decorator.go_binary.register
 
-    def setup(self, c: framework.config.Config, p: framework.project.Interface):
+    def setup(self, c: framework.config.Interface, p: framework.project.Interface):
         def append(t: framework.targets.Interface):
             if t.name in self.items:
                 e = utils.ExistsError()
-                e.messages = f"Target '{target.name}' is already registered"
+                e.messages = f"Target '{t.name}' is already registered"
                 e.details.new(name="name", value=t.name, desc="Target name")
                 raise e
-            self.items[target.name] = target
+            self.items[t.name] = t
 
         for defer in self.decorator.function.defers:
             target = framework.targets.Function(

@@ -6,8 +6,7 @@ from umk.application.cmd import root
 from umk.application.utils import ConfigableCommand
 
 if not os.environ.get('_UMK_COMPLETE', None):
-    from rich.table import Table
-    from umk import runtime, framework, core
+    from umk import runtime, core
     from umk.application import utils
 
 
@@ -18,58 +17,70 @@ def config():
 
 @config.command(help="Remove saved config file")
 def clean():
-    if core.globals.paths.config.exists():
-        os.remove(core.globals.paths.config)
-        core.globals.console.print("[bold]Config file was removed")
-    else:
-        core.globals.console.print("[bold]Config file does not exists")
+    runtime.c.config.clean()
 
 
 @config.command(help="Save project config")
 @asyncclick.option("-C", required=False, type=str, multiple=True, help="Config entry override")
 @asyncclick.option("-P", required=False, type=str, multiple=True, help="Config preset to apply")
 def save(c: tuple[str], p: tuple[str]):
-    lo = runtime.LoadingOptions()
-    lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = list(p)
-    runtime.load(lo)
+    opt = runtime.Options()
+    opt.config.overrides = utils.parse_config_overrides(c)
+    opt.config.presets = list(p)
+    runtime.c.load(opt)
 
-    runtime.container.config.save()
+    runtime.c.config.save()
 
 
 @config.command(name="set", help="Write entry in the config file")
 @asyncclick.argument('values', required=True, nargs=-1)
 def write(values: tuple[str]):
-    lo = runtime.LoadingOptions()
-    lo.config.file = True
-    runtime.load(lo)
+    opt = runtime.Options()
+    opt.config.file = True
+    runtime.c.load(opt)
 
-    if not runtime.container.config.struct:
-        core.globals.console.print("[yellow bold]Could not found config ! Register one at first.")
-        core.globals.close()
+    entries = utils.parse_config_overrides(values)
+    runtime.c.config.write_entries(entries)
 
-    overrides = utils.parse_config_overrides(values)
-    for entry, value in overrides.items():
-        runtime.container.config.set(entry, value)
-    runtime.container.config.save()
-    core.globals.console.print("[green bold]Config successfully saved !")
+
+@config.command(help="Print config presets")
+@asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
+def presets(format: str):
+    opt = runtime.Options()
+    runtime.c.load(opt)
+
+    if not runtime.c.config.presets:
+        core.globals.console.print(f"[bold]Config presets not found !")
+        return
+
+    data = {name: func.__doc__ or "" for name, func in runtime.c.config.presets.items()}
+    if format == "style":
+        properties = core.Properties()
+        for name, desc in data.items():
+            properties.new(name=name, desc=desc, value=None)
+        printer = utils.PropertiesPrinter()
+        printer.print(properties, value=False)
+    elif format == "json":
+        core.globals.console.print_json(
+            json=core.json.text(data)
+        )
 
 
 @config.command(cls=ConfigableCommand, name='inspect', help="Print default config details")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
-    lo = runtime.LoadingOptions()
-    lo.config.file = f
-    lo.config.presets = list(p)
-    lo.config.overrides = utils.parse_config_overrides(c)
-    runtime.load(lo)
+    opts = runtime.Options()
+    opts.config.file = f
+    opts.config.presets = list(p)
+    opts.config.overrides = utils.parse_config_overrides(c)
+    runtime.c.load(opts)
 
-    struct = runtime.container.config.struct
-    if not struct:
+    conf = runtime.c.config
+    if not conf.instance:
         core.globals.console.print(f"[bold]Config: config not found, register one at first !")
         return
 
-    data = runtime.container.config.object()
+    data = conf.object()
     if format == "style":
         printer = utils.PropertiesPrinter()
         printer.print(data.properties)

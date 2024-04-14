@@ -143,7 +143,12 @@ def custom():
     raise NotImplemented()
 
 
-def find(name: str = "") -> Implementation:
+def find(name: str, on_err=None) -> Implementation:
+    # See implementation in runtime.Instance.implementation()
+    raise NotImplemented()
+
+
+def default(on_err=None) -> Implementation:
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 

@@ -51,6 +51,13 @@ class ExistsError(core.Error):
         self.details = details or self.details
 
 
+class NotFoundError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
+        super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
+
+
 class SignatureError(core.Error):
     def __init__(self, *messages: str, details: core.Properties = None):
         super().__init__(name=type(self).__name__.rstrip("Error"))
@@ -110,7 +117,6 @@ def raise_already_exists(*, messages: list[str], properties: core.Properties = N
     err = ExistsError()
     err.details = properties or core.Properties()
     err.messages = messages
-    raise err
 
 
 def call(func, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = None):

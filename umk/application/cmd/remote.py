@@ -17,55 +17,56 @@ if not os.environ.get('_UMK_COMPLETE', None):
 @asyncclick.option('--name', '-n', default="", help="Remote environment name")
 @asyncclick.pass_context
 async def remote(ctx: asyncclick.Context, name: str, c: tuple[str], p: tuple[str], f: bool):
-    lo = runtime.LoadingOptions()
-    lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = list(p)
-    lo.config.file = f
-    runtime.load(lo)
+    opt = runtime.Options()
+    opt.config.overrides = utils.parse_config_overrides(c)
+    opt.config.presets = list(p)
+    opt.config.file = f
+    runtime.c.load(opt)
 
-    ctx.ensure_object(dict)
-    ctx.obj["instance"] = utils.find_remote(name == "", name)
+    if ctx.invoked_subcommand != "ls":
+        ctx.ensure_object(dict)
+        ctx.obj["instance"] = runtime.c.find_remote(name == "", name)
 
 
 @remote.command(help="Build remote environment")
 @asyncclick.pass_context
 def build(ctx: asyncclick.Context):
-    instance = ctx.obj.get("instance")
+    instance: framework.remote.Interface = ctx.obj.get("instance")
     instance.build()
 
 
 @remote.command(help="Destroy remote environment")
 @asyncclick.pass_context
 def destroy(ctx: asyncclick.Context):
-    instance = ctx.obj.get("instance")
+    instance: framework.remote.Interface = ctx.obj.get("instance")
     instance.destroy()
 
 
 @remote.command(help="Start remote environment")
 @asyncclick.pass_context
 def up(ctx: asyncclick.Context):
-    instance = ctx.obj.get("instance")
+    instance: framework.remote.Interface = ctx.obj.get("instance")
     instance.up()
 
 
 @remote.command(help="Stop remote environment")
 @asyncclick.pass_context
 def down(ctx: asyncclick.Context):
-    instance = ctx.obj.get("instance")
+    instance: framework.remote.Interface = ctx.obj.get("instance")
     instance.down()
 
 
 @remote.command(help="Login remote environment")
 @asyncclick.pass_context
 def login(ctx: asyncclick.Context):
-    instance = ctx.obj.get("instance")
+    instance: framework.remote.Interface = ctx.obj.get("instance")
     instance.login()
 
 
 @remote.command(help="Open remote environment shell")
 @asyncclick.pass_context
 def shell(ctx: asyncclick.Context):
-    instance = ctx.obj.get("instance")
+    instance: framework.remote.Interface = ctx.obj.get("instance")
     instance.shell()
 
 
@@ -75,7 +76,7 @@ def ls():
     table.add_column("Name", justify="left", style="", no_wrap=True)
     table.add_column("Default", justify="center", style="", no_wrap=True)
     table.add_column("Description", justify="left", style="", no_wrap=True)
-    for rem in framework.remote.iterate():
+    for rem in runtime.c.remotes:
         default = ''
         if rem.default:
             default = 'x'

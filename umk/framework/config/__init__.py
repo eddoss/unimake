@@ -1,5 +1,5 @@
 from .base import Value
-from .base import Config
+from .base import Interface
 
 from .base import register
 from .base import preset

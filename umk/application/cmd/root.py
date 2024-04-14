@@ -20,33 +20,26 @@ async def root():
 @asyncclick.argument('names', required=True, nargs=-1)
 @asyncclick.pass_context
 def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
-    locally = not bool(remote or r)
+    opt = runtime.Options()
+    opt.config.overrides = utils.parse_config_overrides(c)
+    opt.config.presets = list(p)
+    opt.config.file = f
+    runtime.c.load(opt)
 
-    lo = runtime.LoadingOptions()
-    lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = list(p)
-    lo.config.file = f
-    runtime.load(lo)
-
-    if not locally:
-        rem = utils.find_remote(r, remote)
-        rem.execute(cmd=["unimake", "run"] + list(names))
-        ctx.exit()
-
-    runtime.container.targets.run(*names)
+    runtime.c.targets.run(*names)
 
 
 @root.command(cls=ConfigableCommand, name='inspect', help="Inspect project details")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
-    lo = runtime.LoadingOptions()
-    lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = list(p)
-    lo.config.file = f
-    runtime.load(lo)
+    opt = runtime.Options()
+    opt.config.overrides = utils.parse_config_overrides(c)
+    opt.config.presets = list(p)
+    opt.config.file = f
+    runtime.c.load(opt)
 
-    pro = runtime.container.project.object
-    tar = runtime.container.targets
+    pro = runtime.c.project.instance
+    tar = runtime.c.targets
     if format in ("style", ""):
         table_info = Table(
             title="INFO",
@@ -118,18 +111,11 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
 @asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
 @asyncclick.pass_context
 def release(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool):
-    locally = not bool(remote or r)
-
-    lo = runtime.LoadingOptions()
-    lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = list(p)
-    lo.config.file = f
-    runtime.load(lo)
-
-    if not locally:
-        rem = utils.find_remote(r, remote)
-        rem.execute(cmd=["unimake", "release"])
-        ctx.exit()
+    opt = runtime.Options()
+    opt.config.overrides = utils.parse_config_overrides(c)
+    opt.config.presets = list(p)
+    opt.config.file = f
+    runtime.c.load(opt)
 
     framework.project.release()
 

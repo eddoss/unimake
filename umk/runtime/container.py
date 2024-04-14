@@ -3,9 +3,10 @@ from importlib import util as importer
 from pathlib import Path
 
 from umk import framework, core
-from umk.runtime.loading.config import Config
-from umk.runtime.loading.project import Project
-from umk.runtime.loading.targets import Targets
+from umk.runtime.config import Config
+from umk.runtime.project import Project
+from umk.runtime.targets import Targets
+from umk.runtime.remotes import Remote
 
 
 class Options(core.Model):
@@ -39,25 +40,48 @@ class Container:
         self.config = Config()
         self.project = Project()
         self.targets = Targets()
+        self.remotes = Remote()
 
     def load(self, options: Options):
         root = options.root.expanduser().resolve().absolute()
         sys.path.insert(0, root.as_posix())
 
-        config_found = (root / "config.py").exists()
+        with_config = (root / "config.py").exists()
 
         self.config.init()
         self.project.init()
         self.targets.init()
+        self.remotes.init()
 
-        if config_found:
+        if with_config:
             self.script(root, "config")
         self.script(root, "project")
+        self.script(root, "remotes")
 
-        if config_found:
+        if with_config:
             self.config.setup(options.config)
         self.project.setup(self.config.instance)
         self.targets.setup(self.config.instance, self.project.instance)
+        self.remotes.setup(self.config.instance, self.project.instance)
+
+    def find_remote(self, default: bool, specific: str) -> framework.remote.Interface:
+        if default:
+            result = self.remotes.get(self.remotes.default)
+            if not result:
+                core.globals.error_console.print(
+                    'Failed to find default remote environment! '
+                    'Please specify it in the .unimake/remotes.py'
+                )
+                core.globals.close(-1)
+            return result
+        if specific:
+            result = self.remotes.get(specific)
+            if not result:
+                core.globals.console.print(
+                    f"Failed to find remote environment '{specific}'! "
+                    f"Please create it in the .unimake/remotes.py"
+                )
+                core.globals.close(-1)
 
     def script(self, root: Path, name: str):
         file = root / f'{name}.py'

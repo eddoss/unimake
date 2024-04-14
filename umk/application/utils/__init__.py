@@ -8,30 +8,45 @@ if not os.environ.get('_UMK_COMPLETE', None):
 
     from umk import core
     from umk import framework
+    from umk import runtime
     from umk.application.utils.printers import PropertiesPrinter
 
 
-def find_remote(default: bool, specific: str) -> 'framework.remote.Interface':
-    result = framework.remote.find("" if default else specific)
-    if default and not result:
-        core.globals.error_console.print(
-            'Failed to find default remote environment! '
-            'Please specify it in the .unimake/remotes.py'
-        )
-        core.globals.close(-1)
-    elif not result and specific:
-        core.globals.console.print(
-            f"Failed to find remote environment '{specific}'! "
-            f"Please create it in the .unimake/remotes.py"
-        )
-        core.globals.close(-1)
-    return result
+    def forward(container: runtime.Container, default: bool, specific: str, cmd: list[str]):
+        if not default and not specific:
+            return
+        rem: framework.remote.Interface = container.find_remote(default, specific)
+        # TODO Parse sys.argv and run it in the remote environment
+        print("Forwarding is not implemented !")
+        core.globals.close(0)
 
 
-def subcmd(name: str) -> list[str]:
-    for i, arg in enumerate(sys.argv):
-        if arg == name:
-            return sys.argv[i:]
+    def subcmd(name: str) -> list[str]:
+        for i, arg in enumerate(sys.argv):
+            if arg == name:
+                return sys.argv[i:]
+
+
+    def parse_config_overrides(raw: None | tuple[str] = None) -> dict[str, str]:
+        if not raw:
+            return {}
+        result = {}
+        for entry in raw:
+            name = ""
+            i = 0
+            for i, sym in enumerate(entry):
+                if sym != "=":
+                    name += sym
+                # TODO Validate entry symbols
+                else:
+                    break
+                if i > len(entry):
+                    # TODO Invalid syntax
+                    print(f"Invalid config entry: {entry}", file=sys.stderr)
+                    core.globals.close(-1)
+            value = entry[i+1:]
+            result[name] = value
+        return result
 
 
 class ConfigableCommand(asyncclick.Command):
@@ -71,25 +86,3 @@ class ConfigableGroup(asyncclick.Group):
             asyncclick.Option(param_decls=["-P"], required=False, type=str, multiple=True, help="Config preset to apply"),
             asyncclick.Option(param_decls=["-F"], is_flag=True, help="Load config from file")
         ]
-
-
-def parse_config_overrides(raw: None | tuple[str] = None) -> dict[str, str]:
-    if not raw:
-        return {}
-    result = {}
-    for entry in raw:
-        name = ""
-        i = 0
-        for i, sym in enumerate(entry):
-            if sym != "=":
-                name += sym
-            # TODO Validate entry symbols
-            else:
-                break
-            if i > len(entry):
-                # TODO Invalid syntax
-                print(f"Invalid config entry: {entry}", file=sys.stderr)
-                core.globals.close(-1)
-        value = entry[i+1:]
-        result[name] = value
-    return result

@@ -1,10 +1,12 @@
+import os
+
 from pydantic import ValidationError
 
 from umk import core
 from umk import framework
 from umk.core.typings import Callable, Any
 from umk.framework.filesystem import Path
-from umk.runtime.container import utils
+from umk.runtime import utils
 
 
 class Config(core.Model):
@@ -29,7 +31,7 @@ class Config(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="class",
-                    base=framework.config.Config,
+                    base=framework.config.Interface,
                 ),
                 module="config",
                 single=True,
@@ -59,11 +61,11 @@ class Config(core.Model):
         default_factory=Decorators,
         description="Project decorators"
     )
-    instance: framework.config.Config | None = core.Field(
+    instance: framework.config.Interface | None = core.Field(
         default=None,
         description="Config instance"
     )
-    presets: dict[str, Callable[[framework.config.Config], Any]] = core.Field(
+    presets: dict[str, Callable[[framework.config.Interface], Any]] = core.Field(
         default_factory=dict,
         description="Config presets"
     )
@@ -106,18 +108,36 @@ class Config(core.Model):
             result.properties.add(prop)
         return result
 
-    def save(self, path: Path = core.globals.paths.config):
+    def save(self):
         if self.instance:
-            core.json.save(self.instance, path, 2)
+            core.json.save(self.instance, core.globals.paths.config, 2)
+            core.globals.console.print("[bold]Config: file [green]successfully[/] saved !")
         else:
             core.globals.console.print("[bold]Config: failed to save config. It is not registered !")
+
+    def write_entries(self, entries: dict[str, framework.config.Value]):
+        if not self.instance:
+            core.globals.console.print("[yellow bold]Config: failed to write entries, config was not registered !")
+            core.globals.close()
+
+        for entry, value in entries.items():
+            self.set(entry, value)
+            core.json.save(self.instance, core.globals.paths.config, 2)
+        core.globals.console.print("[bold]Config: entries [green]successfully[/] set !")
+
+    def clean(self):
+        if core.globals.paths.config.exists():
+            os.remove(core.globals.paths.config)
+            core.globals.console.print("[bold]Config: file [green]successfully[/] removed !")
+        else:
+            core.globals.console.print("[bold]Config: file does not exists !")
 
     def load(self, path: Path = core.globals.paths.config):
         if not self.instance:
             core.globals.console.print("[bold yellow]Config: failed to load config. It is not registered !")
             return
         if not path.exists():
-            core.globals.console.print("[bold yellow]Config: failed to load config. File does not exists !")
+            core.globals.console.print("[bold yellow]Config: config file not found !")
             return
 
         data = core.json.load(path)

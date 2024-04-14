@@ -16,33 +16,25 @@ if not os.environ.get('_UMK_COMPLETE', None):
 @asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
 @asyncclick.pass_context
 def target(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool):
-    locally = not bool(remote or r)
-
-    lo = runtime.LoadingOptions()
-    lo.config.overrides = utils.parse_config_overrides(c)
-    lo.config.presets = list(p)
-    lo.config.file = f
-    runtime.load(lo)
-
-    if not locally:
-        rem = utils.find_remote(r, remote)
-        rem.execute(cmd=["unimake", "target"] + utils.subcmd(ctx.invoked_subcommand))
-        ctx.exit()
+    opt = runtime.Options()
+    opt.config.overrides = utils.parse_config_overrides(c)
+    opt.config.presets = list(p)
+    opt.config.file = f
+    runtime.c.load(opt)
 
 
 @target.command(help="List project targets")
 @asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
 def ls(format: str):
-    tars = runtime.container.targets
     if format == "style":
         table = Table(show_header=True, show_edge=True, show_lines=True)
         table.add_column("Name", justify="left", style="", no_wrap=True)
         table.add_column("Description", justify="left", style="", no_wrap=True)
-        for t in tars:
+        for t in runtime.c.targets:
             table.add_row(t.name, t.description)
         core.globals.console.print(table)
     elif format == "json":
-        data = [t.object().model_dump() for t in tars]
+        data = [t.object().model_dump() for t in runtime.c.targets]
         core.globals.console.print_json(core.json.text(data))
 
 
@@ -52,13 +44,13 @@ def ls(format: str):
 def inspect(format: str, names: tuple[str]):
     found = []
     for name in names:
-        if name not in runtime.container.targets:
+        if name not in runtime.c.targets:
             core.globals.console.print(f"[yellow bold]Target '{name}' not found")
         else:
             found.append(name)
     objects = []
     for name in found:
-        o = runtime.container.targets.get(name).object()
+        o = runtime.c.targets.get(name).object()
         objects.append(o)
 
     if format == "style":
