@@ -13,11 +13,7 @@ def register(klass: Implementation):
     raise NotImplemented()
 
 
-def preset(
-    func: Callable[[Implementation], Any],
-    *,
-    name: str = ""
-):
+def preset(*, name: str = ""):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
