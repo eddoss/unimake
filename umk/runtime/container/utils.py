@@ -1,7 +1,7 @@
 import inspect
 
 from umk import core
-from umk.core.typings import Callable, Any
+from umk.core.typings import Callable, Any, Type
 
 
 class Defer:
@@ -16,41 +16,67 @@ class Defer:
         return call(self.func, min, max, _0, _1, _2)
 
 
-class SourceModuleError(core.Error):
-    def __init__(self):
+class SourceError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
         super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
 
 
-class NotFunctionError(core.Error):
-    def __init__(self):
+class FunctionError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
         super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
 
 
-class NotClassError(core.Error):
-    def __init__(self):
+class ClassError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
         super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
 
 
-class NotSubclassError(core.Error):
-    def __init__(self):
+class SubclassError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
         super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
 
 
-class AlreadyExistsError(core.Error):
-    def __init__(self):
+class ExistsError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
         super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
 
 
-class InvalidArgumentsCountError(core.Error):
-    def __init__(self):
+class SignatureError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
         super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
+
+
+class RequirementError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
+        super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
+
+
+class NotRegisteredError(core.Error):
+    def __init__(self, *messages: str, details: core.Properties = None):
+        super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = list(messages)
+        self.details = details or self.details
 
 
 def validate_source_module(*, script: str, stack: int, messages: list[str], properties: core.Properties = None):
     frame = inspect.stack()[stack]
     name = f".unimake/{script}.py"
     if not frame.filename.endswith(name):
-        err = SourceModuleError()
+        err = SourceError()
         err.details = properties or core.Properties()
         err.messages = [m.replace("@script", name) for m in messages]
         raise err
@@ -58,7 +84,7 @@ def validate_source_module(*, script: str, stack: int, messages: list[str], prop
 
 def validate_only_function(*, factory, messages: list[str], properties: core.Properties = None):
     if not inspect.isfunction(factory):
-        err = NotFunctionError()
+        err = FunctionError()
         err.details = properties or core.Properties()
         err.messages = messages
         raise err
@@ -66,7 +92,7 @@ def validate_only_function(*, factory, messages: list[str], properties: core.Pro
 
 def validate_only_class(*, factory, messages: list[str], properties: core.Properties = None):
     if not inspect.isclass(factory):
-        err = NotClassError()
+        err = ClassError()
         err.details = properties or core.Properties()
         err.messages = messages
         raise err
@@ -74,14 +100,14 @@ def validate_only_class(*, factory, messages: list[str], properties: core.Proper
 
 def validate_only_subclass(*, obj, base, messages: list[str], properties: core.Properties = None):
     if not issubclass(type(obj), base):
-        err = NotSubclassError()
+        err = SubclassError()
         err.details = properties or core.Properties()
         err.messages = messages
         raise err
 
 
 def raise_already_exists(*, messages: list[str], properties: core.Properties = None):
-    err = AlreadyExistsError()
+    err = ExistsError()
     err.details = properties or core.Properties()
     err.messages = messages
     raise err
@@ -89,9 +115,14 @@ def raise_already_exists(*, messages: list[str], properties: core.Properties = N
 
 def call(func, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = None):
     sig = len(inspect.signature(func).parameters)
-    if sig < min or sig > max:
+    if sig < min:
         core.globals.error_console.print(
-            f"Failed to call '{func.__name__}': arguments valid range is \[min={min} max={max}], but {sig} required w"
+            f"Failed to call '{func.__name__}': arguments valid range is \[min={min}], but {sig} required"
+        )
+        core.globals.close(-1)
+    if max > -1 and sig > max:
+        core.globals.error_console.print(
+            f"Failed to call '{func.__name__}': arguments valid range is \[min={min} max={max}], but {sig} required"
         )
         core.globals.close(-1)
     if sig == 0:
@@ -102,3 +133,134 @@ def call(func, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = Non
         return func(_0, _1)
     elif sig == 3:
         return func(_0, _1, _2)
+
+
+class Decorator(core.Model):
+    class OnErrors(core.Model):
+        module: core.Error = core.Field(
+            default_factory=core.Error,
+            description="Error on invalid module"
+        )
+        subject: core.Error = core.Field(
+            default_factory=core.Error,
+            description="Error on invalid subject"
+        )
+        single: core.Error = core.Field(
+            default_factory=core.Error,
+            description="Error on multiple usage"
+        )
+        sig: core.Error = core.Field(
+            default_factory=core.Error,
+            description="Error on invalid signature"
+        )
+        base: core.Error = core.Field(
+            default_factory=core.Error,
+            description="Error on invalid base type of the input class"
+        )
+
+    class Input(core.Model):
+        class Signature(core.Model):
+            min: int = core.Field(
+                default=0,
+                description="Minimum arguments count"
+            )
+            max: int = core.Field(
+                default=-1,
+                description="Maximum arguments count"
+            )
+        subject: str = core.Field(
+            default="any",
+            description="Which subject must be used this decorator with (class/function/any)"
+        )
+        base: tuple[Type] | Type | None = core.Field(
+            default=None,
+            description="Input class base type"
+        )
+        sig: Signature = core.Field(
+            default_factory=Signature,
+            description="Signature constraints"
+        )
+
+    defers: list[Defer] = core.Field(
+        default_factory=list,
+        description="Defer function"
+    )
+    stack: int = core.Field(
+        default=2,
+        description="Stack level to validate on"
+    )
+    module: str = core.Field(
+        default="",
+        description="Which module this decorator is allowed to use in"
+    )
+    target: str = core.Field(
+        default="",
+        description="Framework target function name"
+    )
+    errors: OnErrors = core.Field(
+        default_factory=OnErrors,
+        description="Errors for each case"
+    )
+    single: bool = core.Field(
+        default=False,
+        description="Reject multiple registration"
+    )
+    skip: bool = core.Field(
+        default=False,
+        description="Skip registration"
+    )
+    input: Input = core.Field(
+        default_factory=Input,
+        description="Input function/class constraints"
+    )
+    registered: bool = core.Field(
+        default=False,
+        description="Is register was called ?"
+    )
+
+    def init(self, **kwargs):
+        pass
+
+    def validate(self, f):
+        frame = inspect.stack()[self.stack]
+        script = f".unimake/{self.module}.py"
+        if not frame.filename.endswith(script):
+            raise self.errors.module
+        if self.single and self.registered:
+            raise self.errors.single
+        if self.input.subject == "class":
+            if not inspect.isclass(f):
+                raise self.errors.subject
+            if self.input.base and not issubclass(f, self.input.base):
+                raise self.errors.base
+        elif self.subject == "function":
+            if not inspect.isfunction(f):
+                raise self.errors.subject
+        sig = len(inspect.signature(f).parameters)
+        if sig < self.sig.min:
+            raise self.errors.signature
+        if self.sig.max > 0:
+            if sig > self.sig.max:
+                raise self.errors.sig
+
+    @core.overload
+    def register(self, f): ...
+
+    @core.overload
+    def register(self, f, **kwargs): ...
+
+    def register(self, f=None, **kwargs):
+        if f is not None:
+            if not self.skip:
+                self.defers.append(Defer(func=f))
+                self.registered = True
+            return f
+
+        def dec(fun):
+            # parse kwargs
+            if not self.skip:
+                self.defers.append(Defer(func=fun, **kwargs))
+                self.registered = True
+            return fun
+
+        return dec

@@ -1,7 +1,8 @@
 import copy
 
 from umk import core
-from umk.framework.adapters import go
+from umk.framework.adapters.go import Go as Tool
+from umk.framework.adapters.go import Build as GoBuild
 from umk.framework.targets.interface import Interface
 
 
@@ -12,12 +13,12 @@ class GolangBinary(Interface):
             description="Port to run delve on"
         )
 
-    tool: go.Go = core.Field(
-        default_factory=go.Go,
+    tool: Tool = core.Field(
+        default_factory=Tool,
         description="Golang tool object"
     )
-    build: go.Build = core.Field(
-        default_factory=go.Build,
+    build: GoBuild = core.Field(
+        default_factory=GoBuild,
         description="Build options"
     )
     debug: Debug = core.Field(
@@ -27,7 +28,7 @@ class GolangBinary(Interface):
 
     @staticmethod
     @core.typeguard
-    def new(*, name: str, tool: go.Go, build: go.Build, port: int = 2345, label: str = "", description: str = "") -> tuple['GolangBinary', 'GolangBinary']:
+    def new(*, name: str, tool: Tool, build: GoBuild, port: int = 2345, label: str = "", description: str = "") -> tuple['GolangBinary', 'GolangBinary']:
         base = GolangBinary(
             name=name.strip(),
             label=label.strip(),
@@ -65,3 +66,10 @@ class GolangBinary(Interface):
 
     def run(self, **kwargs):
         self.tool.build(self.build)
+
+
+class go:
+    @staticmethod
+    def binary(func):
+        # See implementation in runtime.Instance.implementation()
+        raise NotImplemented()

@@ -46,11 +46,11 @@ class Error(Exception):
         }
 
     @typeguard
-    def __init__(self, name: str, *messages: str):
+    def __init__(self, name: str = "", *messages: str, details: Properties = None):
         super().__init__()
-        self._messages = list(messages)
-        self._details = Properties()
         self._name = name
+        self._messages = list(messages)
+        self._details = details or Properties()
 
     def __str__(self):
         return " ".join(self.messages)
