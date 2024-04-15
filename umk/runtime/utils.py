@@ -79,46 +79,6 @@ class NotRegisteredError(core.Error):
         self.details = details or self.details
 
 
-def validate_source_module(*, script: str, stack: int, messages: list[str], properties: core.Properties = None):
-    frame = inspect.stack()[stack]
-    name = f".unimake/{script}.py"
-    if not frame.filename.endswith(name):
-        err = SourceError()
-        err.details = properties or core.Properties()
-        err.messages = [m.replace("@script", name) for m in messages]
-        raise err
-
-
-def validate_only_function(*, factory, messages: list[str], properties: core.Properties = None):
-    if not inspect.isfunction(factory):
-        err = FunctionError()
-        err.details = properties or core.Properties()
-        err.messages = messages
-        raise err
-
-
-def validate_only_class(*, factory, messages: list[str], properties: core.Properties = None):
-    if not inspect.isclass(factory):
-        err = ClassError()
-        err.details = properties or core.Properties()
-        err.messages = messages
-        raise err
-
-
-def validate_only_subclass(*, obj, base, messages: list[str], properties: core.Properties = None):
-    if not issubclass(type(obj), base):
-        err = SubclassError()
-        err.details = properties or core.Properties()
-        err.messages = messages
-        raise err
-
-
-def raise_already_exists(*, messages: list[str], properties: core.Properties = None):
-    err = ExistsError()
-    err.details = properties or core.Properties()
-    err.messages = messages
-
-
 def call(func, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = None):
     sig = len(inspect.signature(func).parameters)
     if sig < min:
@@ -139,6 +99,22 @@ def call(func, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = Non
         return func(_0, _1)
     elif sig == 3:
         return func(_0, _1, _2)
+
+
+# def cpf(func):
+#     """Based on http://stackoverflow.com/a/6528148/190597 (Glenn Maynard)"""
+#     if inspect.isclass(func):
+#         return func
+#     result = types.FunctionType(
+#         code=func.__code__,
+#         globals=func.__globals__,
+#         name=func.__name__,
+#         argdefs=func.__defaults__,
+#         closure=func.__closure__
+#     )
+#     result = functools.update_wrapper(result, func)
+#     result.__kwdefaults__ = func.__kwdefaults__
+#     return result
 
 
 class Decorator(core.Model):
@@ -258,6 +234,7 @@ class Decorator(core.Model):
     def register(self, f=None, **kwargs):
         if f is not None:
             if not self.skip:
+                # self.defers.append(Defer(func=cpf(f)))
                 self.defers.append(Defer(func=f))
                 self.registered = True
             return f
@@ -265,6 +242,7 @@ class Decorator(core.Model):
         def dec(fun):
             # parse kwargs
             if not self.skip:
+                # self.defers.append(Defer(func=cpf(fun), **kwargs))
                 self.defers.append(Defer(func=fun, **kwargs))
                 self.registered = True
             return fun

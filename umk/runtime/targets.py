@@ -51,6 +51,22 @@ class Targets(core.Model):
                 )
             ),
         )
+        go_mod: utils.Decorator = core.Field(
+            description="Decorator of the target 'go.mod'",
+            default_factory=lambda: utils.Decorator(
+                stack=2,
+                input=utils.Decorator.Input(
+                    subject="function",
+                    sig=utils.Decorator.Input.Signature(min=1)
+                ),
+                module="targets",
+                errors=utils.Decorator.OnErrors(
+                    module=utils.SourceError("Failed to register target 'go.mod' outside of the .unimake/targets.py"),
+                    subject=utils.FunctionError("Failed to register target 'go.mod'. Use 'umk.framework.targets.go.binary' with functions"),
+                    sig=utils.SignatureError("Failed to register target 'go.mod'. Function must accept 1 argument at least"),
+                )
+            ),
+        )
         command: utils.Decorator = core.Field(
             description="Decorator of the target 'command'",
             default_factory=lambda: utils.Decorator(
@@ -126,6 +142,7 @@ class Targets(core.Model):
         framework.target.command = self.decorator.command.register
         framework.target.packages = self.decorator.packages.register
         framework.target.go.binary = self.decorator.go_binary.register
+        framework.target.go.mod = self.decorator.go_mod.register
 
     def setup(self, c: framework.config.Interface, p: framework.project.Interface):
         def append(t: framework.target.Interface):
@@ -165,6 +182,11 @@ class Targets(core.Model):
         for defer in self.decorator.command.defers:
             target = framework.target.Command()
             sig = self.decorator.go_binary.input.sig
+            defer(sig.min, sig.max, target, c, p)
+            append(target)
+        for defer in self.decorator.go_mod.defers:
+            target = framework.target.GolangMod()
+            sig = self.decorator.go_mod.input.sig
             defer(sig.min, sig.max, target, c, p)
             append(target)
         for defer in self.decorator.packages.defers:

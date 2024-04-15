@@ -48,6 +48,8 @@ class GolangBinary(Interface):
         debug.label += " (debug)"
         debug.build.flags.gc.append('all=-N')
         debug.build.flags.gc.append('-l')
+        if debug.description:
+            debug.description += " (with debug info)"
 
         release = copy.deepcopy(base)
         release.name = name + ".release"

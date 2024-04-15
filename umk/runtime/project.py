@@ -60,7 +60,7 @@ class Project(core.Model):
                 f"[bold]Project '{self.instance.info.name or self.instance.info.id}' has no [/][cyan bold]release[/] action !"
             )
         else:
-            utils.call(self.releaser, 0, 2, framework.config.get(), self.object)
+            utils.call(self.releaser, 0, 2, framework.config.get(), self.instance)
 
     def entry(self, factory, target: str = "custom", klass: Type | None = None):
         self.decorator.entry.target = target
@@ -75,13 +75,13 @@ class Project(core.Model):
                 "Failed to register project. Entry must be based on umk.framework.project.Interface"
             )
         else:
-            self.decorator.entry.subject = "function"
-            self.decorator.entry.sig.min = 1
+            self.decorator.entry.input.subject = "function"
+            self.decorator.entry.input.sig.min = 1
             self.decorator.entry.errors.sig = utils.SignatureError(
-                f"Failed to register project. Function '{self.decorator.entry.defers[0].func.__name__}' must accept instance"
+                f"Failed to register project. Function must accept project instance"
             )
             self.decorator.entry.errors.subject = utils.FunctionError(
-                f"Failed to register project. Use 'umk.framework.project.{self.target} with functions"
+                f"Failed to register project. Use 'umk.framework.project.{self.decorator.entry.target} with functions"
             )
         return self.decorator.entry.register(factory)
 
