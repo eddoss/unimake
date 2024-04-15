@@ -110,6 +110,6 @@ class go:
         raise NotImplemented()
 
     @staticmethod
-    def mod():
+    def mod(func):
         # See implementation in runtime.Instance.implementation()
         raise NotImplemented()

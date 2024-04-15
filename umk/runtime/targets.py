@@ -67,6 +67,24 @@ class Targets(core.Model):
                 )
             ),
         )
+        packages: utils.Decorator = core.Field(
+            description="Decorator of the target 'packages'",
+            default_factory=lambda: utils.Decorator(
+                stack=2,
+                input=utils.Decorator.Input(
+                    subject="function",
+                    sig=utils.Decorator.Input.Signature(min=1)
+                ),
+                module="targets",
+                errors=utils.Decorator.OnErrors(
+                    module=utils.SourceError("Failed to register target 'packages' outside of the .unimake/targets.py"),
+                    subject=utils.FunctionError(
+                        "Failed to register target 'command'. Use 'umk.framework.targets.packages' with functions"),
+                    sig=utils.SignatureError(
+                        "Failed to register target 'packages'. Function must accept 1 argument at least"),
+                )
+            ),
+        )
     decorator: Decorators = core.Field(
         default_factory=Decorators,
         description="Targets decorators"
@@ -106,6 +124,7 @@ class Targets(core.Model):
         framework.target.function = self.decorator.function.register
         framework.target.custom = self.decorator.custom.register
         framework.target.command = self.decorator.command.register
+        framework.target.packages = self.decorator.packages.register
         framework.target.go.binary = self.decorator.go_binary.register
 
     def setup(self, c: framework.config.Interface, p: framework.project.Interface):
@@ -146,6 +165,11 @@ class Targets(core.Model):
         for defer in self.decorator.command.defers:
             target = framework.target.Command()
             sig = self.decorator.go_binary.input.sig
+            defer(sig.min, sig.max, target, c, p)
+            append(target)
+        for defer in self.decorator.packages.defers:
+            target = framework.target.SystemPackages()
+            sig = self.decorator.packages.input.sig
             defer(sig.min, sig.max, target, c, p)
             append(target)
         for defer in self.decorator.custom.defers:
