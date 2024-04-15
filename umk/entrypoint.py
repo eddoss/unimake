@@ -3,7 +3,10 @@ import os
 
 from umk.application import cmd
 
-if os.environ.get('_UMK_COMPLETE') or os.getenv("UMK_UNSAFE"):
+com = "_UMK_COMPLETE" in os.environ
+uns = "UMK_UNSAFE" in os.environ
+
+if com or uns:
     asyncio.run(cmd.root())
 else:
     try:
