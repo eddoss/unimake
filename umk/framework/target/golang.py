@@ -1,9 +1,10 @@
 import copy
 
 from umk import core
+from umk.framework.filesystem import Path
 from umk.framework.adapters.go import Go as Tool
 from umk.framework.adapters.go import Build as GoBuild
-from umk.framework.targets.interface import Interface
+from umk.framework.target.interface import Interface
 
 
 class GolangBinary(Interface):
@@ -59,7 +60,7 @@ class GolangBinary(Interface):
 
     def object(self) -> core.Object:
         result = super().object()
-        result.type = "Target.GolangBinary"
+        result.type = "Target.Golang.Binary"
         result.properties.new("Tool", self.tool.shell.cmd, "Golang tool object")
         result.properties.new("Build", " ".join(self.build.serialize()), "Build options")
         return result
@@ -68,8 +69,47 @@ class GolangBinary(Interface):
         self.tool.build(self.build)
 
 
+class GolangMod(Interface):
+    tool: Tool = core.Field(
+        default_factory=Tool,
+        description="Go tool object"
+    )
+    path: Path | None = core.Field(
+        default=None,
+        description="Path to directory with go.mod"
+    )
+    compat: str = core.Field(
+        default="",
+        description="Preserves any additional checksums (see 'go help mod tidy')"
+    )
+    vendor: bool = core.Field(
+        default=False,
+        description="Vendors downloaded packages"
+    )
+
+    def run(self, **kwargs):
+        self.tool.shell.workdir = self.path
+        self.tool.mod.tidy(compat=self.compat)
+        if self.vendor:
+            self.tool.mod.vendor()
+
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "Target.Golang.Mod"
+        result.properties.new("Tool", self.tool.shell.cmd, "Golang tool object")
+        result.properties.new("Path", self.path, "Directory with go.mod")
+        result.properties.new("Compat", self.compat, desc="Preserves any additional checksums (see 'go help mod tidy')")
+        result.properties.new("Vendor", self.vendor, "Vendors packages or not")
+        return result
+
+
 class go:
     @staticmethod
     def binary(debug=True):
+        # See implementation in runtime.Instance.implementation()
+        raise NotImplemented()
+
+    @staticmethod
+    def mod():
         # See implementation in runtime.Instance.implementation()
         raise NotImplemented()

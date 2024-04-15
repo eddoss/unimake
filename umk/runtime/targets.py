@@ -12,7 +12,7 @@ class Targets(core.Model):
                 module="targets",
                 input=utils.Decorator.Input(
                     subject="class",
-                    base=framework.targets.Interface,
+                    base=framework.target.Interface,
                 ),
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register custom target outside of the .unimake/targets.py"),
@@ -71,7 +71,7 @@ class Targets(core.Model):
         default_factory=Decorators,
         description="Targets decorators"
     )
-    items: dict[str, framework.targets.Interface] = core.Field(
+    items: dict[str, framework.target.Interface] = core.Field(
         default_factory=dict,
         description="Project targets"
     )
@@ -83,11 +83,11 @@ class Targets(core.Model):
     def __contains__(self, name: str):
         return name in self.items
 
-    def objects(self) -> Generator[framework.targets.Interface, None, None]:
+    def objects(self) -> Generator[framework.target.Interface, None, None]:
         for item in self.items.values():
             yield item.object()
 
-    def get(self, name: str, on_err=None) -> framework.targets.Interface:
+    def get(self, name: str, on_err=None) -> framework.target.Interface:
         return self.items.get(name, on_err)
 
     def run(self, *names: str):
@@ -102,14 +102,14 @@ class Targets(core.Model):
             target.run(p=framework.project.get(), c=framework.config.get())
 
     def init(self):
-        framework.targets.run = self.run
-        framework.targets.function = self.decorator.function.register
-        framework.targets.custom = self.decorator.custom.register
-        framework.targets.command = self.decorator.command.register
-        framework.targets.go.binary = self.decorator.go_binary.register
+        framework.target.run = self.run
+        framework.target.function = self.decorator.function.register
+        framework.target.custom = self.decorator.custom.register
+        framework.target.command = self.decorator.command.register
+        framework.target.go.binary = self.decorator.go_binary.register
 
     def setup(self, c: framework.config.Interface, p: framework.project.Interface):
-        def append(t: framework.targets.Interface):
+        def append(t: framework.target.Interface):
             if t.name in self.items:
                 e = utils.ExistsError()
                 e.messages.append(f"Target '{t.name}' is already registered")
@@ -118,7 +118,7 @@ class Targets(core.Model):
             self.items[t.name] = t
 
         for defer in self.decorator.function.defers:
-            target = framework.targets.Function(
+            target = framework.target.Function(
                 name=defer.args.get("name", defer.func.__name__),
                 description=defer.args.get("description", (defer.func.__doc__ or "").strip()),
                 label=defer.args.get("label", ""),
@@ -126,12 +126,12 @@ class Targets(core.Model):
             )
             append(target)
         for defer in self.decorator.go_binary.defers:
-            target = framework.targets.GolangBinary()
+            target = framework.target.GolangBinary()
             sig = self.decorator.go_binary.input.sig
             with_debug = defer.args.get("debug", True)
             defer(sig.min, sig.max, target, c, p)
             if with_debug:
-                d, r = framework.targets.GolangBinary.new(
+                d, r = framework.target.GolangBinary.new(
                     name=target.name,
                     label=target.label,
                     description=target.description,
@@ -144,7 +144,7 @@ class Targets(core.Model):
             else:
                 append(target)
         for defer in self.decorator.command.defers:
-            target = framework.targets.Command()
+            target = framework.target.Command()
             sig = self.decorator.go_binary.input.sig
             defer(sig.min, sig.max, target, c, p)
             append(target)

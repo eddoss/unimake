@@ -8,4 +8,5 @@ from .interface import command
 from .interface import custom
 
 from .golang import GolangBinary
+from .golang import GolangMod
 from .golang import go

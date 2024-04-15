@@ -6,4 +6,4 @@ from . import dependencies
 from . import project
 from . import filesystem as fs
 from . import config
-from . import targets
+from . import target
