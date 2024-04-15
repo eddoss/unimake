@@ -1,8 +1,7 @@
 import string
 
 from umk import core
-from umk.core.typings import Callable, TypeVar
-from umk.framework import dependencies
+from umk.core.typings import TypeVar
 from umk.framework import utils
 from umk.framework.filesystem import Path
 
@@ -126,7 +125,6 @@ class Layout(core.Model):
 class Interface:
     def __init__(self):
         self.info: Info = Info()
-        self.deps: dependencies.Container = dependencies.Container()
         self.layout: Layout = Layout()
 
     def release(self):
