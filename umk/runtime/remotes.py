@@ -114,7 +114,7 @@ class Remote(core.Model):
         def append(r: framework.remote.Interface):
             if r.name in self.items:
                 e = utils.ExistsError()
-                e.messages = f"Remote environment '{r.name}' is already registered"
+                e.messages.append(f"Remote environment '{r.name}' is already registered")
                 e.details.new(name="name", value=r.name, desc="Remote environment name")
                 raise e
             if r.default:

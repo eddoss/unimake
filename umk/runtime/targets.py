@@ -112,7 +112,7 @@ class Targets(core.Model):
         def append(t: framework.targets.Interface):
             if t.name in self.items:
                 e = utils.ExistsError()
-                e.messages = f"Target '{t.name}' is already registered"
+                e.messages.append(f"Target '{t.name}' is already registered")
                 e.details.new(name="name", value=t.name, desc="Target name")
                 raise e
             self.items[t.name] = t
@@ -128,8 +128,21 @@ class Targets(core.Model):
         for defer in self.decorator.go_binary.defers:
             target = framework.targets.GolangBinary()
             sig = self.decorator.go_binary.input.sig
+            with_debug = defer.args.get("debug", True)
             defer(sig.min, sig.max, target, c, p)
-            append(target)
+            if with_debug:
+                d, r = framework.targets.GolangBinary.new(
+                    name=target.name,
+                    label=target.label,
+                    description=target.description,
+                    tool=target.tool,
+                    build=target.build,
+                    port=target.debug.port,
+                )
+                append(d)
+                append(r)
+            else:
+                append(target)
         for defer in self.decorator.command.defers:
             target = framework.targets.Command()
             sig = self.decorator.go_binary.input.sig

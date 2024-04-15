@@ -70,6 +70,6 @@ class GolangBinary(Interface):
 
 class go:
     @staticmethod
-    def binary(func):
+    def binary(debug=True):
         # See implementation in runtime.Instance.implementation()
         raise NotImplemented()
