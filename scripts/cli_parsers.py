@@ -93,35 +93,35 @@ class Builder(BaseModel):
         description="Map of the types and its default values/factories."
     )
     cli: dict[str | None, str] = BaseField(
-        description="Map of the types and its kit.cli.TYPE.",
+        description="Map of the types and its cli.TYPE.",
         default_factory=lambda: {
-            "list": 'kit.cli.List(name="$option.name")',
-            "list[str]": 'kit.cli.List(name="$option.name")',
-            "list[int]": 'kit.cli.List(name="$option.name")',
-            "list[float]": 'kit.cli.List(name="$option.name")',
-            "list[bool]": 'kit.cli.List(name="$option.name")',
-            "dict": 'kit.cli.Dict(name="$option.name")',
-            "dict[str, str]": 'kit.cli.Dict(name="$option.name")',
-            "dict[str, int]": 'kit.cli.Dict(name="$option.name")',
-            "dict[str, float]": 'kit.cli.Dict(name="$option.name")',
-            "dict[str, bool]": 'kit.cli.Dict(name="$option.name")',
-            "dict[int, str]": 'kit.cli.Dict(name="$option.name")',
-            "dict[int, int]": 'kit.cli.Dict(name="$option.name")',
-            "dict[int, bool]": 'kit.cli.Dict(name="$option.name")',
-            "dict[int, float]": 'kit.cli.Dict(name="$option.name")',
-            "dict[float, str]": 'kit.cli.Dict(name="$option.name")',
-            "dict[float, int]": 'kit.cli.Dict(name="$option.name")',
-            "dict[float, float]": 'kit.cli.Dict(name="$option.name")',
-            "int": 'kit.cli.Int(name="$option.name")',
-            "str": 'kit.cli.Str(name="$option.name")',
-            "bool": 'kit.cli.Bool(name="$option.name")',
-            "None | int": 'kit.cli.Int(name="$option.name")',
-            "None | str": 'kit.cli.Str(name="$option.name")',
-            "None | bool": 'kit.cli.Bool(name="$option.name")',
-            "None | Path": 'kit.cli.File(name="$option.name")',
-            "None | Path | str": 'kit.cli.File(name="$option.name")',
-            "": 'kit.cli.Obj(name="$option.name")',
-            "None": 'kit.cli.Obj(name="$option.name")',
+            "list": 'cli.List(name="$option.name")',
+            "list[str]": 'cli.List(name="$option.name")',
+            "list[int]": 'cli.List(name="$option.name")',
+            "list[float]": 'cli.List(name="$option.name")',
+            "list[bool]": 'cli.List(name="$option.name")',
+            "dict": 'cli.Dict(name="$option.name")',
+            "dict[str, str]": 'cli.Dict(name="$option.name")',
+            "dict[str, int]": 'cli.Dict(name="$option.name")',
+            "dict[str, float]": 'cli.Dict(name="$option.name")',
+            "dict[str, bool]": 'cli.Dict(name="$option.name")',
+            "dict[int, str]": 'cli.Dict(name="$option.name")',
+            "dict[int, int]": 'cli.Dict(name="$option.name")',
+            "dict[int, bool]": 'cli.Dict(name="$option.name")',
+            "dict[int, float]": 'cli.Dict(name="$option.name")',
+            "dict[float, str]": 'cli.Dict(name="$option.name")',
+            "dict[float, int]": 'cli.Dict(name="$option.name")',
+            "dict[float, float]": 'cli.Dict(name="$option.name")',
+            "int": 'cli.Int(name="$option.name")',
+            "str": 'cli.Str(name="$option.name")',
+            "bool": 'cli.Bool(name="$option.name")',
+            "None | int": 'cli.Int(name="$option.name")',
+            "None | str": 'cli.Str(name="$option.name")',
+            "None | bool": 'cli.Bool(name="$option.name")',
+            "None | Path": 'cli.File(name="$option.name")',
+            "None | Path | str": 'cli.File(name="$option.name")',
+            "": 'cli.Obj(name="$option.name")',
+            "None": 'cli.Obj(name="$option.name")',
         }
     )
 
@@ -152,7 +152,7 @@ class Builder(BaseModel):
         return result
 
 
-def show(fields: list[Field], class_name: str, class_parent="kit.cli.Options"):
+def show(fields: list[Field], class_name: str, class_parent="cli.Options"):
     if class_parent:
         print(f"class {class_name}({class_parent}):")
     else:

@@ -3,7 +3,8 @@ import os
 
 import yaml
 
-from umk import core, kit
+from umk import core
+from umk.framework.utils import cli
 from umk.core.typings import Any
 from umk.framework.filesystem import Path
 
@@ -12,7 +13,7 @@ from umk.framework.filesystem import Path
 # Service models
 # ####################################################################################
 
-class Build(kit.cli.NoEmpty):
+class Build(cli.NoEmpty):
     context: None | Path | str = core.Field(
         default=None,
         description="Either a path to a directory containing a Dockerfile, or a url to a git repository."
@@ -139,12 +140,12 @@ class Build(kit.cli.NoEmpty):
         return res
 
 
-class BlockIo(kit.cli.NoEmpty):
-    class Weight(kit.cli.NoEmpty):
+class BlockIo(cli.NoEmpty):
+    class Weight(cli.NoEmpty):
         path: str | Path
         weight: int
 
-    class Rate(kit.cli.NoEmpty):
+    class Rate(cli.NoEmpty):
         path: str | Path
         rate: int | str
 
@@ -156,19 +157,19 @@ class BlockIo(kit.cli.NoEmpty):
     device_write_iops: list[Rate] = core.Field(default_factory=list)
 
 
-class Credential(kit.cli.NoEmpty):
+class Credential(cli.NoEmpty):
     file: str | Path = core.Field(None)
     registry: str = core.Field(None)
     config: str = core.Field(None)
 
 
-class Dependency(kit.cli.NoEmpty):
+class Dependency(cli.NoEmpty):
     name: str = core.Field(None)
     condition: str = core.Field(None)
     restart: bool = core.Field(None)
 
 
-class Placement(kit.cli.NoEmpty):
+class Placement(cli.NoEmpty):
     constraints: dict[str, Any] = core.Field(
         default_factory=dict,
         description="Defines a required property the platform's node must fulfill to run the service container. It can be set either by a list or a map with string values."
@@ -179,7 +180,7 @@ class Placement(kit.cli.NoEmpty):
     )
 
 
-class Device(kit.cli.NoEmpty):
+class Device(cli.NoEmpty):
     capabilities: list[str] = core.Field(
         default_factory=list,
         description="List of the generic and driver specific capabilities."
@@ -202,7 +203,7 @@ class Device(kit.cli.NoEmpty):
     )
 
 
-class Resource(kit.cli.NoEmpty):
+class Resource(cli.NoEmpty):
     cpus: None | int = core.Field(
         default=None,
         description="Limit or reservation for how much of the available CPU resources, as number of cores, a container can use."
@@ -221,12 +222,12 @@ class Resource(kit.cli.NoEmpty):
     )
 
 
-class Resources(kit.cli.NoEmpty):
+class Resources(cli.NoEmpty):
     limits: None | Resource = core.Field(None)
     reservations: None | Resource = core.Field(None)
 
 
-class Restart(kit.cli.NoEmpty):
+class Restart(cli.NoEmpty):
     condition: None | str = core.Field(
         default=None,
         description="Restart condition."
@@ -245,7 +246,7 @@ class Restart(kit.cli.NoEmpty):
     )
 
 
-class Update(kit.cli.NoEmpty):
+class Update(cli.NoEmpty):
     parallelism: None | int = core.Field(
         default=None,
         description="The number of containers to rollback at a time. If set to 0, all containers rollback simultaneously."
@@ -272,7 +273,7 @@ class Update(kit.cli.NoEmpty):
     )
 
 
-class Deploy(kit.cli.NoEmpty):
+class Deploy(cli.NoEmpty):
     endpoint_mode: None | str = core.Field(
         default=None,
         description="Specifies a service discovery method for external clients connecting to a service."
@@ -307,18 +308,18 @@ class Deploy(kit.cli.NoEmpty):
     )
 
 
-class Watch(kit.cli.NoEmpty):
+class Watch(cli.NoEmpty):
     path: None | str | Path = core.Field(None)
     action: None | str = core.Field(None)
     target: None | str = core.Field(None)
     ignore: list[str] = core.Field(default_factory=list)
 
 
-class Develop(kit.cli.NoEmpty):
+class Develop(cli.NoEmpty):
     watch: list[Watch] = core.Field(default_factory=list)
 
 
-class EnvFile(kit.cli.NoEmpty):
+class EnvFile(cli.NoEmpty):
     path: Path | str = core.Field(
         description="Environment file path."
     )
@@ -328,7 +329,7 @@ class EnvFile(kit.cli.NoEmpty):
     )
 
 
-class Extend(kit.cli.NoEmpty):
+class Extend(cli.NoEmpty):
     service: str = core.Field(
         description="The name of the service being referenced as a base."
     )
@@ -338,7 +339,7 @@ class Extend(kit.cli.NoEmpty):
     )
 
 
-class Healthcheck(kit.cli.NoEmpty):
+class Healthcheck(cli.NoEmpty):
     test: list[str] = core.Field(
         description="Command to run to check health"
     )
@@ -359,7 +360,7 @@ class Healthcheck(kit.cli.NoEmpty):
     )
 
 
-class Logging(kit.cli.NoEmpty):
+class Logging(cli.NoEmpty):
     driver: str = core.Field(
         description="The logging driver."
     )
@@ -368,7 +369,7 @@ class Logging(kit.cli.NoEmpty):
     )
 
 
-class SecretAccess(kit.cli.NoEmpty):
+class SecretAccess(cli.NoEmpty):
     source: str
     target: str | Path
     uid: str
@@ -376,13 +377,13 @@ class SecretAccess(kit.cli.NoEmpty):
     mode: int
 
 
-class StorageOpt(kit.cli.NoEmpty):
+class StorageOpt(cli.NoEmpty):
     size: str = core.Field(
         description="Storage size."
     )
 
 
-class Net(kit.cli.NoEmpty):
+class Net(cli.NoEmpty):
     aliases: list[str] = core.Field(
         default_factory=list,
         description="Alternative hostnames for the service on the network. "
@@ -409,16 +410,16 @@ class Net(kit.cli.NoEmpty):
     )
 
 
-class ULimits(kit.cli.NoEmpty):
-    class Nofile(kit.cli.NoEmpty):
+class ULimits(cli.NoEmpty):
+    class Nofile(cli.NoEmpty):
         soft: int
         hard: int
     nproc: int
     nofile: Nofile
 
 
-class Mount(kit.cli.NoEmpty):
-    class Info(kit.cli.NoEmpty):
+class Mount(cli.NoEmpty):
+    class Info(cli.NoEmpty):
         nocopy: bool = True
     type: str
     source: Path | str
@@ -426,7 +427,7 @@ class Mount(kit.cli.NoEmpty):
     volume: None | Info = None
 
 
-class Volumes(kit.cli.NoEmpty):
+class Volumes(cli.NoEmpty):
     mounts: list[Mount] = core.Field(default_factory=list)
 
     def volume(self, src: str | Path, dst: str | Path, nocopy: bool = None):
@@ -451,7 +452,7 @@ class Volumes(kit.cli.NoEmpty):
         self.mounts.append(mount)
 
 
-class Service(kit.cli.NoEmpty):
+class Service(cli.NoEmpty):
     build: None | Build = core.Field(
         default=None,
         description="Defines either a path to a directory containing a Dockerfile, or a URL to a git repository."
@@ -772,7 +773,7 @@ class Service(kit.cli.NoEmpty):
 # Network models
 # ####################################################################################
 
-class IpamConfig(kit.cli.NoEmpty):
+class IpamConfig(cli.NoEmpty):
     subnet: None | str = core.Field(
         default=None,
         description="Subnet in CIDR format that represents a network segment."
@@ -791,7 +792,7 @@ class IpamConfig(kit.cli.NoEmpty):
     )
 
 
-class IPAM(kit.cli.NoEmpty):
+class IPAM(cli.NoEmpty):
     driver: None | str = core.Field(
         default=None,
         description="Custom IPAM driver, instead of the default."
@@ -806,7 +807,7 @@ class IPAM(kit.cli.NoEmpty):
     )
 
 
-class Network(kit.cli.NoEmpty):
+class Network(cli.NoEmpty):
     driver: None | str = core.Field(
         default=None,
         description="Specifies which driver should be used for this network."
@@ -849,7 +850,7 @@ class Network(kit.cli.NoEmpty):
 # Volumes models
 # ####################################################################################
 
-class Volume(kit.cli.NoEmpty):
+class Volume(cli.NoEmpty):
     driver: None | str = core.Field(
         default=None,
         description="Specifies which volume driver should be used."
@@ -876,7 +877,7 @@ class Volume(kit.cli.NoEmpty):
 # Configs models
 # ####################################################################################
 
-class Config(kit.cli.NoEmpty):
+class Config(cli.NoEmpty):
     file: None | str = core.Field(
         default=None,
         description="The config is created with the contents of the file at the specified path."
@@ -909,7 +910,7 @@ class Config(kit.cli.NoEmpty):
 # Secrets models
 # ####################################################################################
 
-class Secret(kit.cli.NoEmpty):
+class Secret(cli.NoEmpty):
     file: None | str = core.Field(
         default=None,
         description="The secret is created with the contents of the file at the specified path."
@@ -924,7 +925,7 @@ class Secret(kit.cli.NoEmpty):
 # File
 # ####################################################################################
 
-class File(kit.cli.NoEmpty):
+class File(cli.NoEmpty):
     services: dict[str, Service] = core.Field(
         default_factory=dict,
         description="List of the services."
