@@ -1,7 +1,7 @@
 from umk import core
 from umk.framework import utils
 from umk.framework.filesystem import AnyPath, OptPath
-from umk.framework.system import OptEnv
+from umk.framework.system.environs import OptEnv
 
 
 class Interface(core.Model):

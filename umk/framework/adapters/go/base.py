@@ -3,7 +3,7 @@ import copy
 from umk import core
 from umk.framework.utils import cli
 from umk.framework.filesystem import Path, AnyPath
-from umk.framework.system import Shell
+from umk.framework.system.shell import Shell
 
 
 class BuildOptions(cli.Options):

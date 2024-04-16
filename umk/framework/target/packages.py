@@ -2,7 +2,9 @@ import copy
 
 from umk import core
 from umk.framework.target.interface import Interface
-from umk.framework.system import Shell, which, platform
+from umk.framework.system.shell import Shell
+from umk.framework.system.platform import platform
+from shutil import which
 
 
 class Manager(core.Model):

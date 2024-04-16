@@ -5,7 +5,7 @@ from pathlib import Path
 from umk.core.typings import Optional
 
 from umk import core
-from umk.framework.system import User
+from umk.framework.system.user import User
 from umk.framework.filesystem.copy import copy
 from umk.framework.filesystem.factories import local, tar
 

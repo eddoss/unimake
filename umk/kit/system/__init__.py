@@ -12,4 +12,4 @@ from umk.framework.system.user import user
 from shutil import chown
 from shutil import which
 from umk.framework.system.platform import Platform
-from umk.framework.system.platform import create as platform
+from umk.framework.system.platform import platform

@@ -1,4 +1,4 @@
-import platform
+import platform as bp
 
 from umk import core
 
@@ -30,10 +30,10 @@ class Platform(core.Model):
         return self.arch in ("amd64", "x86_64", "arm64")
 
 
-def create() -> Platform:
+def platform() -> Platform:
     result = Platform()
-    result.os = platform.system().lower()
+    result.os = bp.system().lower()
     if result.os == "win32":
         result.os = "windows"
-    result.arch = platform.machine()
+    result.arch = bp.machine()
     return result

@@ -4,7 +4,9 @@ from umk import core
 from umk.framework.adapters import docker
 from umk.framework.filesystem import AnyPath, OptPath
 from umk.framework.remote.interface import Interface
-from umk.framework.system import Shell, User, OptEnv
+from umk.framework.system.environs import OptEnv
+from umk.framework.system.shell import Shell
+from umk.framework.system.user import User
 
 
 class Login(core.Model):
@@ -159,7 +161,7 @@ class Container(Interface):
         default=False,
         description="Open privileged shell."
     )
-    user: None | User = core.Field(
+    user: User | None = core.Field(
         default=None,
         description="Open shell by user."
     )

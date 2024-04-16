@@ -7,7 +7,7 @@ from paramiko import util as paramiko_util
 from umk import core
 from umk.framework.filesystem import Path
 from umk.framework.remote.interface import Interface
-from umk.framework.system import Environs
+from umk.framework.system.environs import Environs
 from umk.framework.system.shell import Shell
 
 

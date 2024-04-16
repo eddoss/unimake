@@ -3,7 +3,7 @@ import inspect
 
 from umk import core
 from umk.core.typings import Callable, Any
-from umk.framework.system import Shell
+from umk.framework.system.shell import Shell
 
 
 class Interface(core.Model):

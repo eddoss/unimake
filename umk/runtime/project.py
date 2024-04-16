@@ -1,5 +1,4 @@
 from umk import core
-from umk import framework
 from umk.kit import project
 from umk.kit import config
 from umk.core.typings import Type, Callable, Any
@@ -90,8 +89,8 @@ class Project(core.Model):
         project.get = lambda: self.instance
         project.release = self.release
         project.releaser = self.decorator.release.register
-        project.empty = lambda f: self.entry(f, "empty", framework.project.Scratch)
-        project.golang = lambda f: self.entry(f, "golang", framework.project.Golang)
+        project.empty = lambda f: self.entry(f, "empty", project.Scratch)
+        project.golang = lambda f: self.entry(f, "golang", project.Golang)
         project.custom = lambda f: self.entry(f)
 
     def setup(self, c: config.Interface):

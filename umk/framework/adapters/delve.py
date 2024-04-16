@@ -1,7 +1,8 @@
 from umk import core
 from umk.framework.utils import cli
 from umk.framework.filesystem import Path, AnyPath
-from umk.framework.system import Shell, Environs
+from umk.framework.system.shell import Shell
+from umk.framework.system.environs import Environs
 
 
 class Options(cli.Options):

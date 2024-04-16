@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from umk import core
 from umk.core.typings import TextIO, Optional, Any
-from umk.framework.system import User as OSUser
+from umk.framework.system.user import User as OSUser
 from umk.framework.filesystem import Path
 
 
