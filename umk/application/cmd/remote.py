@@ -3,70 +3,69 @@ import os
 import asyncclick
 
 from umk.application.cmd import root
-from umk.application.utils import ConfigableGroup
+from umk.application import utils
 
 if not os.environ.get('_UMK_COMPLETE', None):
     from rich.table import Table
     from umk import runtime
-    from umk import framework
     from umk import core
-    from umk.application import utils
+    from umk.framework.remote.interface import Interface
 
 
-@root.group(cls=ConfigableGroup, help="Remote environments management commands",)
-@asyncclick.option('--name', '-n', default="", help="Remote environment name")
+@root.group(help="Remote environments management commands",)
+@asyncclick.option('-n', default="", help="Remote environment name")
+@utils.options.config.all
 @asyncclick.pass_context
-async def remote(ctx: asyncclick.Context, name: str, c: tuple[str], p: tuple[str], f: bool):
+async def remote(ctx: asyncclick.Context, n: str, c: tuple[str], p: tuple[str], f: bool):
+    pass
     opt = runtime.Options()
-    opt.config.overrides = utils.parse_config_overrides(c)
-    opt.config.presets = list(p)
-    opt.config.file = f
+    opt.config = utils.config(f, p, c)
     runtime.c.load(opt)
 
     if ctx.invoked_subcommand != "ls":
         ctx.ensure_object(dict)
-        ctx.obj["instance"] = runtime.c.find_remote(name == "", name)
+        ctx.obj["instance"] = runtime.c.find_remote(n == "", n)
 
 
 @remote.command(help="Build remote environment")
 @asyncclick.pass_context
 def build(ctx: asyncclick.Context):
-    instance: framework.remote.Interface = ctx.obj.get("instance")
+    instance: Interface = ctx.obj.get("instance")
     instance.build()
 
 
 @remote.command(help="Destroy remote environment")
 @asyncclick.pass_context
 def destroy(ctx: asyncclick.Context):
-    instance: framework.remote.Interface = ctx.obj.get("instance")
+    instance: Interface = ctx.obj.get("instance")
     instance.destroy()
 
 
 @remote.command(help="Start remote environment")
 @asyncclick.pass_context
 def up(ctx: asyncclick.Context):
-    instance: framework.remote.Interface = ctx.obj.get("instance")
+    instance: Interface = ctx.obj.get("instance")
     instance.up()
 
 
 @remote.command(help="Stop remote environment")
 @asyncclick.pass_context
 def down(ctx: asyncclick.Context):
-    instance: framework.remote.Interface = ctx.obj.get("instance")
+    instance: Interface = ctx.obj.get("instance")
     instance.down()
 
 
 @remote.command(help="Login remote environment")
 @asyncclick.pass_context
 def login(ctx: asyncclick.Context):
-    instance: framework.remote.Interface = ctx.obj.get("instance")
+    instance: Interface = ctx.obj.get("instance")
     instance.login()
 
 
 @remote.command(help="Open remote environment shell")
 @asyncclick.pass_context
 def shell(ctx: asyncclick.Context):
-    instance: framework.remote.Interface = ctx.obj.get("instance")
+    instance: Interface = ctx.obj.get("instance")
     instance.shell()
 
 
@@ -94,16 +93,16 @@ def ls():
 def execute(ctx: asyncclick.Context, program: str, arguments: tuple[str]):
     cmd = list(arguments)
     cmd.insert(0, program)
-    rem: framework.remote.Interface = ctx.obj.get("instance")
+    rem: Interface = ctx.obj.get("instance")
     rem.execute(cmd=cmd)
 
 
 @remote.command(help='Show remote environment details')
-@asyncclick.option('--format', '-f', default="table", type=asyncclick.Choice(["table", "json"], case_sensitive=False), help="Output format")
+@utils.options.style
 @asyncclick.pass_context
-def inspect(ctx: asyncclick.Context, format: str):
+def inspect(ctx: asyncclick.Context, s: str):
     details: core.Object = ctx.obj.get("instance").object()
-    if format == "table" or format == "":
+    if s == "style" or s == "":
         table = Table(show_header=True, show_edge=True, show_lines=True)
         table.add_column("Name", justify="left", style="", no_wrap=True)
         table.add_column("Description", justify="left", style="", no_wrap=True)
@@ -111,7 +110,7 @@ def inspect(ctx: asyncclick.Context, format: str):
         for prop in details.properties:
             table.add_row(prop.name, prop.description, str(prop.value))
         core.globals.console.print(table)
-    elif format == "json":
+    elif s == "json":
         core.globals.console.print_json(core.json.text(details))
 
 
@@ -119,7 +118,7 @@ def inspect(ctx: asyncclick.Context, format: str):
 @asyncclick.argument('items', required=False, nargs=-1)
 @asyncclick.pass_context
 def upload(ctx: asyncclick.Context, items: tuple[str]):
-    rem: framework.remote.Interface = ctx.obj.get("instance")
+    rem: Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:
         return
@@ -130,7 +129,7 @@ def upload(ctx: asyncclick.Context, items: tuple[str]):
 @asyncclick.argument('items', required=False, nargs=-1)
 @asyncclick.pass_context
 def download(ctx: asyncclick.Context, items: tuple[str]):
-    rem: framework.remote.Interface = ctx.obj.get("instance")
+    rem: Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:
         return

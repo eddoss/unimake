@@ -115,7 +115,7 @@ class Config(core.Model):
         else:
             core.globals.console.print("[bold]Config: failed to save config. It is not registered !")
 
-    def write_entries(self, entries: dict[str, config.Value]):
+    def write(self, entries: dict[str, config.Value]):
         if not self.instance:
             core.globals.console.print("[yellow bold]Config: failed to write entries, config was not registered !")
             core.globals.close()

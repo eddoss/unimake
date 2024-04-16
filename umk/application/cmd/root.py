@@ -2,12 +2,12 @@ import os
 
 import asyncclick
 
+from umk.application import utils
+
 if not os.environ.get('_UMK_COMPLETE'):
     from umk import runtime, core
     from rich.table import Table
-    from umk.application import utils
     from umk.framework.system.shell import Shell
-from umk.application.utils import ConfigableCommand
 
 
 @asyncclick.group()
@@ -15,9 +15,9 @@ async def root():
     pass
 
 
-@root.group(cls=ConfigableCommand, help="Run project targets")
-@asyncclick.option("--remote", default=None, help="Execute command in specific remote environment")
-@asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
+@root.command(help="Run project targets")
+@utils.options.remote
+@utils.options.config.all
 @asyncclick.argument('names', required=True, nargs=-1)
 @asyncclick.pass_context
 def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
@@ -30,9 +30,10 @@ def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[s
     runtime.c.targets.run(*names)
 
 
-@root.command(cls=ConfigableCommand, name='inspect', help="Inspect project details")
-@asyncclick.option('--format', '-f', default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
-def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
+@root.command(name='inspect', help="Inspect project details")
+@utils.options.style
+@utils.options.config.all
+def inspect(s: str, c: tuple[str], p: tuple[str], f: bool):
     opt = runtime.Options()
     opt.config.overrides = utils.parse_config_overrides(c)
     opt.config.presets = list(p)
@@ -41,7 +42,7 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
 
     pro = runtime.c.project.instance
     tar = runtime.c.targets
-    if format in ("style", ""):
+    if s in ("style", ""):
         table_info = Table(
             title="INFO",
             title_style="bold cyan",
@@ -96,15 +97,15 @@ def inspect(format: str, c: tuple[str], p: tuple[str], f: bool):
         if pro.info.contributors:
             core.globals.console.print()
             core.globals.console.print(table_contributors)
-    elif format == "json":
+    elif s == "json":
         # TODO Append targets
         core.globals.console.print_json(core.json.text(pro.info))
 
 
-@root.group(cls=ConfigableCommand, help="Release project")
-@asyncclick.option("--remote", default=None, help="Execute command in specific remote environment")
-@asyncclick.option("-R", is_flag=True, default=False, help="Execute command in default remote environment. This flag has higher priority than --remote")
-def release(remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool):
+@root.command(help="Release project")
+@utils.options.remote
+@utils.options.config.all
+def release(r: bool, c: tuple[str], p: tuple[str], f: bool):
     opt = runtime.Options()
     opt.config.overrides = utils.parse_config_overrides(c)
     opt.config.presets = list(p)
