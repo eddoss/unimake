@@ -116,3 +116,8 @@ def prettier():
         sh.name = "format"
         sh.cmd = ["black", "-l", "100", "-t", "py311", "-W", "4", core.globals.paths.unimake]
         sh.sync()
+
+
+@root.group(help="Project commandline interface")
+def cli():
+    pass
