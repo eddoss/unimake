@@ -32,7 +32,7 @@ def save(c: tuple[str], p: tuple[str]):
     runtime.c.config.save()
 
 
-@config.command(name="set", help="Write entry in the config file")
+@config.command(help="Write entry inside config file")
 @asyncclick.argument('values', required=True, nargs=-1)
 def write(values: tuple[str]):
     opt = runtime.Options()
