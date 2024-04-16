@@ -20,13 +20,10 @@ async def root():
 @utils.options.config.all
 @asyncclick.argument('names', required=True, nargs=-1)
 @asyncclick.pass_context
-def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
+def run(ctx: asyncclick.Context, r: bool, c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
     opt = runtime.Options()
-    opt.config.overrides = utils.parse_config_overrides(c)
-    opt.config.presets = list(p)
-    opt.config.file = f
+    opt.config = utils.config(f, p, c)
     runtime.c.load(opt)
-
     runtime.c.targets.run(*names)
 
 
@@ -35,9 +32,7 @@ def run(ctx: asyncclick.Context, remote: str, r: bool, c: tuple[str], p: tuple[s
 @utils.options.config.all
 def inspect(s: str, c: tuple[str], p: tuple[str], f: bool):
     opt = runtime.Options()
-    opt.config.overrides = utils.parse_config_overrides(c)
-    opt.config.presets = list(p)
-    opt.config.file = f
+    opt.config = utils.config(f, p, c)
     runtime.c.load(opt)
 
     pro = runtime.c.project.instance
@@ -107,9 +102,7 @@ def inspect(s: str, c: tuple[str], p: tuple[str], f: bool):
 @utils.options.config.all
 def release(r: bool, c: tuple[str], p: tuple[str], f: bool):
     opt = runtime.Options()
-    opt.config.overrides = utils.parse_config_overrides(c)
-    opt.config.presets = list(p)
-    opt.config.file = f
+    opt.config = utils.config(f, p, c)
     runtime.c.load(opt)
     runtime.c.project.release()
 

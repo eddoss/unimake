@@ -7,6 +7,7 @@ from umk.application import utils
 
 if not os.environ.get('_UMK_COMPLETE', None):
     from umk import runtime, core
+    from umk.application.printers import PropertiesPrinter
 
 
 @root.group(help="Config management commands")
@@ -54,7 +55,7 @@ def presets(s: str):
         properties = core.Properties()
         for name, desc in data.items():
             properties.new(name=name, desc=desc, value=None)
-        printer = utils.PropertiesPrinter()
+        printer = PropertiesPrinter()
         printer.print(properties, value=False)
     elif s == "json":
         core.globals.console.print_json(
@@ -77,7 +78,7 @@ def inspect(s: str, c: tuple[str], p: tuple[str], f: bool):
 
     data = conf.object()
     if s == "style":
-        printer = utils.PropertiesPrinter()
+        printer = PropertiesPrinter()
         printer.print(data.properties)
     elif s == "json":
         core.globals.console.print_json(

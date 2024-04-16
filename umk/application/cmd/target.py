@@ -8,6 +8,7 @@ from umk.application import utils
 if not os.environ.get('_UMK_COMPLETE', None):
     from rich.table import Table
     from umk import runtime, core
+    from umk.application.printers import PropertiesPrinter
 
 
 @root.group(help="Project targets management commands")
@@ -51,7 +52,7 @@ def inspect(s: str, names: tuple[str]):
         objects.append(o)
 
     if s == "style":
-        printer = utils.PropertiesPrinter()
+        printer = PropertiesPrinter()
         properties = []
         for o in objects:
             properties.append(o.properties)
