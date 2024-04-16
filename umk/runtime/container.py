@@ -7,6 +7,7 @@ from umk.kit import config
 from umk.kit import remote
 from umk.runtime.config import Config
 from umk.runtime.project import Project
+from umk.runtime.targets import Targets
 from umk.runtime.remotes import Remote
 
 
@@ -40,6 +41,7 @@ class Container:
         self._modules = {}
         self.config = Config()
         self.project = Project()
+        self.targets = Targets()
         self.remotes = Remote()
 
     def load(self, options: Options):
@@ -50,6 +52,7 @@ class Container:
 
         self.config.init()
         self.project.init()
+        self.targets.init()
         self.remotes.init()
 
         if with_config:
@@ -60,6 +63,7 @@ class Container:
         if with_config:
             self.config.setup(options.config)
         self.project.setup(self.config.instance)
+        self.targets.setup(self.config.instance, self.project.instance)
         self.remotes.setup(self.config.instance, self.project.instance)
 
     def find_remote(self, default: bool, specific: str) -> remote.Interface:
