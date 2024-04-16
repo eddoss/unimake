@@ -1,7 +1,8 @@
 from umk import core
 from umk import framework
+from umk.kit import project
+from umk.kit import config
 from umk.core.typings import Type, Callable, Any
-from umk.framework import config, project
 from umk.runtime import utils
 
 
@@ -60,7 +61,7 @@ class Project(core.Model):
                 f"[bold]Project '{self.instance.info.name or self.instance.info.id}' has no [/][cyan bold]release[/] action !"
             )
         else:
-            utils.call(self.releaser, 0, 2, framework.config.get(), self.instance)
+            utils.call(self.releaser, 0, 2, config.get(), self.instance)
 
     def entry(self, factory, target: str = "custom", klass: Type | None = None):
         self.decorator.entry.target = target
@@ -86,12 +87,12 @@ class Project(core.Model):
         return self.decorator.entry.register(factory)
 
     def init(self):
-        framework.project.get = lambda: self.instance
-        framework.project.release = self.release
-        framework.project.releaser = self.decorator.release.register
-        framework.project.empty = lambda f: self.entry(f, "empty", framework.project.Scratch)
-        framework.project.golang = lambda f: self.entry(f, "golang", framework.project.Golang)
-        framework.project.custom = lambda f: self.entry(f)
+        project.get = lambda: self.instance
+        project.release = self.release
+        project.releaser = self.decorator.release.register
+        project.empty = lambda f: self.entry(f, "empty", framework.project.Scratch)
+        project.golang = lambda f: self.entry(f, "golang", framework.project.Golang)
+        project.custom = lambda f: self.entry(f)
 
     def setup(self, c: config.Interface):
         if not self.decorator.entry.registered:

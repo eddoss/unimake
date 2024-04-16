@@ -176,6 +176,4 @@ class SystemPackages(Interface):
         return result
 
 
-def packages(func):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
+

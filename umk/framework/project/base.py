@@ -1,7 +1,6 @@
 import string
 
 from umk import core
-from umk.core.typings import TypeVar
 from umk.framework import utils
 from umk.framework.filesystem import Path
 
@@ -143,34 +142,3 @@ class Scratch(Interface):
     pass
 
 
-ProjectType = TypeVar("ProjectType", bound=Interface)
-
-
-def custom(func):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def empty(func):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def golang(func):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def releaser(func):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def release():
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def get() -> ProjectType:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()

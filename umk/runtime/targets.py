@@ -1,4 +1,5 @@
-from umk import framework, core
+from umk import core
+from umk.kit import config, target, project
 from umk.core.typings import Generator
 from umk.runtime import utils
 
@@ -12,7 +13,7 @@ class Targets(core.Model):
                 module="targets",
                 input=utils.Decorator.Input(
                     subject="class",
-                    base=framework.target.Interface,
+                    base=target.Interface,
                 ),
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register custom target outside of the .unimake/targets.py"),
@@ -105,7 +106,7 @@ class Targets(core.Model):
         default_factory=Decorators,
         description="Targets decorators"
     )
-    items: dict[str, framework.target.Interface] = core.Field(
+    items: dict[str, target.Interface] = core.Field(
         default_factory=dict,
         description="Project targets"
     )
@@ -117,11 +118,11 @@ class Targets(core.Model):
     def __contains__(self, name: str):
         return name in self.items
 
-    def objects(self) -> Generator[framework.target.Interface, None, None]:
+    def objects(self) -> Generator[target.Interface, None, None]:
         for item in self.items.values():
             yield item.object()
 
-    def get(self, name: str, on_err=None) -> framework.target.Interface:
+    def get(self, name: str, on_err=None) -> target.Interface:
         return self.items.get(name, on_err)
 
     def run(self, *names: str):
@@ -132,68 +133,70 @@ class Targets(core.Model):
             else:
                 found.append(name)
         for name in found:
-            target = self.get(name)
-            target.run(p=framework.project.get(), c=framework.config.get())
+            t = self.get(name)
+            p = project.get()
+            c = config.get()
+            t.run(p=p, c=c)
 
     def init(self):
-        framework.target.run = self.run
-        framework.target.function = self.decorator.function.register
-        framework.target.custom = self.decorator.custom.register
-        framework.target.command = self.decorator.command.register
-        framework.target.packages = self.decorator.packages.register
-        framework.target.go.binary = self.decorator.go_binary.register
-        framework.target.go.mod = self.decorator.go_mod.register
+        target.run = self.run
+        target.function = self.decorator.function.register
+        target.custom = self.decorator.custom.register
+        target.command = self.decorator.command.register
+        target.packages = self.decorator.packages.register
+        target.go.binary = self.decorator.go_binary.register
+        target.go.mod = self.decorator.go_mod.register
 
-    def setup(self, c: framework.config.Interface, p: framework.project.Interface):
-        def append(t: framework.target.Interface):
-            if t.name in self.items:
+    def setup(self, c: config.Interface, p: project.Interface):
+        def append(tar: target.Interface):
+            if tar.name in self.items:
                 e = utils.ExistsError()
-                e.messages.append(f"Target '{t.name}' is already registered")
-                e.details.new(name="name", value=t.name, desc="Target name")
+                e.messages.append(f"Target '{tar.name}' is already registered")
+                e.details.new(name="name", value=tar.name, desc="Target name")
                 raise e
-            self.items[t.name] = t
+            self.items[tar.name] = tar
 
         for defer in self.decorator.function.defers:
-            target = framework.target.Function(
+            t = target.Function(
                 name=defer.args.get("name", defer.func.__name__),
                 description=defer.args.get("description", (defer.func.__doc__ or "").strip()),
                 label=defer.args.get("label", ""),
                 function=defer.func
             )
-            append(target)
+            append(t)
         for defer in self.decorator.go_binary.defers:
-            target = framework.target.GolangBinary()
+            src = target.GolangBinary()
             sig = self.decorator.go_binary.input.sig
             with_debug = defer.args.get("debug", True)
-            defer(sig.min, sig.max, target, c, p)
+            defer(sig.min, sig.max, src, c, p)
             if with_debug:
-                d, r = framework.target.GolangBinary.new(
-                    name=target.name,
-                    label=target.label,
-                    description=target.description,
-                    tool=target.tool,
-                    build=target.build,
-                    port=target.debug.port,
+                d, r = target.GolangBinary.new(
+                    name=src.name,
+                    label=src.label,
+                    description=src.description,
+                    tool=src.tool,
+                    build=src.build,
+                    port=src.debug.port,
                 )
                 append(d)
                 append(r)
             else:
-                append(target)
+                append(src)
         for defer in self.decorator.command.defers:
-            target = framework.target.Command()
+            src = target.Command()
             sig = self.decorator.go_binary.input.sig
-            defer(sig.min, sig.max, target, c, p)
-            append(target)
+            defer(sig.min, sig.max, src, c, p)
+            append(src)
         for defer in self.decorator.go_mod.defers:
-            target = framework.target.GolangMod()
+            src = target.GolangMod()
             sig = self.decorator.go_mod.input.sig
-            defer(sig.min, sig.max, target, c, p)
-            append(target)
+            defer(sig.min, sig.max, src, c, p)
+            append(src)
         for defer in self.decorator.packages.defers:
-            target = framework.target.SystemPackages()
+            src = target.SystemPackages()
             sig = self.decorator.packages.input.sig
-            defer(sig.min, sig.max, target, c, p)
-            append(target)
+            defer(sig.min, sig.max, src, c, p)
+            append(src)
         for defer in self.decorator.custom.defers:
-            target = defer(0, 2, c, p)
-            append(target)
+            res = defer(0, 2, c, p)
+            append(res)

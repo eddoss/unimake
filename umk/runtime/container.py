@@ -2,7 +2,9 @@ import sys
 from importlib import util as importer
 from pathlib import Path
 
-from umk import framework, core
+from umk import core
+from umk.kit import config
+from umk.kit import remote
 from umk.runtime.config import Config
 from umk.runtime.project import Project
 from umk.runtime.targets import Targets
@@ -11,7 +13,7 @@ from umk.runtime.remotes import Remote
 
 class Options(core.Model):
     class Config(core.Model):
-        overrides: dict[str, framework.config.Value] = core.Field(
+        overrides: dict[str, config.Value] = core.Field(
             default_factory=dict,
             description="Config entry overrides (passed by unimake CLI)"
         )
@@ -64,7 +66,7 @@ class Container:
         self.targets.setup(self.config.instance, self.project.instance)
         self.remotes.setup(self.config.instance, self.project.instance)
 
-    def find_remote(self, default: bool, specific: str) -> framework.remote.Interface:
+    def find_remote(self, default: bool, specific: str) -> remote.Interface:
         if default:
             result = self.remotes.get(self.remotes.default)
             if not result:

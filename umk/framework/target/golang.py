@@ -104,14 +104,3 @@ class GolangMod(Interface):
         result.properties.new("Vendor", self.vendor, "Vendors packages or not")
         return result
 
-
-class go:
-    @staticmethod
-    def binary(debug=True):
-        # See implementation in runtime.Instance.implementation()
-        raise NotImplemented()
-
-    @staticmethod
-    def mod(func):
-        # See implementation in runtime.Instance.implementation()
-        raise NotImplemented()

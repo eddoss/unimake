@@ -2,7 +2,7 @@ import abc
 import inspect
 
 from umk import core
-from umk.core.typings import Callable, Any, Generator
+from umk.core.typings import Callable, Any
 from umk.framework.system import Shell
 
 
@@ -73,28 +73,4 @@ class Function(Interface):
         result.type = "Target.Function"
         return result
 
-
-def run(*names: str):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def iterate() -> Generator[Interface, None, None]:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def custom(klass):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def function(name: str = "", label: str = "", description: str = ""):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def command(func):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
 

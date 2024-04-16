@@ -1,14 +1,10 @@
-from umk import core
-from umk.core.typings import TypeVar, Callable, Any
-from umk.framework.project import Interface as Project
+from umk.core.typings import Model
 
 Value = str | int | bool | float
-ValueTypes = {str, int, bool, float}
-Interface = core.Model
-Implementation = TypeVar("Implementation", bound=Interface)
+Interface = Model
 
 
-def register(klass: Implementation):
+def register(klass):
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()
 
@@ -18,6 +14,6 @@ def preset(*, name: str = ""):
     raise NotImplemented()
 
 
-def get() -> Implementation:
+def get():
     # See implementation in runtime.Instance.implementation()
     raise NotImplemented()

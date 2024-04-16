@@ -3,7 +3,7 @@ import os
 from pydantic import ValidationError
 
 from umk import core
-from umk import framework
+from umk.kit import config
 from umk.core.typings import Callable, Any
 from umk.framework.filesystem import Path
 from umk.runtime import utils
@@ -11,7 +11,7 @@ from umk.runtime import utils
 
 class Config(core.Model):
     class Update(core.Model):
-        overrides: dict[str, framework.config.Value] = core.Field(
+        overrides: dict[str, config.Value] = core.Field(
             default_factory=dict,
             description="Config entry overrides (passed by unimake CLI)"
         )
@@ -31,7 +31,7 @@ class Config(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="class",
-                    base=framework.config.Interface,
+                    base=config.Interface,
                 ),
                 module="config",
                 single=True,
@@ -61,11 +61,11 @@ class Config(core.Model):
         default_factory=Decorators,
         description="Project decorators"
     )
-    instance: framework.config.Interface | None = core.Field(
+    instance: config.Interface | None = core.Field(
         default=None,
         description="Config instance"
     )
-    presets: dict[str, Callable[[framework.config.Interface], Any]] = core.Field(
+    presets: dict[str, Callable[[config.Interface], Any]] = core.Field(
         default_factory=dict,
         description="Config presets"
     )
@@ -74,7 +74,7 @@ class Config(core.Model):
         description="Config entries"
     )
 
-    def set(self, entry: str, value: framework.config.Value):
+    def set(self, entry: str, value: config.Value):
         if entry not in self.entries:
             core.globals.console.print(f"[yellow bold]Config: '{entry}' entry not found")
             return
@@ -88,7 +88,7 @@ class Config(core.Model):
                 curr = getattr(curr, token)
             setattr(curr, attr, value)
 
-    def get(self, entry: str, on_err: Any = None) -> framework.config.Value | None:
+    def get(self, entry: str, on_err: Any = None) -> config.Value | None:
         if entry not in self.entries:
             return on_err
         result = self.instance
@@ -115,7 +115,7 @@ class Config(core.Model):
         else:
             core.globals.console.print("[bold]Config: failed to save config. It is not registered !")
 
-    def write_entries(self, entries: dict[str, framework.config.Value]):
+    def write_entries(self, entries: dict[str, config.Value]):
         if not self.instance:
             core.globals.console.print("[yellow bold]Config: failed to write entries, config was not registered !")
             core.globals.close()
@@ -161,9 +161,9 @@ class Config(core.Model):
             self.set(k, v)
 
     def init(self):
-        framework.config.register = self.decorator.instance.register
-        framework.config.preset = self.decorator.preset.register
-        framework.config.get = lambda: self.instance
+        config.register = self.decorator.instance.register
+        config.preset = self.decorator.preset.register
+        config.get = lambda: self.instance
 
     def setup(self, update: Update | None = None):
         def recursive(root: core.Model, parent: str, tokens: dict[str, str]):

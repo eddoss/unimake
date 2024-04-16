@@ -1,5 +1,5 @@
-from umk import framework, core
-from umk.core.typings import Generator
+from umk import core
+from umk.kit import project, config, remote
 from umk.runtime import utils
 
 
@@ -12,7 +12,7 @@ class Remote(core.Model):
                 module="remotes",
                 input=utils.Decorator.Input(
                     subject="class",
-                    base=framework.remote.Interface,
+                    base=remote.Interface,
                 ),
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register custom remote environment outside of the .unimake/remote.py"),
@@ -73,7 +73,7 @@ class Remote(core.Model):
         default_factory=Decorators,
         description="Targets decorators"
     )
-    items: dict[str, framework.remote.Interface] = core.Field(
+    items: dict[str, remote.Interface] = core.Field(
         default_factory=dict,
         description="List of the remote environments"
     )
@@ -95,23 +95,23 @@ class Remote(core.Model):
     def __contains__(self, name: str):
         return name in self.items
 
-    def get(self, name: str, on_err=None) -> framework.remote.Interface:
+    def get(self, name: str, on_err=None) -> remote.Interface:
         return self.items.get(name, on_err)
 
-    def find(self, name: str, on_err=None) -> None | framework.remote.Interface:
+    def find(self, name: str, on_err=None) -> remote.Interface | None:
         return self.get(name, on_err)
 
     def init(self):
-        framework.remote.iterate = self.__iter__
-        framework.remote.find = self.find
-        framework.remote.default = lambda on_err=None: self.get(self.default, on_err)
-        framework.remote.ssh = self.decorator.ssh.register
-        framework.remote.docker.container = self.decorator.container.register
-        framework.remote.docker.compose = self.decorator.compose.register
-        framework.remote.custom = self.decorator.custom.register
+        remote.iterate = self.__iter__
+        remote.find = self.find
+        remote.default = lambda on_err=None: self.get(self.default, on_err)
+        remote.ssh = self.decorator.ssh.register
+        remote.docker.container = self.decorator.container.register
+        remote.docker.compose = self.decorator.compose.register
+        remote.custom = self.decorator.custom.register
 
-    def setup(self, c: framework.config.Interface, p: framework.project.Interface):
-        def append(r: framework.remote.Interface):
+    def setup(self, c: config.Interface, p: project.Interface):
+        def append(r: remote.Interface):
             if r.name in self.items:
                 e = utils.ExistsError()
                 e.messages.append(f"Remote environment '{r.name}' is already registered")
@@ -125,20 +125,20 @@ class Remote(core.Model):
                 self.default = r.name
             self.items[r.name] = r
         for defer in self.decorator.compose.defers:
-            rem = framework.remote.DockerCompose()
+            src = remote.DockerCompose()
             sig = self.decorator.compose.input.sig
-            defer(sig.min, sig.max, rem, c, p)
-            append(rem)
+            defer(sig.min, sig.max, src, c, p)
+            append(src)
         for defer in self.decorator.container.defers:
-            rem = framework.remote.DockerContainer()
+            src = remote.DockerContainer()
             sig = self.decorator.container.input.sig
-            defer(sig.min, sig.max, rem, c, p)
-            append(rem)
+            defer(sig.min, sig.max, src, c, p)
+            append(src)
         for defer in self.decorator.ssh.defers:
-            rem = framework.remote.SecureShell()
+            src = remote.SecureShell()
             sig = self.decorator.ssh.input.sig
-            defer(sig.min, sig.max, rem, c, p)
-            append(rem)
+            defer(sig.min, sig.max, src, c, p)
+            append(src)
         for defer in self.decorator.custom.defers:
-            rem = defer(0, 2, c, p)
-            append(rem)
+            res = defer(0, 2, c, p)
+            append(res)

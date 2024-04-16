@@ -1,7 +1,4 @@
-from umk.core.typings import Generator
-
 from umk import core
-from umk.core.typings import TypeVar
 from umk.framework import utils
 from umk.framework.filesystem import AnyPath, OptPath
 from umk.framework.system import OptEnv
@@ -116,43 +113,3 @@ class Interface(core.Model):
 
     def __str__(self):
         return f"umk.remote.Interface(name='{self.name}', description='{self.description}')"
-
-
-Implementation = TypeVar("Implementation", bound=Interface)
-
-
-class docker:
-    @staticmethod
-    def compose(factory):
-        # See implementation in runtime.Instance.implementation()
-        raise NotImplemented()
-
-    @staticmethod
-    def container(factory):
-        # See implementation in runtime.Instance.implementation()
-        raise NotImplemented()
-
-
-def ssh(factory):
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def custom():
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def find(name: str, on_err=None) -> Implementation:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def default(on_err=None) -> Implementation:
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
-
-
-def iterate():
-    # See implementation in runtime.Instance.implementation()
-    raise NotImplemented()
