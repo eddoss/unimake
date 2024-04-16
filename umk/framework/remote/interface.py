@@ -1,150 +1,109 @@
-from textwrap import dedent
-from beartype import beartype
-from beartype.typing import Any, Optional
-from umk.globals import Global
-from umk.framework.system import environs as envs
+from umk import core
 from umk.framework import utils
+from umk.framework.filesystem import AnyPath, OptPath
+from umk.framework.system.environs import OptEnv
 
 
-class Property:
-    @property
-    def name(self) -> str:
-        return self._name
+class Interface(core.Model):
+    name: str = core.Field(
+        default="",
+        description="Remote environment name",
+    )
+    description: str = core.Field(
+        default="",
+        description="Remote environment description",
+    )
+    default: bool = core.Field(
+        default=False,
+        description="Whether this remote environment are default or not",
+    )
 
-    @name.setter
-    @beartype
-    def name(self, value: str):
-        name = value.strip()
-        if name == '':
-            raise ValueError(f"Remote environment property name should not be empty: '{name}'")
-        self._name = name
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "Remote." + type(self).__name__.split(".")[-1]
+        for name in self.model_fields:
+            props = self.property(name)
+            for prop in props:
+                result.properties.add(prop)
+        return result
 
-    @property
-    def value(self) -> Optional[Any]:
-        return self._value
+    def property(self, name: str) -> list[core.Property]:
+        field = self.model_fields[name]
+        if not field.repr:
+            return []
+        return [
+            core.Property(
+                name=name,
+                description=field.description,
+                value=getattr(self, name)
+            )
+        ]
 
-    @value.setter
-    @beartype
-    def value(self, value: Optional[Any]):
-        self._value = value
-
-    @property
-    def description(self) -> str:
-        return self._description
-
-    @description.setter
-    @beartype
-    def description(self, value: str):
-        self._description = dedent(value)
-
-    @beartype
-    def __init__(self, name: str, description: str = '', value: Any = None):
-        self._name = name
-        self.name = name
-        self._value = value
-        self._description = description
-
-
-class Interface:
-    @property
-    def name(self) -> str:
-        """
-        Remote environment name.
-        """
-        return self._name
-
-    @name.setter
-    @beartype
-    def name(self, value: str):
-        name = value.strip()
-        if name == '':
-            raise ValueError(f"Given remote environment name is forbidden: '{name}'")
-        self._name = name
-
-    @property
-    def description(self) -> str:
-        """
-        Remote environment description.
-        """
-        return self._description
-
-    @description.setter
-    @beartype
-    def description(self, value: str):
-        self._description = value
-
-    @property
-    def default(self) -> bool:
-        """
-        Whether this remote environment are default or not.
-        """
-        return self._default
-
-    @default.setter
-    @beartype
-    def default(self, value: bool):
-        self._default = value
-
-    @property
-    def details(self) -> dict[str, Property]:
-        """
-        Remote environment detailed information
-        """
-        return self._details
-
-    def build(self, *args, **kwargs):
+    def build(self, **kwargs):
         """
         Build remote environment.
         """
         self.__not_implemented()
 
-    def destroy(self, *args, **kwargs):
+    def destroy(self, **kwargs):
         """
         Destroy remote environment.
         """
         self.__not_implemented()
 
-    def up(self, *args, **kwargs):
+    def up(self, **kwargs):
         """
         Start remote environment.
         """
         self.__not_implemented()
 
-    def down(self, *args, **kwargs):
+    def down(self, **kwargs):
         """
         Stop remote environment.
         """
         self.__not_implemented()
 
-    def shell(self, *args, **kwargs):
+    def shell(self, **kwargs):
         """
         Open remote environment shell.
         """
         self.__not_implemented()
 
-    @beartype
-    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, *args, **kwargs):
+    def login(self, **kwargs):
+        """
+        Login remote environment.
+        """
+        self.__not_implemented()
+
+    def logout(self, **kwargs):
+        """
+        Logout remote environment.
+        """
+        self.__not_implemented()
+
+    @core.typeguard
+    def execute(self, cmd: list[AnyPath], cwd: OptPath = None, env: OptEnv = None, **kwargs):
         """
         Execute command in remote environment.
         """
         self.__not_implemented()
 
-    @beartype
-    def upload(self, paths: dict[str, str], *args, **kwargs):
+    @core.typeguard
+    def upload(self, items: dict[AnyPath, AnyPath], **kwargs):
         """
         Upload given paths to remote environment.
         """
         self.__not_implemented()
 
-    @beartype
-    def download(self, paths: dict[str, str], *args, **kwargs):
+    @core.typeguard
+    def download(self, items: dict[AnyPath, AnyPath], **kwargs):
         """
         Download given paths from remote environment.
         """
         self.__not_implemented()
 
     def __not_implemented(self):
-        Global.console.print(
+        core.globals.console.print(
             f"[bold]The '{self.name}' remote environment has no '{utils.caller(2)}' function. "
             f"It`s must be managed outside of this tool."
         )
@@ -152,9 +111,5 @@ class Interface:
     def __hash__(self) -> int:
         return hash(self.name)
 
-    @beartype
-    def __init__(self, name: str = "", description: str = "", default: bool = False):
-        self._name: str = name
-        self._default: bool = default
-        self._description = description
-        self._details: dict[str, Property] = {}
+    def __str__(self):
+        return f"umk.remote.Interface(name='{self.name}', description='{self.description}')"

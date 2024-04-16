@@ -1,28 +1,22 @@
 import os
-from beartype import beartype
-from beartype.typing import Optional
+
+from umk import core
 
 
-@beartype
-def prepend(envs: dict[str, str], name: str, *values: str) -> None:
-    nonempty = filter(None, values)
-    value = os.pathsep.join(nonempty)
-    if name in envs and envs[name]:
-        value += os.pathsep + envs[name]
-    envs[name] = value
+class EnvironmentNotExistsError(Exception):
+    def __init__(self, name: str, message: str = ""):
+        self.name = name
+        self.message = message
 
-
-@beartype
-def append(envs: dict[str, str], name: str, *values: str) -> None:
-    nonempty = filter(None, values)
-    appended = os.pathsep.join(nonempty)
-    if name in envs and envs[name]:
-        appended = f'{envs[name]}{os.pathsep}{appended}'
-    envs[name] = appended
+    def __str__(self):
+        if self.message:
+            return f"Environment '{self.name}' is required. {self.message}"
+        else:
+            return f"Environment '{self.name}' is required"
 
 
 class Environs(dict):
-    @beartype
+    @core.typeguard
     def __init__(self, inherit=True, **var):
         super().__init__()
         if inherit:
@@ -31,13 +25,27 @@ class Environs(dict):
         for k, v in var.items():
             self[k] = v
 
-    @beartype
+    @core.typeguard
     def prepend(self, name: str, *values: str) -> None:
-        prepend(self, name, *values)
+        nonempty = filter(None, values)
+        value = os.pathsep.join(nonempty)
+        if name in self and self[name]:
+            value += os.pathsep + self[name]
+        self[name] = value
 
-    @beartype
+    @core.typeguard
     def append(self, name: str, *values: str) -> None:
-        append(self, name, *values)
+        nonempty = filter(None, values)
+        appended = os.pathsep.join(nonempty)
+        if name in self and self[name]:
+            appended = f'{self[name]}{os.pathsep}{appended}'
+        self[name] = appended
+
+    @core.typeguard
+    def require(self, name: str, message: str = ""):
+        if name in self:
+            return
+        raise EnvironmentNotExistsError(name=name, message=message)
 
 
-Optional = Optional[Environs]
+OptEnv = None | Environs

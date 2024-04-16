@@ -1,12 +1,17 @@
-from beartype.typing import Union
-from beartype import beartype
-from umk.framework.filesystem.path import Path
+import os
+import tarfile
+from pathlib import Path
+
+from umk.core.typings import Optional
+
+from umk import core
+from umk.framework.system.user import User
 from umk.framework.filesystem.copy import copy
-from umk.framework.filesystem.factories import local
+from umk.framework.filesystem.factories import local, tar
 
 
 class Installer:
-    @beartype
+    @core.typeguard
     def __init__(self, root: Path):
         self._root = local(root.expanduser().resolve().absolute().as_posix())
 
@@ -21,15 +26,14 @@ class Installer:
     def close(self):
         self._root.close()
 
-    @beartype
-    def add(
+    @core.typeguard
+    def install(
         self,
-        path: Union[str, Path],
+        path: str | Path,
         name: str = '',
         timestamp: bool = True,
-        group: str = '',
-        mode: str = '',
-        owner: str = ''
+        mode: Optional[int] = None,
+        owner: Optional[User] = None
     ):
         """
         Copies given file/directory to root with new name.
@@ -38,19 +42,38 @@ class Installer:
         :param path: File/directory to copy
         :param name: New file/directory name. Leave it empty to use source name.
         :param timestamp: Preserve timestamp or not
-        :param group: Destination file mode.
-        :param mode: Destination file group.
+        :param mode: Destination file mode.
         :param owner: Destination file ownership (required super-user permission).
         """
-        p = Path(path)
-        n = name
-        if not name:
-            n = p.name
+        src = Path(path)
+        dst = Path(os.path.join(self._root.root_path, name if name else src.name))
         copy(
-            src=path,
-            dst=(self._root, n),
+            src=src,
+            dst=dst,
             timestamp=timestamp,
-            group=group,
-            mode=mode,
-            owner=owner
         )
+        if mode:
+            os.chmod(dst, mode)
+        if owner:
+            os.chown(dst, owner.id, owner.group.id)
+
+
+class Bundle(Installer):
+    name: str = core.Field(
+        default="bundle",
+        description="Bundle name"
+    )
+
+    def tar(self, outdir: Path, compression: Optional[str] = None):
+        if not outdir.exists():
+            os.makedirs(outdir.as_posix())
+        filename = f"{self.name}.tar"
+        output = outdir / filename
+        if output.exists():
+            os.remove(output)
+        cm = "w"
+        if compression:
+            cm += f":" + compression
+        with tarfile.open(output, cm) as stream:
+            root = Path(self._root.root_path)
+            stream.add(root.as_posix(), arcname=root.name)

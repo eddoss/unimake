@@ -1,103 +1,56 @@
 import logging
 import os
+
 import paramiko
-from pathlib import Path
-from beartype import beartype
-from beartype.typing import Optional
-from umk.globals import Global
-from umk.framework.remote.interface import Interface, Property
-from umk.framework.system import environs as envs
-from umk.framework.system.shell import Shell
 from paramiko import util as paramiko_util
 
+from umk import core
+from umk.framework.filesystem import Path
+from umk.framework.remote.interface import Interface
+from umk.framework.system.environs import Environs
+from umk.framework.system.shell import Shell
 
-class Ssh(Interface):
-    @property
-    def host(self) -> str:
-        return self._host
 
-    @host.setter
-    @beartype
-    def host(self, value: str):
-        self._host = value
-        self._details["host"].value = self._host
+class SecureShell(Interface):
+    host: str = core.Field(
+        default="",
+        description="Remote server IP address"
+    )
+    port: int = core.Field(
+        default=22,
+        description="Remote server port"
+    )
+    password: str = core.Field(
+        default="",
+        description="Remote server user password"
+    )
+    username: str = core.Field(
+        default="",
+        description="Remote server user name"
+    )
+    sh: str = core.Field(
+        default="",
+        description="Default shell (bash, sh, zsh ...)"
+    )
 
-    @property
-    def port(self) -> int:
-        return self._port
-
-    @port.setter
-    @beartype
-    def port(self, value: int):
-        self._port = value
-        self._details["port"].value = self._port
-
-    @property
-    def password(self) -> str:
-        return self._password
-
-    @password.setter
-    @beartype
-    def password(self, value: str):
-        self._password = value
-        self._details["pass"].value = self._password
-
-    @property
-    def username(self) -> str:
-        return self._username
-
-    @username.setter
-    @beartype
-    def username(self, value: str):
-        self._username = value
-        self._details["user"].value = self._username
-
-    @property
-    def sh(self) -> Optional[str]:
-        return self._sh
-
-    @sh.setter
-    @beartype
-    def sh(self, value: Optional[str]):
-        self._sh = value
-        self._details["shell"].value = self._sh
-
-    @beartype
-    def __init__(
-        self,
-        name: str = "",
-        description: str = "Secure shell",
-        default: bool = False,
-        host: str = "",
-        username: str = "",
-        password: str = "",
-        port: int = 22,
-        shell: Optional[str] = None
-    ):
-        super().__init__(name=name, description=description, default=default)
-
+    def client(self) -> paramiko.SSHClient:
         paramiko_util.get_logger('paramiko').setLevel(logging.ERROR)
+        result = paramiko.SSHClient()
+        result.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        result.connect(self.host, self.port, self.username, self.password)
+        return result
 
-        self._host = host
-        self._port = port
-        self._password = password
-        self._username = username
-        self._sh = shell
-
-        self._details['host'] = Property('host', 'Remote server address', self.host)
-        self._details['port'] = Property('port', 'Remote server port (default is 22)', self.port)
-        self._details['user'] = Property('user', 'User login', self.username)
-        self._details['pass'] = Property('pass', 'User password', self.password)
-        self._details['shell'] = Property('shell', 'Default shell', self.sh)
-
-    def shell(self, *args, **kwargs):
+    def shell(self, **kwargs):
+        paramiko_util.get_logger('paramiko').setLevel(logging.ERROR)
         cmd = ["ssh", f"{self.username}@{self.host}", "-p", str(self.port)]
         if self.sh:
             cmd.extend(["-t", self.sh.strip()])
-        Shell(name=self.name, command=cmd).sync()
+        Shell(name=self.name, cmd=cmd).sync()
 
-    def execute(self, cmd: list[str], cwd: str = '', env: envs.Optional = None, *args, **kwargs):
-        client = self._client()
+    @core.typeguard
+    def execute(self, cmd: list[str], cwd: None | Path | str = None, env: None | Environs = None, **kwargs):
+        paramiko_util.get_logger('paramiko').setLevel(logging.ERROR)
+        client = self.client()
         _, out, err = client.exec_command(
             command=Shell.stringify(cmd),
             environment=None,
@@ -108,39 +61,33 @@ class Ssh(Interface):
         for line in err:
             print(line.rstrip())
 
-    @beartype
-    def upload(self, paths: dict[str, str], *args, **kwargs):
+    @core.typeguard
+    def upload(self, paths: dict[str | Path, str | Path], **kwargs):
         if not paths:
             return
-        client = self._client()
+        client = self.client()
         with client.open_sftp() as transport:
             for src, dst in paths.items():
-                Global.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
+                core.globals.console.print(f"[bold]\[{self.name}] upload: {src} -> {dst}")
                 transport.put(
-                    localpath=Path(src).expanduser().resolve().absolute().as_posix(),
-                    remotepath=dst
+                    localpath=str(Path(src).expanduser().resolve().absolute()),
+                    remotepath=str(dst)
                 )
         client.close()
 
-    @beartype
-    def download(self, paths: dict[str, str], *args, **kwargs):
-        if not paths:
+    @core.typeguard
+    def download(self, items: dict[str | Path, str | Path], **kwargs):
+        if not items:
             return
-        client = self._client()
+        client = self.client()
         with client.open_sftp() as transport:
-            for src, dst in paths.items():
-                Global.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
+            for src, dst in items.items():
+                core.globals.console.print(f"[bold]\[{self.name}] download: {src} -> {dst}")
                 dst = Path(dst).expanduser().resolve().absolute()
                 if not dst.parent.exists():
                     os.makedirs(dst.parent)
                 transport.get(
-                    remotepath=src,
-                    localpath=dst.as_posix()
+                    remotepath=str(src),
+                    localpath=str(dst)
                 )
         client.close()
-
-    def _client(self):
-        result = paramiko.SSHClient()
-        result.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        result.connect(self.host, self.port, self.username, self.password)
-        return result

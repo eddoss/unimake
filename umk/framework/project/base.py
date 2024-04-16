@@ -1,165 +1,144 @@
 import string
-from beartype import beartype
-from beartype.typing import Optional, Callable, Union, Type
-from umk.globals import Global
+
+from umk import core
+from umk.framework import utils
+from umk.framework.filesystem import Path
 
 
-class Description:
-    @property
-    def short(self) -> str:
-        return self._short
-
-    @short.setter
-    @beartype
-    def short(self, value: str):
-        self._short = value
-
-    @property
-    def full(self) -> str:
-        return self._full
-
-    @full.setter
-    @beartype
-    def full(self, value: str):
-        self._full = value
-
-    @beartype
-    def __init__(self, short: str = "", full: str = ""):
-        self._short = short
-        self._full = full
+class BadProjectIdError(core.Error):
+    def __init__(self, project_id: str, allowed: str, message: str):
+        super().__init__(name=type(self).__name__.rstrip("Error"))
+        self.messages = [message]
+        self.details.new(name="id", value=project_id, desc="Project ID value")
+        self.details.new(name="allowed", value=allowed, desc="Allowed symbols")
 
 
-class Name(Description):
-    @property
-    def ok(self) -> bool:
+class Contributor(core.Model):
+    name: str = core.Field(
+        default="",
+        description="Author name."
+    )
+    email: list[str] = core.Field(
+        default_factory=list,
+        description="Author emails."
+    )
+    socials: dict[str, str] = core.Field(
+        default_factory=dict,
+        description="Author social networks.",
+    )
+
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "Project.Info.Contributor"
+        result.properties.new(name="Name", value=self.name, desc="Contributor name")
+        result.properties.new(name="Email", value=self.email, desc="Contributor email")
+        result.properties.new(name="Socials", value=self.socials, desc="Contributor social networks")
+        return result
+
+
+class Info(core.Model):
+    id: str = core.Field(
+        default="",
+        description="Project ID."
+    )
+    name: str = core.Field(
+        default="",
+        description="Project name."
+    )
+    version: str = core.Field(
+        default="",
+        description="Project version."
+    )
+    description: str = core.Field(
+        default="",
+        description="Project description."
+    )
+    contributors: list[Contributor] = core.Field(
+        default_factory=list,
+        description="Project contributors."
+    )
+
+    def object(self) -> core.Object:
+        result = core.Object()
+        result.type = "Project.Info"
+        result.properties.new(name="Id", value=self.id, desc="Project ID")
+        result.properties.new(name="Name", value=self.name, desc="Project label")
+        result.properties.new(name="Version", value=self.version, desc="Project version")
+        result.properties.new(name="Description", value=self.description, desc="Project description")
+        result.properties.new(name="Contributors", value=[c.object() for c in self.contributors], desc="Project contributors")
+        return result
+
+    @core.field.validator("id")
+    @classmethod
+    def _validate(cls, value: str):
         signs = set('.-+_')
         digits = set(string.digits)
         alphabet = set(string.ascii_lowercase)
         allowed = set()
         allowed.update(digits, signs, alphabet)
 
-        return self.short != "" \
-            and self.short[0] not in digits \
-            and self.short[0] not in signs \
-            and set(self.short) <= allowed
+        if value[0] in digits:
+            raise BadProjectIdError(
+                project_id=value,
+                allowed=string.ascii_lowercase,
+                message="Project ID should not starts with digit"
+            )
+        if value[0] in signs:
+            raise BadProjectIdError(
+                project_id=value,
+                allowed=string.ascii_lowercase,
+                message="Project ID should not starts with signs"
+            )
+        if set(value) > allowed:
+            raise BadProjectIdError(
+                project_id=value,
+                allowed=string.ascii_lowercase + string.digits + "".join(signs),
+                message="Project ID should contains just alphas and signs"
+            )
 
-    @beartype
-    def __init__(self, short: str = '', full: str = ''):
-        super().__init__(short, full)
+        return value
 
-
-class Author:
-    @property
-    def name(self) -> str:
-        return self._name
-
-    @name.setter
-    @beartype
-    def name(self, value: str):
-        self._name = value
-
-    @property
-    def email(self) -> str:
-        return self._email
-
-    @email.setter
-    @beartype
-    def email(self, value: str):
-        self._email = value
-
-    @property
-    def socials(self) -> dict[str, str]:
-        return self._socials
-
-    @socials.setter
-    @beartype
-    def socials(self, value: dict[str, str]):
-        self._socials = value
-
-    @beartype
-    def __init__(self, name: str = '', email: str = '', socials: dict[str, str] = None):
-        self._name = name
-        self._email = email
-        self._socials = {} if not socials else socials
+    @core.typeguard
+    def contrib(self, name: str, email: str | list[str], socials: None | dict[str, str] = None):
+        item = Contributor()
+        item.name = name
+        item.socials = socials or {}
+        if issubclass(type(email), str):
+            item.email.append(email)
+        else:
+            item.email = email
+        self.contributors.append(item)
 
 
-class Info:
-    @property
-    def name(self) -> Name:
-        return self._name
+class Layout(core.Model):
+    root: Path = core.Field(
+        default=core.globals.paths.work,
+        description="Project root directory."
+    )
+    unimake: Path = core.Field(
+        default=core.globals.paths.work / ".unimake",
+        description="'.unimake' root directory."
+    )
 
-    @name.setter
-    @beartype
-    def name(self, value: Name):
-        self._name = value
 
-    @property
-    def version(self) -> str:
-        return self._version
-
-    @version.setter
-    @beartype
-    def version(self, value: str):
-        self._version = value
-
-    @property
-    def description(self) -> Description:
-        return self._description
-
-    @description.setter
-    @beartype
-    def description(self, value: Description):
-        self._description = value
-
-    @property
-    def authors(self) -> list[Author]:
-        return self._authors
-
-    @authors.setter
-    @beartype
-    def authors(self, value: list[Author]):
-        self._authors = value
-
+class Interface:
     def __init__(self):
-        self._name = Name()
-        self._version = ""
-        self._description = Description()
-        self._authors = []
+        self.info: Info = Info()
+        self.layout: Layout = Layout()
+
+    def release(self):
+        """
+        Release project.
+        """
+        self.__not_implemented()
+
+    def __not_implemented(self):
+        core.globals.console.print(
+            f"[bold]The '{self.info.name or self.info.id}' has no '{utils.caller(2)}' action."
+        )
 
 
-class Layout:
-    def __init__(self, root=Global.paths.work):
-        self.root = root
-        self.umk = self.root / ".unimake"
+class Scratch(Interface):
+    pass
 
 
-class Project:
-    @property
-    def info(self) -> Info:
-        return self._info
-
-    @info.setter
-    @beartype
-    def info(self, value: Info):
-        self._info = value
-
-    def __init__(self):
-        self._info = Info()
-
-
-class Registerer:
-    @property
-    def instance(self) -> Project:
-        return self._creator()
-
-    def __init__(self, value: Optional[Union[Type, Callable[[], Project]]] = None):
-        self._creator = value
-
-
-def register(creator):
-    return Registerer(creator)
-
-
-def get() -> Optional[Project]:
-    # See implementation in dot/implementation.py
-    raise NotImplemented()

@@ -2,33 +2,31 @@ import os
 import pwd
 import grp
 
-from beartype import beartype
+from umk import core
 
 
-class Group:
-    @property
-    def name(self) -> str:
-        return self._name
+class Group(core.Model):
+    id: None | int = core.Field(
+        default=None,
+        description="Group ID."
+    )
+    name: None | str = core.Field(
+        default=None,
+        description="Group name."
+    )
 
-    @property
-    def id(self) -> int:
-        return self._id
-
-    @beartype
-    def __init__(self, name: str, id: int):
-        self._name = name
-        self._id = id
+    def __str__(self):
+        return f"gid={self.id} group={self.name}"
 
 
 class User(Group):
-    @property
-    def group(self) -> Group:
-        return self._group
+    group: Group = core.Field(
+        default_factory=Group,
+        description="User group info."
+    )
 
-    @beartype
-    def __init__(self, name: str, id: int, group: Group):
-        super().__init__(name, id)
-        self._group = group
+    def __str__(self):
+        return f"uid={self.id} user={self.name} {self.group}"
 
 
 def user() -> User:

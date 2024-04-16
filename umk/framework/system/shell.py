@@ -3,14 +3,13 @@ import asyncio
 import subprocess
 import sys
 from asyncio import subprocess as async_subprocess
-from beartype.typing import Union, Optional, Iterable
-from beartype import beartype
 from pathlib import Path
-from umk.framework.system import environs as env
-from umk.globals import Global
+from umk.core.typings import Callable
 
+from umk import core
+from umk.framework.system.environs import Environs
 
-Command = Union[str, list[str]]
+Command = str | list[str]
 
 
 class Handler:
@@ -20,124 +19,111 @@ class Handler:
     @abc.abstractmethod
     def on_output(self, text: str): ...
 
+    @abc.abstractmethod
+    def on_exception(self, exc: Exception): ...
 
-class Shell:
-    @staticmethod
-    def stringify(command: Iterable[str]) -> str:
-        return " ".join(command)
 
-    @property
-    def name(self) -> str:
-        return self._name
+class Devnull(Handler):
+    def on_error(self, text: str): ...
 
-    @name.setter
-    @beartype
-    def name(self, value: str):
-        self._name = value
+    def on_output(self, text: str): ...
 
-    @property
-    def command(self) -> str:
-        """
-        Program and its arguments
-        """
-        return self._command
+    def on_exception(self, exc: Exception): ...
 
-    @command.setter
-    @beartype
-    def command(self, value: Command):
-        if issubclass(type(value), str):
-            self._command = value.strip().split(" ")
-        else:
-            self._command = value
 
-    @property
-    def workdir(self) -> Path:
-        """
-        Path to working directory.
-        """
-        return self._workdir
+class Colorful(Handler, core.Model):
+    out: str = core.Field(default="[bold green]${msg}", description="Output pattern")
+    err: str = core.Field(default="[bold red]${msg}", description="Error pattern")
+    exc: str = core.Field(default="[bold red]${exc}", description="Error pattern")
 
-    @workdir.setter
-    @beartype
-    def workdir(self, value: Path):
-        self._workdir = value
+    def on_error(self, text: str):
+        for line in text.split('\n'):
+            if line.strip():
+                core.globals.console.print(self.out.replace("${msg}", line))
 
-    @property
-    def environs(self) -> env.Environs:
-        """
-        Additional process environs (it will be merged to current envs and override).
-        """
-        return self._environs
+    def on_output(self, text: str):
+        for line in text.split('\n'):
+            if line.strip():
+                core.globals.console.print(self.err.replace("${msg}", line))
 
-    @environs.setter
-    @beartype
-    def environs(self, value: env.Optional):
-        self._environs = env.Environs(inherit=True)
-        if value:
-            self._environs.update(value)
+    def on_exception(self, exc: Exception):
+        core.globals.console.print(self.err.replace("${exc}", str(exc)))
 
-    @property
-    def handler(self) -> Optional[Handler]:
-        """
-        Callbacks to handle output when pipe is used.
-        """
-        return self._handler
 
-    @handler.setter
-    @beartype
-    def handler(self, value: Optional[Handler]):
-        self._handler = value
+class Fetch(Handler, core.Model):
+    out: list[str] = core.Field(default_factory=list, description="Output buffer")
+    err: list[str] = core.Field(default_factory=list, description="Error buffer")
+    exc: None | Exception = core.Field(default=None, description="Exception object")
 
-    @property
-    def log(self) -> bool:
-        """
-        Print executable command or not
-        """
-        return self._log
+    def on_error(self, text: str):
+        self.err.append(text)
 
-    @log.setter
-    @beartype
-    def log(self, value: bool):
-        self._log = value
+    def on_output(self, text: str):
+        self.out.append(text)
 
-    devnull = subprocess.DEVNULL
-    pipe = subprocess.PIPE
-    stdout = sys.stdout
-    stderr = sys.stderr
+    def on_exception(self, exc: Exception):
+        self.exc = exc
 
-    @beartype
-    def __init__(
-        self,
-        command: Command,
-        workdir: Path = Global.paths.work,
-        environs: env.Optional = None,
-        handler: Optional[Handler] = None,
-        name: str = "",
-        log: bool = True,
-    ):
-        """
-        Initialize shell attributes.
+    def outstr(self, splitter="\n") -> str:
+        return splitter.join(self.out)
 
-        :param command: Program and its arguments.
-        :param workdir: Path to working directory.
-        :param environs: Additional process environs (it will merge and override current envs).
-        :param handler: Callbacks to handle output when pipe is used.
-        :param name: Name of this shell instance.
-        :param log: Print executable command or not.
-        """
-        self._name = name
-        self._command = command
-        self.command = command
-        self._workdir = workdir
-        self._environs = environs
-        self._handler = handler
-        self._log = log
+    def errstr(self, splitter="\n") -> str:
+        return splitter.join(self.err)
 
-    async def asyn(self, *, log: Optional[bool] = None) -> Optional[int]:
-        cmd = self.stringify(self.command)
+    def excstr(self) -> str:
+        return str(self.exc) if self.exc else ""
+
+
+class Std(Handler):
+    def on_error(self, text: str): ...
+
+    def on_output(self, text: str): ...
+
+    def on_exception(self, exc: Exception):
+        core.globals.log.error(msg=str(exc))
+
+
+devnull = subprocess.DEVNULL
+pipe = subprocess.PIPE
+stdout = sys.stdout
+stderr = sys.stderr
+
+
+class Shell(core.Model):
+    name: str = core.Field(
+        default="",
+        description="Shell name (just for convenience)"
+    )
+    cmd: list[str | Path] = core.Field(
+        default_factory=list,
+        description="Shell command and it's options"
+    )
+    workdir: None | Path | str = core.Field(
+        default=None,
+        description="Shell working directory"
+    )
+    environs: None | Environs = core.Field(
+        default=None,
+        description="Shell environment variables"
+    )
+    handler: None | Handler = core.Field(
+        default_factory=Std,
+        description="Result handler"
+    )
+    log: bool = core.Field(
+        default=False,
+        description="Print command or not"
+    )
+    stringifier: Callable[[list[str | Path]], str] = core.Field(
+        default=lambda args: " ".join([str(entry) for entry in args]),
+        description="List to string converter (it's need to convert command list to string)"
+    )
+
+    async def asyn(self, *, log: bool | None = None) -> int | None:
+        cmd = self.stringifier(self.cmd)
         self._log_cmd(log, cmd)
         inp, out, err = self._descriptors()
-        prc: Optional[async_subprocess.Process] = None
+        prc: async_subprocess.Process | None = None
         try:
             prc = await asyncio.create_subprocess_shell(
                 cmd=cmd,
@@ -149,10 +135,11 @@ class Shell:
                 shell=True
             )
         except Exception as e:
-            self._on_exception(err, e)
+            if self.handler:
+                self.handler.on_exception(e)
             return
 
-        if out != self.pipe and err != self.pipe:
+        if out != pipe and err != pipe:
             return await prc.wait()
 
         async def read(stream, func):
@@ -169,16 +156,14 @@ class Shell:
 
         return await prc.wait()
 
-    def sync(self, *, log: Optional[bool] = None) -> Optional[int]:
-        cmd = self.stringify(self.command)
-        self._log_cmd(log, cmd)
-        prc: Optional[subprocess.Popen] = None
+    def sync(self, *, log: bool | None = None) -> int | None:
+        self._log_cmd(log, self.stringifier(self.cmd))
+        prc: subprocess.Popen | None = None
         inp, out, err = self._descriptors()
 
         try:
             prc = subprocess.Popen(
-                args=self.command,
-                # stdin=inp,
+                args=self.cmd,
                 stdout=out,
                 stderr=err,
                 universal_newlines=True,
@@ -187,10 +172,10 @@ class Shell:
                 shell=False
             )
         except Exception as e:
-            self._on_exception(err, e)
+            self.handler.on_exception(e)
             return
 
-        if out != err != self.pipe:
+        if out != err != pipe:
             return prc.wait()
 
         while True:
@@ -214,81 +199,25 @@ class Shell:
 
     def _descriptors(self):
         inp = None
-        out = self.stdout
-        err = self.stderr
+        out = stdout
+        err = stderr
         if self.handler:
-            ht = type(self.handler)
-            if issubclass(ht, Devnull):
-                out = self.devnull
-                err = self.devnull
+            t = type(self.handler)
+            if issubclass(t, Devnull):
+                out = devnull
+                err = devnull
+            elif issubclass(t, Std):
+                out = stdout
+                err = stderr
             else:
-                out = self.pipe
-                err = self.pipe
+                out = pipe
+                err = pipe
         return inp, out, err
 
-    def _on_exception(self, err, e: Exception):
-        if err == self.devnull:
-            return
-        elif err == self.stdout or err == self.stderr:
-            print(e)
-        elif err == self.pipe:
-            self.handler.on_error(str(e))
-
-    def _log_cmd(self, need: Optional[bool], cmd: str):
+    def _log_cmd(self, need: bool | None, cmd: str):
         need_log = need if need is not None else self.log
         if need_log:
             if self.name:
-                Global.console.print(f"[bold]shell\['{self.name}']: {cmd}")
+                core.globals.console.print(f"[bold]shell\['{self.name}']: {cmd}")
             else:
-                Global.console.print(f"[bold]shell: {cmd}")
-
-
-class Devnull(Handler):
-    def on_error(self, text: str): ...
-
-    def on_output(self, text: str): ...
-
-
-class ColorPrinter(Handler):
-    @property
-    def out(self) -> str:
-        return self._out
-
-    @out.setter
-    @beartype
-    def out(self, value: str):
-        self._out = value
-
-    @property
-    def err(self) -> str:
-        return self._err
-
-    @err.setter
-    @beartype
-    def err(self, value: str):
-        self._err = value
-
-    @beartype
-    def __init__(self, out: str = ' ', err: str = '[error]'):
-        """
-        :param out: Output prefix.
-        :param err: Error prefix.
-        """
-        self._out = out
-        self._err = err
-
-    def on_error(self, text: str):
-        prefix = self.err
-        if prefix.startswith('['):
-            prefix = '\\' + prefix
-        for line in text.split('\n'):
-            if line.strip():
-                Global.console.print(f'[bold red]{prefix}[/] [bold]{line}')
-
-    def on_output(self, text: str):
-        prefix = self.out
-        if prefix.startswith('['):
-            prefix = '\\' + prefix
-        for line in text.split('\n'):
-            if line.strip():
-                Global.console.print(f'[bold green]{prefix}[/] [bold]{line}')
+                core.globals.console.print(f"[bold]shell: {cmd}")
