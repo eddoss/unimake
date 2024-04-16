@@ -52,7 +52,6 @@ export PROJECT_NAME_SHORT     := umk
 export PROJECT_ROOT           := $(CURDIR)
 export PROJECT_TESTS          := $(PROJECT_ROOT)/tests
 export PROJECT_DEVELOPMENT    := $(PROJECT_ROOT)/development
-export PROJECT_EXAMPLES       := $(PROJECT_ROOT)/examples
 export PROJECT_VERSION        := $(shell git describe --abbrev=0 --tags)
 export PROJECT_VERSION_RAW    := $(subst v,,$(PROJECT_VERSION))
 export PY                     ?= python
@@ -242,21 +241,3 @@ remote/container: remote/container/stop
 .PHONY: remote/container/stop
 remote/container/stop:
 	@docker container ls -a -q --filter "name=$(REMOTES_IMAGE_NAME).container" | grep -q . && docker container rm -f $(REMOTES_IMAGE_NAME).container || true
-
-# ################################################################################################ #
-# Examples
-# ################################################################################################ #
-
-export EXAMPLE_IMAGE ?= dev.$(PROJECT_NAME).example
-
-.PHONY: example/%
-example/%:
-	@docker image ls -q --filter "reference=$(EXAMPLE_IMAGE).$@" | grep -q . && docker image rm -f $(EXAMPLE_IMAGE).$@ || true
-	@docker container ls -a -q --filter "name=$(EXAMPLE_IMAGE).$@" | grep -q . && docker container rm -f $(EXAMPLE_IMAGE).$@ || true
-	@docker build \
-		--tag $(EXAMPLE_IMAGE).$@ \
-		--file $(PROJECT_EXAMPLES)/$@/Dockerfile $(PROJECT_EXAMPLES)/$@
-	@docker container create \
-		--name $(EXAMPLE_IMAGE).$@ \
-		--user "$(shell id -u):$(shell id -g)" \
-		$(DEV_IMAGE)
