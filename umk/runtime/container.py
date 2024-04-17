@@ -79,7 +79,7 @@ class Container:
         if specific:
             result = self.remotes.get(specific)
             if not result:
-                core.globals.console.print(
+                core.globals.error_console.print(
                     f"Failed to find remote environment '{specific}'! "
                     f"Please create it in the .unimake/remotes.py"
                 )
