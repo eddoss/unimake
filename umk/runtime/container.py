@@ -84,6 +84,7 @@ class Container:
                     f"Please create it in the .unimake/remotes.py"
                 )
                 core.globals.close(-1)
+            return result
 
     def script(self, root: Path, name: str):
         file = root / f'{name}.py'
