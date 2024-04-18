@@ -132,5 +132,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 .idea/
 
-examples/project.go/.unimake/Dockerfile
-examples/project.go/.unimake/docker-compose.yaml
+# docs sample
+docs/sample/output
+docs/sample/dev.dockerfile
+docs/sample/docker-compose.yaml
+docs/sample/go.sum
+docs/sample/server

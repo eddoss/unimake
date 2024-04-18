@@ -27,73 +27,150 @@ A specific project must contain at least 2 scripts:
 `umk` tool allows you to execute a command from `.unimake/cli.py`
 
 ![how-unimake-works](docs/diagrams/high-level.svg)
-
-### Script project.py
+## Sample project
+Sources are [here](docs/sample).
+### Project and targets
 ```py
-import umk 
+# File      .unimake/config.py
+# Optional  no
 
-class Project(umk.GoProject):  
-    def __init__(self):  
-        super().__init__()  
-        self.git = umk.git()
-        self.info.name.short = "project-name"
-        self.info.name.full = "Project Name"
-        self.info.version = umk.tag(self.git, "v1.0.0")
-        self.info.authors = [
-            umk.Author('Author Name', 'author.name@email.com')
-        ]
-        self.info.description = "Super puper mega description"  
-        self.go = umk.Go.find("1.19")
-        self.dlv = umk.Delve.find()
-  
-    async def build(self, mode: str):
-        args = umk.GoBuildArgs.new(mode)  
-        args.output = self.layout.output / 'foo'
-        args.sources.append(self.layout.cmd / 'foo')
-        args.flags.go.append('-mod=vendor')
-        await self.go.build(args).asyn()
-  
-    def vendor(self):
-        self.go.mod.tidy().sync()
-        self.go.mod.vendor().sync()
-  
-    def debug(self, port=2345):
-        self.dlv.exec(
-            binary=self.layout.output / 'foo',
-            flags=umk.DelveFlags(port)
-        ).sync()
-  
-project = Project()
+from umk.kit import project, target
+from config import Config
+
+
+@project.golang
+def _(s: project.Golang):
+    s.info.id = "sample"
+    s.info.name = "Sample Project"
+    s.info.description = "Sample project detailed description"
+    s.info.version = "v0.2.0"
+    s.info.contrib("John Doe", "john.doe@mail.com")
+
+
+@target.go.binary
+def _(s: target.GolangBinary, c: Config, p: project.Golang):
+    s.name = "server"
+    s.label = "Server"
+    s.description = "Server application"
+    s.tool = p.tool
+    s.build.output = p.layout.root / "server"
+    s.build.source = [p.layout.cmd / "server"]
+    s.debug.port = c.debug.port  # Read server debug port from config
+
+
+@target.go.mod
+def _(s: target.GolangMod, _, p: project.Golang):
+    s.name = "dependencies.go"
+    s.label = "Golang Dependencies"
+    s.description = "List of golang packages required to build project"
+    s.tool = p.tool
+    s.path = p.layout.root
+
+
+@target.packages
+def _(s: target.SystemPackages):
+    s.name = "dependencies.os"
+    s.label = "System Package Dependencies"
+    s.description = "List of system packages required to build project"
+    s.apt_get.sudo = True
+    s.apt_get.items = ["golang"]
+
+
+@project.releaser
+def _(c: Config):
+    target.run("dependencies.os")
+    target.run("dependencies.go")
+    if c.debug.on:
+        target.run("server")
+    else:
+        target.run("server")
 ```
-### Script cli.py
+### Config
 ```py
-from umk import cli  
-from project import project  
+# File      .unimake/config.py
+# Optional  yes 
 
-@cli.cmd()
-def vendor():  
-    project.vendor()
+from umk import core
+from umk.kit import config
 
-@cli.cmd()
-@cli.opt('--mode', default='debug', help='Build mode (debug|release)')
-async def build(mode: str):
-    await project.build(mode)
 
-@cli.cmd(help="Run debug server (on port 2345 by default)")
-@cli.opt('--port', type=int, default=2345)  
-def debug(port: int):  
-    project.debug(port)
+@config.register
+class Config(config.Interface):
+    class Debug(core.Model):
+        on: bool = core.Field(False, description="Enable debug info")
+        port: int = core.Field(default=2345, description="Port to start debugger on")
+    debug: Debug = core.Field(default_factory=Debug)
+    usermod: bool = core.Field(True, description="Create user inside development container")
+
+
+@config.preset(name="local")
+def _(c: Config):
+    c.debug.port = 2020
 ```
-### Execute projects command
-```sh
-cd path/to/project/root
-umk vendor
-umk build
-umk debug --port 3000
-``` 
-# Installation
-See [installation instructions](docs/installation.md) for more details.
+### Development environment
+```py
+# File      .unimake/remote.py
+# Optional  yes
 
-# Documentation
-- [Intoduction](docs/intro.md)
-- [Tool: umk](docs/tool-umk.md)
+from umk.kit import remote, project, system
+from umk.kit.adapter import docker
+from config import Config
+
+
+@remote.docker.compose
+def _(s: remote.DockerCompose, c: Config, p: project.Golang):
+    s.name = "dev"
+    s.description = "Project development container"
+    s.default = True
+
+    u = system.user()
+
+    # Dockerfile
+    f = docker.File(path=p.layout.root, name="dev.dockerfile")
+    f.froms("ubuntu")
+    if c.usermod:
+        f.run([
+            f"apt-get update",
+            f"apt-get -y install sudo",
+            f"mkdir -p /etc/sudoers.d",
+            f'echo "{u.name} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd',
+            f"groupadd -g {u.group.id} {u.name}",
+            f"useradd -m -u {u.id} -d /home/{u.name} -g {u.group.id} -s /bin/sh {u.name}",
+        ])
+        f.user(u.id)
+        f.env("PATH", f"$PATH:/home/{u.name}/.local/bin")
+        f.run([f"sudo chown {u.name}:{u.name} /home/{u.name}"])
+        f.run([
+            "sudo apt-get -y install git",
+            "sudo apt-get -y install python3",
+            "sudo apt-get -y install pip",
+        ])
+    else:
+        f.run([
+            "apt-get -y install git",
+            "apt-get -y install python3",
+            "apt-get -y install pip",
+        ])
+    f.run(["pip install umk"])
+
+    # Compose service
+    b = docker.ComposeService()
+    b.build = docker.ComposeBuild()
+    b.build.context = f.path
+    b.build.dockerfile = f.name
+    b.image = "project-image"
+    b.container_name = "dev"
+    b.ports = ["2233:2233"]
+    b.hostname = "dev"
+    b.working_dir = "/workdir"
+    if c.usermod:
+        b.user = f"{u.id}:{u.group.id}"
+        b.working_dir = f"/home/{u.name}/workdir"
+    b.volumes.bind(src=p.layout.root, dst=b.working_dir)
+    b.entrypoint = ["sleep", "infinity"]
+
+    s.dockerfiles.append(f)
+    s.composefile.services["dev"] = b
+    s.composefile.path = p.layout.root
+    s.service = "dev"
+```
