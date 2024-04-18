@@ -1,43 +1,16 @@
 import functools
-import os
 
 import asyncclick
 
-
-class State:
-    Complete = "_UMK_COMPLETE" in os.environ
-    Unsafe = "UMK_UNSAFE" in os.environ
-
-
-class RemoteOption(asyncclick.Option):
-    def __init__(self, *args, **kwargs):
-        cls = None
-        for arg in args:
-            if issubclass(type(arg), asyncclick.Parameter):
-                cls = arg
-                break
-        name = ("-R",)
-        if cls:
-            super(RemoteOption, self).__init__(name, cls=cls, **kwargs)
-        else:
-            super(RemoteOption, self).__init__(name, **kwargs)
-        self.flag_value = "flag"
-        self.is_flag = False
-        self.help = "Execute in the default or specific remote environment"
-
-    def handle_parse_result(self, ctx: asyncclick.Context, opts: dict[str, str], args: list[str]):
-        r = opts.get('r')
-        if issubclass(type(ctx.command), asyncclick.Group):
-            if r in ctx.command.commands:
-                args.append(r)
-                opts['r'] = "___umk_option_remote___"
-        return super(RemoteOption, self).handle_parse_result(ctx, opts, args)
+import umk.core.globals
+from umk import state
 
 
 class options:
     @staticmethod
     def remote(func):
-        @asyncclick.option(cls=RemoteOption)
+        # @asyncclick.option(cls=RemoteOption)
+        @asyncclick.option("-R", is_flag=True, flag_value="___umk_flag___", help="Execute in the default or specific remote environment")
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
@@ -87,21 +60,23 @@ class options:
             return wrapper
 
 
-if not State.Complete:
+if not state.complete:
     import sys
 
     from umk import core
     from umk import runtime
 
 
-    # def forward(container: runtime.Container, default: bool, specific: str, cmd: list[str]):
-        # if not default and not specific:
-        #     return
-        # rem: framework.remote.Interface = container.find_remote(default, specific)
-        # # TODO Parse sys.argv and run it in the remote environment
-        # print("Forwarding is not implemented !")
-        # core.globals.close(0)
-
+    def forward(container: runtime.Container):
+        if state.remote.default:
+            re = container.find_remote(state.remote.default, "")
+        elif state.remote.specific.strip():
+            re = container.find_remote(False, state.remote.specific)
+        else:
+            return
+        umk.core.globals.console.print(f"[bold]Forward execution to '{re.name}' remote environment: '{' '.join(state.remote.cmd)}'")
+        re.execute(state.remote.cmd)
+        sys.exit(0)
 
     def config(file: bool, presets: tuple[str] | None, overrides: None | tuple[str] = None) -> runtime.Options.Config:
         result = runtime.Options.Config()

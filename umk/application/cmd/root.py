@@ -11,19 +11,19 @@ if not os.environ.get('_UMK_COMPLETE'):
 
 
 @asyncclick.group()
-async def root():
+@utils.options.remote
+async def root(r):
     pass
 
 
 @root.command(help="Run project targets")
-@utils.options.remote
 @utils.options.config.all
 @asyncclick.argument('names', required=True, nargs=-1)
-@asyncclick.pass_context
-def run(ctx: asyncclick.Context, r: bool, c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
+def run(c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
     opt = runtime.Options()
     opt.config = utils.config(f, p, c)
     runtime.c.load(opt)
+    utils.forward(runtime.c)
     runtime.c.targets.run(*names)
 
 
@@ -98,12 +98,12 @@ def inspect(s: str, c: tuple[str], p: tuple[str], f: bool):
 
 
 @root.command(help="Release project")
-@utils.options.remote
 @utils.options.config.all
-def release(r: bool, c: tuple[str], p: tuple[str], f: bool):
+def release(c: tuple[str], p: tuple[str], f: bool):
     opt = runtime.Options()
     opt.config = utils.config(f, p, c)
     runtime.c.load(opt)
+    utils.forward(runtime.c)
     runtime.c.project.release()
 
 

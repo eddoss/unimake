@@ -12,10 +12,8 @@ if not os.environ.get('_UMK_COMPLETE', None):
 
 
 @root.group(help="Project targets management commands")
-@utils.options.remote
 @utils.options.config.all
-@asyncclick.pass_context
-def target(ctx: asyncclick.Context, r: bool | str, c: tuple[str], p: tuple[str], f: bool):
+def target(c: tuple[str], p: tuple[str], f: bool):
     opt = runtime.Options()
     opt.config = utils.config(f, p, c)
     runtime.c.load(opt)

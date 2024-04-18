@@ -1,9 +1,10 @@
 import asyncio
 
+from umk import state
 from umk.application import cmd
-from umk.application.utils import State
 
-if State.Complete or State.Unsafe:
+
+if state.complete or state.unsafe:
     asyncio.run(cmd.root())
 else:
     try:
