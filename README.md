@@ -18,13 +18,13 @@
 - Run project targets in remote environment (dev-container, remote server, etc)
 
 # How it works ?
-Unimake provides the Python framework (`umk`), project commands runner tool (`umk cli`) and command line manager (`unimake`).
+Unimake provides the Python framework (`umk`) and project commandline tool (`umk`).
 
-A specific project must contain at least 2 scripts:
-- `.unimake/project.py` - project info, build steps, etc.
-- `.unimake/cli.py` - command line interface to interact with project
-
-`umk` tool allows you to execute a command from `.unimake/cli.py`
+A specific project must contain at least 1 module:
+- `.unimake/project.py` - project info, target descriptions and release function
+Other modules are optionals:
+- `.unimake/config.py` - contains project config class and config presets
+- `.unimake/remotes.py` - contains remote environments to run targets in
 
 ![how-unimake-works](docs/diagrams/high-level.svg)
 ## Sample project
