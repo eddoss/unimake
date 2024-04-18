@@ -49,6 +49,7 @@ class Container:
         sys.path.insert(0, root.as_posix())
 
         with_config = (root / "config.py").exists()
+        with_remote = (root / "remote.py").exists()
 
         self.config.init()
         self.project.init()
@@ -58,13 +59,15 @@ class Container:
         if with_config:
             self.script(root, "config")
         self.script(root, "project")
-        self.script(root, "remotes")
+        if with_remote:
+            self.script(root, "remotes")
 
         if with_config:
             self.config.setup(options.config)
         self.project.setup(self.config.instance)
         self.targets.setup(self.config.instance, self.project.instance)
-        self.remotes.setup(self.config.instance, self.project.instance)
+        if with_remote:
+            self.remotes.setup(self.config.instance, self.project.instance)
 
     def find_remote(self, default: bool, specific: str) -> remote.Interface:
         if default:
