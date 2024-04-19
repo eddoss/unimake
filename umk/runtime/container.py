@@ -60,7 +60,7 @@ class Container:
             self.script(root, "config")
         self.script(root, "project")
         if with_remote:
-            self.script(root, "remotes")
+            self.script(root, "remote")
 
         if with_config:
             self.config.setup(options.config)
@@ -75,7 +75,7 @@ class Container:
             if not result:
                 core.globals.error_console.print(
                     'Failed to find default remote environment! '
-                    'Please specify it in the .unimake/remotes.py'
+                    'Please specify it in the .unimake/remote.py'
                 )
                 core.globals.close(-1)
             return result
@@ -84,7 +84,7 @@ class Container:
             if not result:
                 core.globals.error_console.print(
                     f"Failed to find remote environment '{specific}'! "
-                    f"Please create it in the .unimake/remotes.py"
+                    f"Please create it in the .unimake/remote.py"
                 )
                 core.globals.close(-1)
             return result

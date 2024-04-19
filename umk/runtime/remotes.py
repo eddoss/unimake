@@ -9,7 +9,7 @@ class Remote(core.Model):
             description="Decorator of the remote 'custom'",
             default_factory=lambda: utils.Decorator(
                 stack=2,
-                module="remotes",
+                module="remote",
                 input=utils.Decorator.Input(
                     subject="class",
                     base=remote.Interface,
@@ -29,10 +29,10 @@ class Remote(core.Model):
                     subject="function",
                     sig=utils.Decorator.Input.Signature(min=1)
                 ),
-                module="remotes",
+                module="remote",
                 errors=utils.Decorator.OnErrors(
-                    module=utils.SourceError("Failed to register remote environment 'ssh' outside of the .unimake/remotes.py"),
-                    subject=utils.FunctionError("Failed to register remote environment 'ssh'. Use 'umk.framework.remotes.ssh with functions"),
+                    module=utils.SourceError("Failed to register remote environment 'ssh' outside of the .unimake/remote.py"),
+                    subject=utils.FunctionError("Failed to register remote environment 'ssh'. Use 'umk.framework.remote.ssh with functions"),
                     sig=utils.SignatureError("Failed to register remote environment 'ssh'. Function must accept 1 argument at least"),
                 )
             ),
@@ -45,10 +45,10 @@ class Remote(core.Model):
                     subject="function",
                     sig=utils.Decorator.Input.Signature(min=1)
                 ),
-                module="remotes",
+                module="remote",
                 errors=utils.Decorator.OnErrors(
-                    module=utils.SourceError("Failed to register remote environment 'docker.container' outside of the .unimake/remotes.py"),
-                    subject=utils.FunctionError("Failed to register remote environment 'docker.container'. Use 'umk.framework.remotes.docker.container with functions"),
+                    module=utils.SourceError("Failed to register remote environment 'docker.container' outside of the .unimake/remote.py"),
+                    subject=utils.FunctionError("Failed to register remote environment 'docker.container'. Use 'umk.framework.remote.docker.container with functions"),
                     sig=utils.SignatureError("Failed to register remote environment 'docker.container'. Function must accept 1 argument at least"),
                 )
             ),
@@ -61,10 +61,10 @@ class Remote(core.Model):
                     subject="function",
                     sig=utils.Decorator.Input.Signature(min=1)
                 ),
-                module="remotes",
+                module="remote",
                 errors=utils.Decorator.OnErrors(
-                    module=utils.SourceError("Failed to register remote environment 'docker.compose' outside of the .unimake/remotes.py"),
-                    subject=utils.FunctionError("Failed to register remote environment 'docker.compose'. Use 'umk.framework.remotes.docker.compose with functions"),
+                    module=utils.SourceError("Failed to register remote environment 'docker.compose' outside of the .unimake/remote.py"),
+                    subject=utils.FunctionError("Failed to register remote environment 'docker.compose'. Use 'umk.framework.remote.docker.compose with functions"),
                     sig=utils.SignatureError("Failed to register remote environment 'docker.compose'. Function must accept 1 argument at least"),
                 )
             ),
