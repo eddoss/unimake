@@ -3,8 +3,11 @@ All notable changes to this project will be documented in this file. The format 
 
 ## [v0.1.2] - 2024-04-19
 ### Fixed
-- Make core properties boolable
+- Fix assignment of config entry with type int, bool and float
 - Fix 'umk config write' crash with 'NoneType object is not iterable'
+
+### Changed
+- Make core properties boolable
 
 ## [v0.1.1] - 2024-04-19
 ### Fixed

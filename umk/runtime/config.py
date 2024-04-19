@@ -1,10 +1,11 @@
 import os
+import sys
 
 from pydantic import ValidationError
 
 from umk import core
 from umk.kit import config
-from umk.core.typings import Callable, Any
+from umk.core.typings import Callable, Any, Type
 from umk.framework.filesystem import Path
 from umk.runtime import utils
 
@@ -74,19 +75,41 @@ class Config(core.Model):
         description="Config entries"
     )
 
-    def set(self, entry: str, value: config.Value):
+    def set(self, entry: str, value: str):
         if entry not in self.entries:
             core.globals.console.print(f"[yellow bold]Config: '{entry}' entry not found")
             return
-        tokens = entry.replace("-", "_").split(".")
-        if len(tokens) == 1:
-            setattr(self.instance, tokens[0], value)
-        else:
+
+        def find() -> tuple[Any, str, Type]:
+            tokens = entry.replace("-", "_").split(".")
             attr = tokens[-1]
             curr = self.instance
             for token in tokens[:-1]:
                 curr = getattr(curr, token)
-            setattr(curr, attr, value)
+            return curr, attr, type(getattr(curr, attr))
+
+        def assign(to: Any, which: str, what: str, t: Type):
+            if t == str:
+                setattr(to, which, what)
+            elif t == int:
+                setattr(to, which, int(what))
+            elif t == bool:
+                if what == "yes":
+                    setattr(to, which, True)
+                elif what == "no":
+                    setattr(to, which, False)
+                else:
+                    raise core.Error(
+                        "BadBool",
+                        f"Failed to set config entry '{entry}' value",
+                        "Valid boolean: 'yes', 'no'",
+                        f"Given: {value}"
+                    )
+            elif t == float:
+                setattr(to, which, float(what))
+
+        obj, name, typ = find()
+        assign(obj, name, value, typ)
 
     def get(self, entry: str, on_err: Any = None) -> config.Value | None:
         if entry not in self.entries:
@@ -175,6 +198,16 @@ class Config(core.Model):
                     tokens[token] = f.description or ""
                 elif issubclass(t, core.Model):
                     recursive(v, f"{parent}.{n}", tokens)
+                else:
+                    e = n
+                    if parent:
+                        e = parent + "." + n
+                    raise core.Error(
+                        "UnsupportedConfigType",
+                        f"Failed to register config !",
+                        f"The entry '{e}' is an unsupported type: {t}",
+                        f"Only 'str | bool | int | float' are allowed."
+                    )
 
         if self.decorator.instance.registered:
             self.instance = self.decorator.instance.defers[0].func()
