@@ -51,6 +51,9 @@ class Properties:
     def __setitem__(self, name: str, value: Property):
         self._items[name] = value
 
+    def __bool__(self):
+        return bool(self._items)
+
     @typeguard
     def get(self, name: str, value: Any = None) -> Property:
         return self._items.get(name, value)
