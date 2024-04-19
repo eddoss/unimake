@@ -58,7 +58,8 @@ class Error(Exception):
     @typeguard
     def print(self, printer: Callable[[...], Any]):
         self.print_messages(printer)
-        self.print_details(printer)
+        if self.details:
+            self.print_details(printer)
 
     @typeguard
     def print_messages(self, printer: Callable[[...], Any]):
@@ -68,8 +69,8 @@ class Error(Exception):
 
     @typeguard
     def print_details(self, printer: Callable[[...], Any]):
-        cs = "[bold red]"
-        rs = "[bold red]"
+        cs = "bold red"
+        rs = "bold red"
         table = Table(show_header=True, show_edge=True, show_lines=False)
         table.add_column("Name", justify="left", style=cs, no_wrap=True)
         table.add_column("Default", justify="center", style=cs, no_wrap=True)
