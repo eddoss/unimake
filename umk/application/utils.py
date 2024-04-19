@@ -78,25 +78,26 @@ if not state.complete:
         re.execute(state.remote.cmd)
         sys.exit(0)
 
-    def config(file: bool, presets: tuple[str] | None, overrides: None | tuple[str] = None) -> runtime.Options.Config:
+    def config(file: bool, presets: tuple[str] | None = None, overrides: None | tuple[str] = None) -> runtime.Options.Config:
         result = runtime.Options.Config()
-        result.presets = list(presets)
+        result.presets = list(presets) if presets else []
         result.file = file
         if not overrides:
             return result
-        for entry in overrides:
-            name = ""
-            i = 0
-            for i, sym in enumerate(entry):
-                if sym != "=":
-                    name += sym
-                # TODO Validate entry symbols
-                else:
-                    break
-                if i > len(entry):
-                    # TODO Invalid syntax
-                    print(f"Invalid config entry: {entry}", file=sys.stderr)
-                    core.globals.close(-1)
-            value = entry[i+1:]
-            result.overrides[name] = value
+        if overrides is not None:
+            for entry in overrides:
+                name = ""
+                i = 0
+                for i, sym in enumerate(entry):
+                    if sym != "=":
+                        name += sym
+                    # TODO Validate entry symbols
+                    else:
+                        break
+                    if i > len(entry):
+                        # TODO Invalid syntax
+                        print(f"Invalid config entry: {entry}", file=sys.stderr)
+                        core.globals.close(-1)
+                value = entry[i+1:]
+                result.overrides[name] = value
         return result
