@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [v0.1.4] - 2024-04-19
+### Fix
+- Fix conflict between 'target.go.binary' and 'target.command' decorators
+
 ## [v0.1.3] - 2024-04-19
 ### Change
 - Rename .unimake/remotes.py -> .unimake/remote.py
@@ -9,7 +13,6 @@ All notable changes to this project will be documented in this file. The format 
 ### Fixed
 - Fix assignment of config entry with type int, bool and float
 - Fix 'umk config write' crash with 'NoneType object is not iterable'
-
 ### Changed
 - Make core properties boolable
 

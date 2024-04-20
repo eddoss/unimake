@@ -184,6 +184,11 @@ class Targets(core.Model):
                 append(src)
         for defer in self.decorator.command.defers:
             src = target.Command()
+            sig = self.decorator.command.input.sig
+            defer(sig.min, sig.max, src, c, p)
+            append(src)
+        for defer in self.decorator.go_binary.defers:
+            src = target.GolangBinary()
             sig = self.decorator.go_binary.input.sig
             defer(sig.min, sig.max, src, c, p)
             append(src)
