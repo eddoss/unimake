@@ -142,3 +142,8 @@ class Remote(core.Model):
         for defer in self.decorator.custom.defers:
             res = defer(0, 2, c, p)
             append(res)
+
+        self.decorator.custom.skip = True
+        self.decorator.ssh.skip = True
+        self.decorator.compose.skip = True
+        self.decorator.container.skip = True

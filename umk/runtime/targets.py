@@ -205,3 +205,10 @@ class Targets(core.Model):
         for defer in self.decorator.custom.defers:
             res = defer(0, 2, c, p)
             append(res)
+
+        self.decorator.custom.skip = True
+        self.decorator.go_mod.skip = True
+        self.decorator.go_binary.skip = True
+        self.decorator.function.skip = True
+        self.decorator.command.skip = True
+        self.decorator.packages.skip = True
