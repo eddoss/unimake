@@ -119,83 +119,86 @@ class Shell(core.Model):
         description="List to string converter (it's need to convert command list to string)"
     )
 
-    async def asyn(self, *, log: bool | None = None) -> int | None:
-        cmd = self.stringifier(self.cmd)
-        self._log_cmd(log, cmd)
-        inp, out, err = self._descriptors()
-        prc: async_subprocess.Process | None = None
-        try:
-            prc = await asyncio.create_subprocess_shell(
-                cmd=cmd,
-                stdin=inp,
-                stdout=out,
-                stderr=err,
-                cwd=self.workdir,
-                env=self.environs,
-                shell=True
-            )
-        except Exception as e:
-            if self.handler:
-                self.handler.on_exception(e)
-            return
-
-        if out != pipe and err != pipe:
-            return await prc.wait()
-
-        async def read(stream, func):
-            while True:
-                line = await stream.readline()
-                if not line:
-                    return
-                func(self.handler, line.rstrip().decode("utf-8"))
-
-        await asyncio.gather(
-            read(prc.stdout, type(self.handler).on_output),
-            read(prc.stderr, type(self.handler).on_error)
-        )
-
-        return await prc.wait()
-
     def sync(self, *, log: bool | None = None) -> int | None:
-        self._log_cmd(log, self.stringifier(self.cmd))
-        prc: subprocess.Popen | None = None
-        inp, out, err = self._descriptors()
+        async def run():
+            cmd = self.stringifier(self.cmd)
+            self._log_cmd(log, cmd)
+            inp, out, err = self._descriptors()
+            prc: async_subprocess.Process | None = None
+            try:
+                prc = await asyncio.create_subprocess_shell(
+                    cmd=cmd,
+                    stdin=inp,
+                    stdout=out,
+                    stderr=err,
+                    cwd=self.workdir,
+                    env=self.environs,
+                    shell=True
+                )
+            except Exception as e:
+                if self.handler:
+                    self.handler.on_exception(e)
+                return
 
-        try:
-            prc = subprocess.Popen(
-                args=self.cmd,
-                stdout=out,
-                stderr=err,
-                universal_newlines=True,
-                cwd=self.workdir,
-                env=self.environs,
-                shell=False
+            if out != pipe and err != pipe:
+                return await prc.wait()
+
+            async def read(stream, func):
+                while True:
+                    line = await stream.readline()
+                    if not line:
+                        return
+                    func(self.handler, line.rstrip().decode("utf-8"))
+
+            await asyncio.gather(
+                read(prc.stdout, type(self.handler).on_output),
+                read(prc.stderr, type(self.handler).on_error)
             )
-        except Exception as e:
-            self.handler.on_exception(e)
-            return
 
-        if out != err != pipe:
-            return prc.wait()
+            await prc.wait()
 
-        while True:
-            code = prc.poll()
-            if code is not None:
-                if prc.stdout:
-                    for line in prc.stdout.readlines():
-                        self.handler.on_output(line.rstrip())
-                if prc.stderr:
-                    for line in prc.stderr.readlines():
-                        self.handler.on_error(line.rstrip())
-                return code
-            if prc.stdout:
-                o = prc.stdout.readline()
-                if o:
-                    self.handler.on_output(o.rstrip())
-            if prc.stderr:
-                e = prc.stderr.readline()
-                if e:
-                    self.handler.on_error(e.strip())
+        return asyncio.run(run())
+
+    # def sync(self, *, log: bool | None = None) -> int | None:
+    #     self._log_cmd(log, self.stringifier(self.cmd))
+    #     prc: subprocess.Popen | None = None
+    #     inp, out, err = self._descriptors()
+    #
+    #     try:
+    #         prc = subprocess.Popen(
+    #             args=self.cmd,
+    #             stdout=out,
+    #             stderr=err,
+    #             universal_newlines=True,
+    #             cwd=self.workdir,
+    #             env=self.environs,
+    #             shell=False
+    #         )
+    #     except Exception as e:
+    #         self.handler.on_exception(e)
+    #         return
+    #
+    #     if out != err != pipe:
+    #         return prc.wait()
+    #
+    #     while True:
+    #         code = prc.poll()
+    #         if code is not None:
+    #             if prc.stdout:
+    #                 for line in prc.stdout.readlines():
+    #                     self.handler.on_output(line.rstrip())
+    #             if prc.stderr:
+    #                 for line in prc.stderr.readlines():
+    #                     self.handler.on_error(line.rstrip())
+    #             return code
+    #         if prc.stdout:
+    #             o = prc.stdout.readline()
+    #             if o:
+    #                 self.handler.on_output(o.rstrip())
+    #         if prc.stderr:
+    #             e = prc.stderr.readline()
+    #             if e:
+    #                 self.handler.on_error(e.strip())
 
     def _descriptors(self):
         inp = None
