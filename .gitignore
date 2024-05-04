@@ -135,6 +135,6 @@ cython_debug/
 # docs sample
 docs/sample/output
 docs/sample/dev.dockerfile
-docs/sample/docker-compose.yaml
+docs/sample/dev.docker-compose.yaml
 docs/sample/go.sum
 docs/sample/server

@@ -1,6 +1,6 @@
 import os
 
-import asyncclick
+import click
 
 from umk.application.cmd import root
 from umk.application import utils
@@ -23,7 +23,7 @@ def target(c: tuple[str], p: tuple[str], f: bool):
 @utils.options.style
 def ls(s: str):
     if s == "style":
-        table = Table(show_header=True, show_edge=True, show_lines=True)
+        table = Table(show_header=False, show_edge=False, show_lines=False, box=None)
         table.add_column("Name", justify="left", style="", no_wrap=True)
         table.add_column("Description", justify="left", style="", no_wrap=True)
         for t in runtime.c.targets:
@@ -36,7 +36,7 @@ def ls(s: str):
 
 @target.command(name='inspect', help="Inspect targets details")
 @utils.options.style
-@asyncclick.argument('names', required=True, nargs=-1)
+@click.argument('names', required=True, nargs=-1)
 def inspect(s: str, names: tuple[str]):
     found = []
     for name in names:
@@ -54,7 +54,7 @@ def inspect(s: str, names: tuple[str]):
         properties = []
         for o in objects:
             properties.append(o.properties)
-        printer.print(*properties)
+        printer.print(*properties, description=False)
 
     elif s == "json":
         core.globals.console.print_json(core.json.text(objects))

@@ -1,6 +1,6 @@
 import os
 
-import asyncclick
+import click
 
 from umk.application.cmd import root
 from umk.application import utils
@@ -13,10 +13,10 @@ if not os.environ.get('_UMK_COMPLETE', None):
 
 
 @root.group(help="Remote environments management commands",)
-@asyncclick.option('-n', default="", help="Remote environment name")
+@click.option('-n', default="", help="Remote environment name")
 @utils.options.config.all
-@asyncclick.pass_context
-async def remote(ctx: asyncclick.Context, n: str, c: tuple[str], p: tuple[str], f: bool):
+@click.pass_context
+def remote(ctx: click.Context, n: str, c: tuple[str], p: tuple[str], f: bool):
     pass
     opt = runtime.Options()
     opt.config = utils.config(f, p, c)
@@ -28,43 +28,43 @@ async def remote(ctx: asyncclick.Context, n: str, c: tuple[str], p: tuple[str], 
 
 
 @remote.command(help="Build remote environment")
-@asyncclick.pass_context
-def build(ctx: asyncclick.Context):
+@click.pass_context
+def build(ctx: click.Context):
     instance: Interface = ctx.obj.get("instance")
     instance.build()
 
 
 @remote.command(help="Destroy remote environment")
-@asyncclick.pass_context
-def destroy(ctx: asyncclick.Context):
+@click.pass_context
+def destroy(ctx: click.Context):
     instance: Interface = ctx.obj.get("instance")
     instance.destroy()
 
 
 @remote.command(help="Start remote environment")
-@asyncclick.pass_context
-def up(ctx: asyncclick.Context):
+@click.pass_context
+def up(ctx: click.Context):
     instance: Interface = ctx.obj.get("instance")
     instance.up()
 
 
 @remote.command(help="Stop remote environment")
-@asyncclick.pass_context
-def down(ctx: asyncclick.Context):
+@click.pass_context
+def down(ctx: click.Context):
     instance: Interface = ctx.obj.get("instance")
     instance.down()
 
 
 @remote.command(help="Login remote environment")
-@asyncclick.pass_context
-def login(ctx: asyncclick.Context):
+@click.pass_context
+def login(ctx: click.Context):
     instance: Interface = ctx.obj.get("instance")
     instance.login()
 
 
 @remote.command(help="Open remote environment shell")
-@asyncclick.pass_context
-def shell(ctx: asyncclick.Context):
+@click.pass_context
+def shell(ctx: click.Context):
     instance: Interface = ctx.obj.get("instance")
     instance.shell()
 
@@ -87,10 +87,10 @@ def ls():
 
 
 @remote.command(name='exec', help="Execute command in remote environment")
-@asyncclick.argument('program', required=True, nargs=1)
-@asyncclick.argument('arguments', required=False, nargs=-1)
-@asyncclick.pass_context
-def execute(ctx: asyncclick.Context, program: str, arguments: tuple[str]):
+@click.argument('program', required=True, nargs=1)
+@click.argument('arguments', required=False, nargs=-1)
+@click.pass_context
+def execute(ctx: click.Context, program: str, arguments: tuple[str]):
     cmd = list(arguments)
     cmd.insert(0, program)
     rem: Interface = ctx.obj.get("instance")
@@ -99,8 +99,8 @@ def execute(ctx: asyncclick.Context, program: str, arguments: tuple[str]):
 
 @remote.command(help='Show remote environment details')
 @utils.options.style
-@asyncclick.pass_context
-def inspect(ctx: asyncclick.Context, s: str):
+@click.pass_context
+def inspect(ctx: click.Context, s: str):
     details: core.Object = ctx.obj.get("instance").object()
     if s == "style" or s == "":
         table = Table(show_header=True, show_edge=True, show_lines=True)
@@ -115,9 +115,9 @@ def inspect(ctx: asyncclick.Context, s: str):
 
 
 @remote.command(help="Upload files to remote environment")
-@asyncclick.argument('items', required=False, nargs=-1)
-@asyncclick.pass_context
-def upload(ctx: asyncclick.Context, items: tuple[str]):
+@click.argument('items', required=False, nargs=-1)
+@click.pass_context
+def upload(ctx: click.Context, items: tuple[str]):
     rem: Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:
@@ -126,9 +126,9 @@ def upload(ctx: asyncclick.Context, items: tuple[str]):
 
 
 @remote.command(help="Download files from remote environment")
-@asyncclick.argument('items', required=False, nargs=-1)
-@asyncclick.pass_context
-def download(ctx: asyncclick.Context, items: tuple[str]):
+@click.argument('items', required=False, nargs=-1)
+@click.pass_context
+def download(ctx: click.Context, items: tuple[str]):
     rem: Interface = ctx.obj.get("instance")
     paths = split(items)
     if not paths:

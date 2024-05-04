@@ -1,6 +1,6 @@
 import os
 
-import asyncclick
+import click
 
 from umk.application.cmd import root
 from umk.application import utils
@@ -31,7 +31,7 @@ def save(c: tuple[str], p: tuple[str]):
 
 
 @config.command(help="Write entry inside config file")
-@asyncclick.argument('values', required=True, nargs=-1)
+@click.argument('values', required=True, nargs=-1)
 def write(values: tuple[str]):
     opt = runtime.Options()
     opt.config.file = True

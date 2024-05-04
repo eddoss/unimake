@@ -8,7 +8,7 @@ if not os.environ.get('_UMK_COMPLETE', None):
     class PropertiesPrinter:
         def print(self, *entries: core.Properties, name=True, description=True, value=True, splitter=" ", equal="="):
             for properties in entries:
-                table = Table(show_header=True, show_edge=True, show_lines=True)
+                table = Table(show_header=True, show_edge=True, show_lines=True, box=None)
                 if name:
                     table.add_column("Name", justify="left", style="", no_wrap=True)
                 if description:

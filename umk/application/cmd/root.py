@@ -1,6 +1,6 @@
 import os
 
-import asyncclick
+import click
 
 from umk.application import utils
 
@@ -10,15 +10,15 @@ if not os.environ.get('_UMK_COMPLETE'):
     from umk.framework.system.shell import Shell
 
 
-@asyncclick.group()
+@click.group()
 @utils.options.remote
-async def root(r):
+def root(r):
     pass
 
 
 @root.command(help="Run project targets")
 @utils.options.config.all
-@asyncclick.argument('names', required=True, nargs=-1)
+@click.argument('names', required=True, nargs=-1)
 def run(c: tuple[str], p: tuple[str], f: bool, names: tuple[str]):
     opt = runtime.Options()
     opt.config = utils.config(f, p, c)

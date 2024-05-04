@@ -45,21 +45,6 @@ files = [
 ]
 
 [[package]]
-name = "asyncclick"
-version = "8.1.7.2"
-description = "Composable command line interface toolkit, async version"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "asyncclick-8.1.7.2-py3-none-any.whl", hash = "sha256:1ab940b04b22cb89b5b400725132b069d01b0c3472a9702c7a2c9d5d007ded02"},
-    {file = "asyncclick-8.1.7.2.tar.gz", hash = "sha256:219ea0f29ccdc1bb4ff43bcab7ce0769ac6d48a04f997b43ec6bee99a222daa0"},
-]
-
-[package.dependencies]
-anyio = "*"
-colorama = {version = "*", markers = "platform_system == \"Windows\""}
-
-[[package]]
 name = "bcrypt"
 version = "4.1.2"
 description = "Modern password hashing for your software and your servers"
@@ -1007,4 +992,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<3.12"
-content-hash = "16ab434cee00105b46e3333841d87ec30ef68f286584321958ddb6db66c9a2b9"
+content-hash = "de92db87c2446ffad238fd7b266559b1dca4a79bbf7e675901888721e260f445"

@@ -1,6 +1,6 @@
 import functools
 
-import asyncclick
+import click
 
 import umk.core.globals
 from umk import state
@@ -10,7 +10,7 @@ class options:
     @staticmethod
     def remote(func):
         # @asyncclick.option(cls=RemoteOption)
-        @asyncclick.option("-R", is_flag=True, flag_value="___umk_flag___", help="Execute in the default or specific remote environment")
+        @click.option("-R", is_flag=True, flag_value="___umk_flag___", help="Execute in the default or specific remote environment")
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
@@ -18,7 +18,7 @@ class options:
 
     @staticmethod
     def style(func):
-        @asyncclick.option("-s", default="style", type=asyncclick.Choice(["style", "json"], case_sensitive=False), help="Output format")
+        @click.option("-s", default="style", type=click.Choice(["style", "json"], case_sensitive=False), help="Output format")
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
@@ -27,9 +27,9 @@ class options:
     class config:
         @staticmethod
         def all(func):
-            @asyncclick.option("-F", is_flag=True, help="Load config from file")
-            @asyncclick.option("-P", required=False, type=str, multiple=True, help="Config preset to apply")
-            @asyncclick.option("-C", required=False, type=str, multiple=True, help="Config entry override")
+            @click.option("-F", is_flag=True, help="Load config from file")
+            @click.option("-P", required=False, type=str, multiple=True, help="Config preset to apply")
+            @click.option("-C", required=False, type=str, multiple=True, help="Config entry override")
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
@@ -37,7 +37,7 @@ class options:
 
         @staticmethod
         def entry(func):
-            @asyncclick.option("-C", required=False, type=str, multiple=True, help="Config entry override")
+            @click.option("-C", required=False, type=str, multiple=True, help="Config entry override")
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
@@ -45,7 +45,7 @@ class options:
 
         @staticmethod
         def preset(func):
-            @asyncclick.option("-P", required=False, type=str, multiple=True, help="Config preset to apply")
+            @click.option("-P", required=False, type=str, multiple=True, help="Config preset to apply")
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
@@ -53,7 +53,7 @@ class options:
 
         @staticmethod
         def file(func):
-            @asyncclick.option("-F", is_flag=True, help="Load config from file")
+            @click.option("-F", is_flag=True, help="Load config from file")
             @functools.wraps(func)
             def wrapper(*args, **kwargs):
                 return func(*args, **kwargs)
