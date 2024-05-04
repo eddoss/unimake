@@ -21,6 +21,12 @@ class Project(core.Model):
                 input=utils.Decorator.Input(
                     subject="function",
                 ),
+                sig=utils.Signature(
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
+                ),
                 module="project",
                 single=True,
                 errors=utils.Decorator.OnErrors(
@@ -32,9 +38,14 @@ class Project(core.Model):
         entry: EntryDecorator = core.Field(
             description="Decorator of the project empty, golang, custom, ... functions",
             default_factory=lambda: EntryDecorator(
-                stack=2,
+                stack=4,
                 module="project",
                 single=True,
+                sig=utils.Signature(
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                    }
+                ),
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register project outside of the .unimake/project.py"),
                     single=utils.ExistsError("Failed to register project. It's already exists"),
@@ -65,9 +76,9 @@ class Project(core.Model):
     def entry(self, factory, target: str = "custom", klass: Type | None = None):
         self.decorator.entry.target = target
         self.decorator.entry.klass = klass
+        self.decorator.entry.sig.required.pop("s", None)
         if target == "custom":
             self.decorator.entry.input.subject = "class"
-            self.decorator.entry.input.sig.min = 0
             self.decorator.entry.errors.subject = utils.ClassError(
                 f"Failed to register project. Use 'umk.framework.project.custom' with functions"
             )
@@ -75,11 +86,8 @@ class Project(core.Model):
                 "Failed to register project. Entry must be based on umk.framework.project.Interface"
             )
         else:
+            self.decorator.entry.sig.required["s"] = utils.SignatureArgument(description="Project instance")
             self.decorator.entry.input.subject = "function"
-            self.decorator.entry.input.sig.min = 1
-            self.decorator.entry.errors.sig = utils.SignatureError(
-                f"Failed to register project. Function must accept project instance"
-            )
             self.decorator.entry.errors.subject = utils.FunctionError(
                 f"Failed to register project. Use 'umk.framework.project.{self.decorator.entry.target} with functions"
             )
@@ -98,11 +106,17 @@ class Project(core.Model):
             raise utils.NotRegisteredError(
                 "No project registration was found. Put one in the .unimake/project.py'"
             )
+        args = {"c": c}
         if self.decorator.entry.klass is None:
-            self.instance = self.decorator.entry.defers[0](0, 1, c)
+            self.instance = self.decorator.entry.sig.call(
+                self.decorator.entry.defers[0].func, args
+            )
         else:
-            self.instance = self.decorator.entry.klass()
-            self.decorator.entry.defers[0](1, 2, self.instance, c)
+            args["s"] = self.decorator.entry.klass()
+            self.decorator.entry.sig.call(
+                self.decorator.entry.defers[0].func, args
+            )
+            self.instance = args["s"]
         if self.decorator.release.registered:
             if not self.instance:
                 raise utils.NotRegisteredError(

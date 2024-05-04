@@ -70,7 +70,6 @@ def inspect(s: str, c: tuple[str], p: tuple[str], f: bool):
                 contacts = " ".join(contrib.email)
                 contacts += " " + " ".join([f'{k}:{v}' for k, v in contrib.socials.items()])
                 table_contributors.add_row(f"• {contrib.name}", contacts)
-
         if tar:
             table_targets = Table(
                 title="TARGETS",

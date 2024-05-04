@@ -18,10 +18,12 @@ class Printers(core.Model):
         t = type(error)
         if issubclass(t, SystemExit):
             return
-        if t in self.printers:
-            self.printers[t](error)
-            self.stack(error)
-            return
+        for reg in self.printers:
+            if issubclass(t, reg):
+                p = self.printers[reg]
+                p(error)
+                self.stack(error)
+                return
 
         # process unregistered exception type
         core.globals.error_console.print(error.__class__.__name__)

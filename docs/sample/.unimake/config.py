@@ -12,5 +12,5 @@ class Config(config.Interface):
 
 
 @config.preset(name="local")
-def _(c: Config):
-    c.debug.port = 2020
+def _(s: Config):
+    s.debug.port = 2020

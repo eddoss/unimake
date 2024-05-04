@@ -23,7 +23,7 @@ def _(s: target.GolangBinary, c: Config, p: project.Golang):
 
 
 @target.go.mod
-def _(s: target.GolangMod, _, p: project.Golang):
+def _(s: target.GolangMod, p: project.Golang):
     s.name = "deps.go"
     s.label = "Golang Dependencies"
     s.description = "List of golang packages required to build project"
@@ -47,4 +47,4 @@ def _(c: Config):
     if c.debug.on:
         target.run("server")
     else:
-        target.run("server")
+        target.run("server.release")

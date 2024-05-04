@@ -57,5 +57,6 @@ def _(s: remote.DockerCompose, c: Config, p: project.Golang):
 
     s.dockerfiles.append(f)
     s.composefile.services["dev"] = b
+    s.composefile.name = "dev.docker-compose.yaml"
     s.composefile.path = p.layout.root
     s.service = "dev"

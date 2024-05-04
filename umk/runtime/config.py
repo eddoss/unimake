@@ -1,5 +1,6 @@
 import os
 import sys
+from collections import OrderedDict
 
 from pydantic import ValidationError
 
@@ -38,7 +39,8 @@ class Config(core.Model):
                 single=True,
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register config outside of the .unimake/config.py"),
-                    subject=utils.ClassError("Failed to register config. Use 'framework.config.register' with functions")
+                    subject=utils.ClassError("Failed to register config. Use 'framework.config.register' with functions"),
+                    single=utils.ExistsError("Failed to register config. It is already exists"),
                 )
             ),
         )
@@ -49,11 +51,14 @@ class Config(core.Model):
                 module="config",
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
+                ),
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Config instance"),
+                    })
                 ),
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register config preset outside of the .unimake/project.py"),
-                    sig=utils.SignatureError("Failed to register config preset. Function must accept 1 argument at least"),
                 )
             )
         )

@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from umk import core
 from umk.kit import config, target, project
 from umk.core.typings import Generator
@@ -10,10 +12,16 @@ class Targets(core.Model):
             description="Decorator of the target 'custom'",
             default_factory=lambda: utils.Decorator(
                 stack=2,
-                module="targets",
+                module="project",
                 input=utils.Decorator.Input(
                     subject="class",
                     base=target.Interface,
+                ),
+                sig=utils.Signature(
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
                 ),
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register custom target outside of the .unimake/targets.py"),
@@ -29,7 +37,13 @@ class Targets(core.Model):
                 input=utils.Decorator.Input(
                     subject="function",
                 ),
-                module="targets",
+                sig=utils.Signature(
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    },
+                ),
+                module="project",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register target 'function' outside of the .unimake/targets.py"),
                     subject=utils.FunctionError("Failed to register target 'function'. Use 'umk.framework.targets.function' with functions")
@@ -42,13 +56,20 @@ class Targets(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
                 ),
-                module="targets",
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Object to build"),
+                    }),
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
+                ),
+                module="project",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register target 'go.binary' outside of the .unimake/targets.py"),
                     subject=utils.FunctionError("Failed to register target 'go.binary'. Use 'umk.framework.targets.go.binary' with functions"),
-                    sig=utils.SignatureError("Failed to register target 'go.binary'. Function must accept 1 argument at least"),
                 )
             ),
         )
@@ -58,13 +79,20 @@ class Targets(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
                 ),
-                module="targets",
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Object to build"),
+                    }),
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
+                ),
+                module="project",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register target 'go.mod' outside of the .unimake/targets.py"),
                     subject=utils.FunctionError("Failed to register target 'go.mod'. Use 'umk.framework.targets.go.binary' with functions"),
-                    sig=utils.SignatureError("Failed to register target 'go.mod'. Function must accept 1 argument at least"),
                 )
             ),
         )
@@ -74,13 +102,20 @@ class Targets(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
                 ),
-                module="targets",
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Object to build"),
+                    }),
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
+                ),
+                module="project",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register target 'command' outside of the .unimake/targets.py"),
                     subject=utils.FunctionError("Failed to register target 'command'. Use 'umk.framework.targets.go.binary' with functions"),
-                    sig=utils.SignatureError("Failed to register target 'command'. Function must accept 1 argument at least"),
                 )
             ),
         )
@@ -90,15 +125,21 @@ class Targets(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
                 ),
-                module="targets",
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Object to build"),
+                    }),
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
+                ),
+                module="project",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register target 'packages' outside of the .unimake/targets.py"),
                     subject=utils.FunctionError(
                         "Failed to register target 'command'. Use 'umk.framework.targets.packages' with functions"),
-                    sig=utils.SignatureError(
-                        "Failed to register target 'packages'. Function must accept 1 argument at least"),
                 )
             ),
         )
@@ -134,9 +175,7 @@ class Targets(core.Model):
                 found.append(name)
         for name in found:
             t = self.get(name)
-            p = project.get()
-            c = config.get()
-            t.run(p=p, c=c)
+            t.run()
 
     def init(self):
         target.run = self.run
@@ -161,49 +200,41 @@ class Targets(core.Model):
                 name=defer.args.get("name", defer.func.__name__),
                 description=defer.args.get("description", (defer.func.__doc__ or "").strip()),
                 label=defer.args.get("label", ""),
-                function=defer.func
+                function=lambda: self.decorator.function.sig.call(defer.func, {"c": c, "p": p})
             )
             append(t)
         for defer in self.decorator.go_binary.defers:
-            src = target.GolangBinary()
-            sig = self.decorator.go_binary.input.sig
+            args = {"s": target.GolangBinary(), "c": c, "p": p}
+            self.decorator.go_binary.sig.call(defer.func, args)
             with_debug = defer.args.get("debug", True)
-            defer(sig.min, sig.max, src, c, p)
             if with_debug:
                 d, r = target.GolangBinary.new(
-                    name=src.name,
-                    label=src.label,
-                    description=src.description,
-                    tool=src.tool,
-                    build=src.build,
-                    port=src.debug.port,
+                    name=args["s"].name,
+                    label=args["s"].label,
+                    description=args["s"].description,
+                    tool=args["s"].tool,
+                    build=args["s"].build,
+                    port=args["s"].debug.port,
                 )
                 append(d)
                 append(r)
             else:
-                append(src)
+                append(args["s"])
         for defer in self.decorator.command.defers:
-            src = target.Command()
-            sig = self.decorator.command.input.sig
-            defer(sig.min, sig.max, src, c, p)
-            append(src)
-        for defer in self.decorator.go_binary.defers:
-            src = target.GolangBinary()
-            sig = self.decorator.go_binary.input.sig
-            defer(sig.min, sig.max, src, c, p)
-            append(src)
+            args = {"s": target.Command(), "c": c, "p": p}
+            self.decorator.command.sig.call(defer.func, args)
+            append(args["s"])
         for defer in self.decorator.go_mod.defers:
-            src = target.GolangMod()
-            sig = self.decorator.go_mod.input.sig
-            defer(sig.min, sig.max, src, c, p)
-            append(src)
+            args = {"s": target.GolangMod(), "c": c, "p": p}
+            self.decorator.go_mod.sig.call(defer.func, args)
+            append(args["s"])
         for defer in self.decorator.packages.defers:
-            src = target.SystemPackages()
-            sig = self.decorator.packages.input.sig
-            defer(sig.min, sig.max, src, c, p)
-            append(src)
+            args = {"s": target.SystemPackages(), "c": c, "p": p}
+            self.decorator.packages.sig.call(defer.func, args)
+            append(args["s"])
         for defer in self.decorator.custom.defers:
-            res = defer(0, 2, c, p)
+            args = {"c": c, "p": p}
+            res = self.decorator.custom.sig.call(defer.func, args)
             append(res)
 
         self.decorator.custom.skip = True

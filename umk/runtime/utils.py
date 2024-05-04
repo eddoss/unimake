@@ -1,19 +1,72 @@
 import inspect
+from collections import OrderedDict
 
 from umk import core
-from umk.core.typings import Callable, Any, Type
+from umk.core.typings import Callable, Any, Type, Mapping
+
+
+class SignatureArgument(core.Model):
+    description: str = core.Field("", description="Argument description")
+    # provider: Callable[..., Any] = core.Field(None, description="Value provider")
+
+
+class Signature(core.Model):
+    required: OrderedDict[str, SignatureArgument] = core.Field(default_factory=dict, description="Required arguments (passed by position)")
+    optional: dict[str, SignatureArgument] = core.Field(default_factory=dict, description="Optional arguments (passed by name)")
+
+    def ok(self, func):
+        sig = inspect.signature(func).parameters
+        if self.required:
+            if len(sig) < len(self.required):
+                raise SignatureError(self, sig)
+            for req, inp in zip(self.required, sig):
+                if req != inp:
+                    raise SignatureError(self, sig)
+        # for inp in sig:
+        #     if inp in self.required:
+        #         continue
+            # if inp not in self.optional:
+            #     core.globals.console.print(f"[yellow bold]Unknown parameter '{inp}', pass None")
+
+    def call(self, func, args: dict[str, Any]):
+        sig = inspect.signature(func).parameters
+        kwargs = {}
+        unknown = {}
+        for name in sig:
+            if name in self.required or name in self.optional:
+                kwargs[name] = args[name]
+            else:
+                unknown[name] = None
+                core.globals.console.print(f"[yellow underline bold]unknown parameters '{name}', pass None")
+        return func(**kwargs, **unknown)
 
 
 class Defer:
     def __init__(self, func=None, **kwargs):
         self.func: Callable[..., Any] | None = func
         self.args: dict[str, Any] = kwargs
+        self.sig: dict[str, SignatureArgument] = {}
 
     def __bool__(self):
         return self.func is not None
 
     def __call__(self, min: int, max: int, _0: Any = None, _1: Any = None, _2: Any = None):
+        p: dict[str, Any] = {}
         return call(self.func, min, max, _0, _1, _2)
+
+    def call(self, sg):
+        sig = inspect.signature(self.func).parameters
+        kwargs = {}
+        for name in sig:
+            if name in sg.required:
+                continue
+            value = None
+            info = sg.optional.get(name)
+            if name:
+                value = info.provider()
+            kwargs[name] = value
+        args = [req.provider() for req in sg.required.values()]
+        self.func(*args, **kwargs)
 
 
 class SourceError(core.Error):
@@ -59,10 +112,38 @@ class NotFoundError(core.Error):
 
 
 class SignatureError(core.Error):
-    def __init__(self, *messages: str, details: core.Properties = None):
+    def __init__(self, req: Signature, inp: Mapping[str, inspect.Parameter]):
         super().__init__(name=type(self).__name__.rstrip("Error"))
-        self.messages = list(messages)
-        self.details = details or self.details
+        self.messages = ["Invalid signature."]
+
+        if req.required:
+            self.messages.append("required:")
+            for name, r in req.required.items():
+                self.messages.append(
+                    f" - '{name}' {r.description}"
+                )
+        if req.optional:
+            self.messages.append("optional:")
+            for name, o in req.optional.items():
+                self.messages.append(
+                    f" - '{name}' {o.description}"
+                )
+        if not req.required and not req.optional:
+            self.messages.append("No parameters required")
+
+        # if req.required:
+        #     self.messages = [
+        #         f"Required arguments:",
+        #         f" - {}
+        #     ]
+        # if req:
+        #     f" - ({' ,'.join(req.required)}, {' ,'.join(req.optional)}) -> Any",
+        # elif req.required:
+        #     self.messages = [
+        #         f"Required signature one of:",
+        #         f" - ({' ,'.join(req.required)}) -> Any",
+        #     ]
+        # self.details = details or self.details
 
 
 class RequirementError(core.Error):
@@ -141,15 +222,6 @@ class Decorator(core.Model):
         )
 
     class Input(core.Model):
-        class Signature(core.Model):
-            min: int = core.Field(
-                default=0,
-                description="Minimum arguments count"
-            )
-            max: int = core.Field(
-                default=-1,
-                description="Maximum arguments count"
-            )
         subject: str = core.Field(
             default="any",
             description="Which subject must be used this decorator with (class/function/any)"
@@ -157,10 +229,6 @@ class Decorator(core.Model):
         base: tuple[Type] | Type | None = core.Field(
             default=None,
             description="Input class base type"
-        )
-        sig: Signature = core.Field(
-            default_factory=Signature,
-            description="Signature constraints"
         )
 
     defers: list[Defer] = core.Field(
@@ -195,6 +263,10 @@ class Decorator(core.Model):
         default_factory=Input,
         description="Input function/class constraints"
     )
+    sig: Signature = core.Field(
+        default_factory=Signature,
+        description="Signature constraints"
+    )
     registered: bool = core.Field(
         default=False,
         description="Is register was called ?"
@@ -208,22 +280,17 @@ class Decorator(core.Model):
         script = f".unimake/{self.module}.py"
         if not frame.filename.endswith(script):
             raise self.errors.module
-        if self.single and self.registered:
+        if self.single and self.registered and self.skip:
             raise self.errors.single
         if self.input.subject == "class":
             if not inspect.isclass(f):
                 raise self.errors.subject
             if self.input.base and not issubclass(f, self.input.base):
                 raise self.errors.base
-        elif self.subject == "function":
+        elif self.input.subject == "function":
             if not inspect.isfunction(f):
                 raise self.errors.subject
-        sig = len(inspect.signature(f).parameters)
-        if sig < self.sig.min:
-            raise self.errors.signature
-        if self.sig.max > 0:
-            if sig > self.sig.max:
-                raise self.errors.sig
+        self.sig.ok(f)
 
     @core.overload
     def register(self, f): ...
@@ -235,6 +302,7 @@ class Decorator(core.Model):
         if f is not None:
             if not self.skip:
                 # self.defers.append(Defer(func=cpf(f)))
+                self.validate(f)
                 self.defers.append(Defer(func=f))
                 self.registered = True
             return f
@@ -243,6 +311,7 @@ class Decorator(core.Model):
             # parse kwargs
             if not self.skip:
                 # self.defers.append(Defer(func=cpf(fun), **kwargs))
+                self.validate(fun)
                 self.defers.append(Defer(func=fun, **kwargs))
                 self.registered = True
             return fun

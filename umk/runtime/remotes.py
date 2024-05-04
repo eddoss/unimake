@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from umk import core
 from umk.kit import project, config, remote
 from umk.runtime import utils
@@ -27,13 +29,20 @@ class Remote(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
+                ),
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Secure shell instance"),
+                    }),
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
                 ),
                 module="remote",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register remote environment 'ssh' outside of the .unimake/remote.py"),
                     subject=utils.FunctionError("Failed to register remote environment 'ssh'. Use 'umk.framework.remote.ssh with functions"),
-                    sig=utils.SignatureError("Failed to register remote environment 'ssh'. Function must accept 1 argument at least"),
                 )
             ),
         )
@@ -43,13 +52,20 @@ class Remote(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
+                ),
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Secure shell instance"),
+                    }),
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
                 ),
                 module="remote",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register remote environment 'docker.container' outside of the .unimake/remote.py"),
                     subject=utils.FunctionError("Failed to register remote environment 'docker.container'. Use 'umk.framework.remote.docker.container with functions"),
-                    sig=utils.SignatureError("Failed to register remote environment 'docker.container'. Function must accept 1 argument at least"),
                 )
             ),
         )
@@ -59,13 +75,20 @@ class Remote(core.Model):
                 stack=2,
                 input=utils.Decorator.Input(
                     subject="function",
-                    sig=utils.Decorator.Input.Signature(min=1)
+                ),
+                sig=utils.Signature(
+                    required=OrderedDict({
+                        "s": utils.SignatureArgument(description="Secure shell instance"),
+                    }),
+                    optional={
+                        "c": utils.SignatureArgument(description="Config instance"),
+                        "p": utils.SignatureArgument(description="Project instance"),
+                    }
                 ),
                 module="remote",
                 errors=utils.Decorator.OnErrors(
                     module=utils.SourceError("Failed to register remote environment 'docker.compose' outside of the .unimake/remote.py"),
                     subject=utils.FunctionError("Failed to register remote environment 'docker.compose'. Use 'umk.framework.remote.docker.compose with functions"),
-                    sig=utils.SignatureError("Failed to register remote environment 'docker.compose'. Function must accept 1 argument at least"),
                 )
             ),
         )
@@ -125,22 +148,20 @@ class Remote(core.Model):
                 self.default = r.name
             self.items[r.name] = r
         for defer in self.decorator.compose.defers:
-            src = remote.DockerCompose()
-            sig = self.decorator.compose.input.sig
-            defer(sig.min, sig.max, src, c, p)
-            append(src)
+            args = {"s": remote.DockerCompose(), "c": c, "p": p}
+            self.decorator.compose.sig.call(defer.func, args)
+            append(args["s"])
         for defer in self.decorator.container.defers:
-            src = remote.DockerContainer()
-            sig = self.decorator.container.input.sig
-            defer(sig.min, sig.max, src, c, p)
-            append(src)
+            args = {"s": remote.DockerContainer(), "c": c, "p": p}
+            self.decorator.container.sig.call(defer.func, args)
+            append(args["s"])
         for defer in self.decorator.ssh.defers:
-            src = remote.SecureShell()
-            sig = self.decorator.ssh.input.sig
-            defer(sig.min, sig.max, src, c, p)
-            append(src)
+            args = {"s": remote.SecureShell(), "c": c, "p": p}
+            self.decorator.ssh.sig.call(defer.func, args)
+            append(args["s"])
         for defer in self.decorator.custom.defers:
-            res = defer(0, 2, c, p)
+            args = {"c": c, "p": p}
+            res = self.decorator.custom.sig.call(defer.func, args)
             append(res)
 
         self.decorator.custom.skip = True
