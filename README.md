@@ -55,12 +55,12 @@ def _(s: target.GolangBinary, c: Config, p: project.Golang):
     s.tool = p.tool
     s.build.output = p.layout.root / "server"
     s.build.source = [p.layout.cmd / "server"]
-    s.debug.port = c.debug.port  # Read server debug port from config
+    s.debug.port = c.debug.port  # Read debug port from config
 
 
 @target.go.mod
-def _(s: target.GolangMod, _, p: project.Golang):
-    s.name = "dependencies.go"
+def _(s: target.GolangMod, p: project.Golang):
+    s.name = "deps.go"
     s.label = "Golang Dependencies"
     s.description = "List of golang packages required to build project"
     s.tool = p.tool
@@ -69,7 +69,7 @@ def _(s: target.GolangMod, _, p: project.Golang):
 
 @target.packages
 def _(s: target.SystemPackages):
-    s.name = "dependencies.os"
+    s.name = "deps.os"
     s.label = "System Package Dependencies"
     s.description = "List of system packages required to build project"
     s.apt_get.sudo = True
@@ -78,12 +78,12 @@ def _(s: target.SystemPackages):
 
 @project.releaser
 def _(c: Config):
-    target.run("dependencies.os")
-    target.run("dependencies.go")
+    target.run("deps.os")
+    target.run("deps.go")
     if c.debug.on:
         target.run("server")
     else:
-        target.run("server")
+        target.run("server.release")
 ```
 ### Config
 ```py
@@ -104,8 +104,8 @@ class Config(config.Interface):
 
 
 @config.preset(name="local")
-def _(c: Config):
-    c.debug.port = 2020
+def _(s: Config):
+    s.debug.port = 2020
 ```
 ### Development environment
 ```py
