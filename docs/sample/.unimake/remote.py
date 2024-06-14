@@ -13,7 +13,7 @@ def _(s: remote.DockerCompose, c: Config, p: project.Golang):
 
     # Dockerfile
     f = docker.File(path=p.layout.root, name="dev.dockerfile")
-    f.froms("ubuntu")
+    f.froms("debian")
     if c.usermod:
         f.run([
             f"apt-get update",
@@ -21,7 +21,7 @@ def _(s: remote.DockerCompose, c: Config, p: project.Golang):
             f"mkdir -p /etc/sudoers.d",
             f'echo "{u.name} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/nopasswd',
             f"groupadd -g {u.group.id} {u.name}",
-            f"useradd -m -u {u.id} -d /home/{u.name} -g {u.group.id} -s /bin/sh {u.name}",
+            f"useradd -o -m -u {u.id} -d /home/{u.name} -g {u.group.id} -s /bin/sh {u.name}",
         ])
         f.user(u.id)
         f.env("PATH", f"$PATH:/home/{u.name}/.local/bin")
@@ -29,15 +29,15 @@ def _(s: remote.DockerCompose, c: Config, p: project.Golang):
         f.run([
             "sudo apt-get -y install git",
             "sudo apt-get -y install python3",
-            "sudo apt-get -y install pip",
+            # "sudo apt-get -y install pip",
         ])
     else:
         f.run([
             "apt-get -y install git",
             "apt-get -y install python3",
-            "apt-get -y install pip",
+            # "apt-get -y install pip",
         ])
-    f.run(["pip install umk"])
+    # f.run(["pip install umk"])
 
     # Compose service
     b = docker.ComposeService()

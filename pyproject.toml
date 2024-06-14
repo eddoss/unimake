@@ -20,7 +20,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10,<3.12"
+python = ">=3.10,^3.12"
 rich = "^13.6.0"
 gitpython = "^3.1.37"
 anyio = "^4.0.0"
@@ -29,7 +29,7 @@ fs = "^2.4.16"
 multimethod = "^1.10"
 paramiko = "^3.3.1"
 pydantic = "^2.5.3"
-python-on-whales = "^0.69.0"
+python-on-whales = "^0.70.1"
 pyyaml = "^6.0.1"
 python-dotenv = "^1.0.1"
 click = "^8.1.7"

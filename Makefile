@@ -207,7 +207,7 @@ export REMOTES_IMAGE_NAME := dev.$(PROJECT_NAME).remotes
 
 .PHONY: remote/ssh
 remote/ssh: remote/ssh/stop
-	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml up -d --build
+	@docker compose -f $(PROJECT_DEVELOPMENT)/ssh/docker-compose.yaml up -d --build
 	@docker compose exec $(REMOTES_IMAGE_NAME).ssh make install
 	@echo 'SSH remote environment run in container "dev.unimake.ssh"'
 	@echo " - ip:   171.16.14.2"
@@ -217,7 +217,7 @@ remote/ssh: remote/ssh/stop
 
 .PHONY: remote/ssh/stop
 remote/ssh/stop:
-	@docker compose -f $(PROJECT_DEVELOPMENT)/remotes/ssh/docker-compose.yaml down --remove-orphans --rmi all
+	@docker compose -f $(PROJECT_DEVELOPMENT)/ssh/docker-compose.yaml down --remove-orphans --rmi all
 
 .PHONY: remote/container
 remote/container: remote/container/stop
